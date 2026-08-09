@@ -52,6 +52,15 @@ namespace RouteXia.App.Views
             }
         }
 
+        private async void BtnBrowserAuth_Click(object sender, RoutedEventArgs e)
+        {
+            bool success = await _vm.SignInWithBrowserAsync();
+            if (success)
+            {
+                UpdateViewVisibility();
+            }
+        }
+
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
             bool success = await _vm.SubmitAuthAsync();

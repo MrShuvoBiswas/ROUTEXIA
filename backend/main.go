@@ -44,7 +44,11 @@ func main() {
 	// ── Public Routes ─────────────────────────────────────────────────────────
 	mux.HandleFunc("/api/v1/auth/register", withCORS(handlers.Register))
 	mux.HandleFunc("/api/v1/auth/login", withCORS(handlers.Login))
+	mux.HandleFunc("/api/v1/auth/firebase", withCORS(handlers.FirebaseAuth))
 	mux.HandleFunc("/api/v1/relays", withCORS(handlers.GetRelays))
+	mux.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/auth.html")
+	})
 	mux.HandleFunc("/api/v1/health", withCORS(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok","service":"RouteXia Management API"}`)

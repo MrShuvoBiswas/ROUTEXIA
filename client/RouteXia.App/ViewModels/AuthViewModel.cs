@@ -106,6 +106,43 @@ namespace RouteXia.App.ViewModels
             }
         }
 
+        public async Task<bool> SignInWithBrowserAsync()
+        {
+            IsBusy = true;
+            StatusMessage = "Opening browser for Firebase authentication...";
+            IsError = false;
+
+            try
+            {
+                var browserAuth = new RouteXia.VpnClient.Auth.BrowserAuthService();
+                var result = await browserAuth.StartBrowserAuthAsync();
+
+                if (!result.Success || string.IsNullOrEmpty(result.Token))
+                {
+                    StatusMessage = result.ErrorMessage ?? "Browser authentication failed";
+                    IsError = true;
+                    return false;
+                }
+
+                StatusMessage = "Verifying with server...";
+                (bool success, string message) = await _apiClient.AuthenticateWithFirebaseTokenAsync(result.Token, result.Email);
+
+                StatusMessage = message;
+                IsError = !success;
+                return success;
+            }
+            catch (System.Exception ex)
+            {
+                StatusMessage = $"Authentication error: {ex.Message}";
+                IsError = true;
+                return false;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         public void Logout()
         {
             _apiClient.Logout();

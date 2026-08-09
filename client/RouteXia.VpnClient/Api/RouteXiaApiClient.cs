@@ -115,6 +115,42 @@ namespace RouteXia.VpnClient.Api
             }
         }
 
+        public async Task<(bool success, string message)> AuthenticateWithFirebaseTokenAsync(string idToken, string? email)
+        {
+            try
+            {
+                string hwid = HwidGenerator.GetHwid();
+                var req = new
+                {
+                    id_token = idToken,
+                    email = email ?? string.Empty,
+                    hwid = hwid
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
+                var res = await _http.PostAsync($"{_baseUrl}/api/v1/auth/firebase", content);
+
+                string resBody = await res.Content.ReadAsStringAsync();
+                if (!res.IsSuccessStatusCode)
+                {
+                    return (false, string.IsNullOrWhiteSpace(resBody) ? "Firebase authentication failed" : resBody);
+                }
+
+                var authRes = JsonSerializer.Deserialize<AuthResponse>(resBody);
+                if (authRes != null)
+                {
+                    HandleAuthSuccess(authRes);
+                    return (true, authRes.Subscription?.Message ?? "Authenticated successfully!");
+                }
+
+                return (false, "Invalid response from server");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Network error: {ex.Message}");
+            }
+        }
+
         public async Task RefreshProfileAsync()
         {
             if (string.IsNullOrEmpty(_authToken)) return;
