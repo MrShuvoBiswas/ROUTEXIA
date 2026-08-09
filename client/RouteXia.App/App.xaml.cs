@@ -38,9 +38,19 @@ public partial class App : Application
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
-        // Show main window
-        var mainWindow = Services.GetRequiredService<MainWindow>();
-        mainWindow.Show();
+        var apiClient = Services.GetRequiredService<RouteXiaApiClient>();
+
+        // ExitLag style: If authenticated, open Dashboard directly; otherwise show LoginWindow
+        if (apiClient.IsAuthenticated)
+        {
+            var mainWindow = Services.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+        }
+        else
+        {
+            var loginWindow = Services.GetRequiredService<LoginWindow>();
+            loginWindow.Show();
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -70,6 +80,7 @@ public partial class App : Application
         services.AddSingleton<ConnectViewModel>();
 
         // ── Views ──────────────────────────────────────────────────────────────
+        services.AddTransient<LoginWindow>();
         services.AddSingleton<MainWindow>();
     }
 

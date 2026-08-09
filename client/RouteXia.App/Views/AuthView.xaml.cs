@@ -79,7 +79,13 @@ namespace RouteXia.App.Views
         {
             _vm.Logout();
             TxtPassword.Password = string.Empty;
-            UpdateViewVisibility();
+
+            // Open LoginWindow and close MainWindow
+            var loginWindow = App.Services.GetRequiredService<LoginWindow>();
+            loginWindow.Show();
+
+            var currentWindow = Window.GetWindow(this);
+            currentWindow?.Close();
         }
     }
 }
