@@ -6,6 +6,8 @@
 **/publish_v2/
 **/publish_v3/
 **/publish_enterprise/
+**/publish_exitlag/
+**/publish_v4/
 *.db
 *.db-journal
 *.db-wal
