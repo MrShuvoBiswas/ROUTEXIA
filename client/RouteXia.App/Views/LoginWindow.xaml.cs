@@ -41,6 +41,9 @@ namespace RouteXia.App.Views
 
         private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
+            _vm.Email = TxtEmail.Text?.Trim() ?? string.Empty;
+            _vm.Password = TxtPassword.Password ?? string.Empty;
+
             // Reset validation states
             LblEmailError.Visibility = Visibility.Collapsed;
             LblPasswordError.Visibility = Visibility.Collapsed;

@@ -113,24 +113,41 @@
                 </StackPanel>
             </Border>
 
-            <!-- Managed Node Banner -->
+            <!-- About RouteXia -->
+            <TextBlock
+                Text="ABOUT"
+                FontSize="11" FontWeight="SemiBold"
+                Foreground="{StaticResource TextMutedBrush}"
+                Margin="0,0,0,12" />
+
             <Border
-                Background="#0D1F2D"
-                BorderBrush="{StaticResource AccentBrush}"
-                BorderThickness="1" CornerRadius="10"
-                Padding="16,14">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="24" Foreground="{StaticResource AccentBrush}" Margin="0,0,14,0" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Fully Managed Relay Network" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                        <TextBlock Text="RouteXia automatically selects the fastest AWS Singapore server and manages all WireGuard configurations in real time."
-                            FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
-                    </StackPanel>
-                </Grid>
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1" CornerRadius="12"
+                Padding="20,16">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="RouteXia" FontSize="14"
+                                FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="AI-Powered Game Route Optimizer"
+                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#1A2230" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+                            <TextBlock Text="v0.1.0-beta" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,4,0,12" />
+
+                    <TextBlock
+                        Text="RouteXia uses Multipath Routing Technology to find the fastest path for your game traffic, reducing ping and eliminating packet loss."
+                        FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
+                </StackPanel>
             </Border>
 
         </StackPanel>

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -33,6 +34,8 @@ public partial class ConnectView : Page
             {
                 if (args.PropertyName == nameof(ConnectViewModel.State))
                     Dispatcher.Invoke(() => UpdateUIForState(_vm.State));
+                if (args.PropertyName == nameof(ConnectViewModel.IsGameRunning))
+                    Dispatcher.Invoke(() => BtnLaunchGame.IsEnabled = !_vm.IsGameRunning);
             };
 
             _vm.LogMessage += OnLogMessage;
@@ -46,6 +49,7 @@ public partial class ConnectView : Page
         }
 
         UpdateUIForState(_vm.State);
+        BtnLaunchGame.IsEnabled = !_vm.IsGameRunning;
     }
 
     private async void BtnConnect_Click(object sender, RoutedEventArgs e)
@@ -54,6 +58,32 @@ public partial class ConnectView : Page
             await _vm.DisconnectAsync();
         else if (_vm.CanConnect)
             await _vm.ConnectAsync();
+    }
+
+    private void BtnLaunchGame_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Launch PUBG via Steam protocol (PUBG Steam App ID: 578080)
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "steam://rungameid/578080",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Fallback: try direct TslGame.exe if Steam protocol fails
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "TslGame.exe",
+                    UseShellExecute = true
+                });
+            }
+            catch { /* Steam not installed or PUBG not found */ }
+        }
     }
 
     private void UpdateUIForState(ConnectionState state)

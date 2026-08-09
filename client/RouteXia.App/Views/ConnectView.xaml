@@ -198,7 +198,7 @@
                     BorderThickness="1"
                     CornerRadius="12"
                     Padding="16,12"
-                    Width="260">
+                    Width="300">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -206,62 +206,131 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock
+                        <Border
                             Grid.Column="0"
-                            Text="🇸🇬"
-                            FontSize="22"
+                            Background="#1A2230"
+                            CornerRadius="8"
+                            Width="36" Height="36"
                             VerticalAlignment="Center"
-                            Margin="0,0,12,0" />
+                            Margin="0,0,12,0">
+                            <TextBlock
+                                Text="SG"
+                                FontFamily="/Resources/Fonts/#Rajdhani"
+                                FontSize="14"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource AccentBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
 
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock
-                                Text="Singapore Relay"
+                                Text="South East Asia"
                                 FontFamily="/Resources/Fonts/#Rajdhani"
                                 FontSize="15"
                                 FontWeight="SemiBold"
                                 Foreground="{StaticResource TextPrimaryBrush}" />
                             <TextBlock
-                                Text="PUBG SEA Optimizer"
+                                Text="Optimized Route"
                                 FontSize="11"
                                 Foreground="{StaticResource TextMutedBrush}" />
                         </StackPanel>
 
                         <Border
                             Grid.Column="2"
-                            Background="#1A2230"
-                            CornerRadius="6"
-                            Padding="8,4"
+                            Background="#0D2A1A"
+                            BorderBrush="{StaticResource StatusGoodBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10,5"
                             VerticalAlignment="Center">
                             <TextBlock
                                 x:Name="TxtRelayPing"
                                 Text="--ms"
                                 FontFamily="/Resources/Fonts/#JetBrains Mono"
                                 FontSize="12"
-                                FontWeight="Medium"
-                                Foreground="{StaticResource AccentBrush}" />
+                                FontWeight="Bold"
+                                Foreground="{StaticResource StatusGoodBrush}" />
                         </Border>
                     </Grid>
                 </Border>
 
-                <!-- Activity Log -->
+                <!-- Launch PUBG Button -->
+                <Button
+                    x:Name="BtnLaunchGame"
+                    Click="BtnLaunchGame_Click"
+                    Width="300"
+                    Margin="0,14,0,0"
+                    Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border
+                                x:Name="LaunchBorder"
+                                Background="#0D1929"
+                                BorderBrush="{StaticResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="16,10">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="Play24" FontSize="18" Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Text="LAUNCH PUBG"
+                                        FontFamily="/Resources/Fonts/#Rajdhani"
+                                        FontSize="14"
+                                        FontWeight="Bold"
+                                        Foreground="{StaticResource AccentBrush}"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="LaunchBorder" Property="Background" Value="#152238" />
+                                    <Setter TargetName="LaunchBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="LaunchBorder" Property="Opacity" Value="0.4" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- Activity Feed -->
                 <Border
                     Background="{StaticResource BgCardBrush}"
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="12,8"
+                    CornerRadius="10"
+                    Padding="14,12"
                     Margin="0,16,0,0"
-                    Width="260"
-                    Height="70">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <TextBlock
-                            x:Name="TxtLog"
-                            Text="Ready to optimize."
-                            FontFamily="/Resources/Fonts/#JetBrains Mono"
-                            FontSize="10"
-                            Foreground="{StaticResource TextMutedBrush}"
-                            TextWrapping="Wrap" />
-                    </ScrollViewer>
+                    Width="300"
+                    MaxHeight="120">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <ui:SymbolIcon Symbol="Pulse24" FontSize="14" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock
+                                Text="ACTIVITY"
+                                FontFamily="/Resources/Fonts/#Rajdhani"
+                                FontSize="11"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <TextBlock
+                                x:Name="TxtLog"
+                                Text="Ready to optimize."
+                                FontFamily="/Resources/Fonts/#JetBrains Mono"
+                                FontSize="11"
+                                LineHeight="18"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                TextWrapping="Wrap" />
+                        </ScrollViewer>
+                    </Grid>
                 </Border>
             </StackPanel>
         </Border>
