@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="RouteXia.App.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Background="{StaticResource BgBaseBrush}"
+    Title="Settings">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="40,32" MaxWidth="560">
+
+            <TextBlock
+                Text="SETTINGS"
+                FontFamily="/Resources/Fonts/#Rajdhani"
+                FontSize="22"
+                FontWeight="Bold"
+                Foreground="{StaticResource TextPrimaryBrush}"
+                Margin="0,0,0,32" />
+
+            <!-- Optimization Preferences -->
+            <TextBlock
+                Text="GAME OPTIMIZATION"
+                FontSize="11" FontWeight="SemiBold"
+                Foreground="{StaticResource TextMutedBrush}"
+                Margin="0,0,0,12" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1" CornerRadius="12"
+                Padding="20,16" Margin="0,0,0,24">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Auto-Connect on PUBG Launch" FontSize="13"
+                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Automatically optimize routes as soon as PUBG PC starts"
+                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoConnectOnGameLaunch}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,4,0,16" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Route Optimization Mode" FontSize="13"
+                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="PUBG PC Split-Tunneling (Game traffic only)"
+                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#1A2230" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+                            <TextBlock Text="⚡ Smart Split" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Application Preferences -->
+            <TextBlock
+                Text="SYSTEM"
+                FontSize="11" FontWeight="SemiBold"
+                Foreground="{StaticResource TextMutedBrush}"
+                Margin="0,0,0,12" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1" CornerRadius="12"
+                Padding="20,16" Margin="0,0,0,24">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Minimize to System Tray" FontSize="13"
+                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Keep running in background for game detection"
+                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding MinimizeToTray}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,4,0,16" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Start with Windows" FontSize="13"
+                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Launch RouteXia silently when Windows starts"
+                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding StartWithWindows}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Managed Node Banner -->
+            <Border
+                Background="#0D1F2D"
+                BorderBrush="{StaticResource AccentBrush}"
+                BorderThickness="1" CornerRadius="10"
+                Padding="16,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="24" Foreground="{StaticResource AccentBrush}" Margin="0,0,14,0" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Fully Managed Relay Network" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="RouteXia automatically selects the fastest AWS Singapore server and manages all WireGuard configurations in real time."
+                            FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

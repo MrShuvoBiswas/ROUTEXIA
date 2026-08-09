@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== RouteXia Color Palette ===== -->
+
+    <!-- Solid colors (use these only where Color type is needed) -->
+    <Color x:Key="BgBase">#0A0E14</Color>
+    <Color x:Key="BgPanel">#10151D</Color>
+    <Color x:Key="BgCard">#0D1420</Color>
+    <Color x:Key="BorderColor">#1A2230</Color>
+    <Color x:Key="Accent">#00C2FF</Color>
+    <Color x:Key="AccentDeep">#0B5ED7</Color>
+    <Color x:Key="TextPrimary">#E8EDF5</Color>
+    <Color x:Key="TextMuted">#6B7684</Color>
+    <Color x:Key="StatusGood">#2ED573</Color>
+    <Color x:Key="StatusWarn">#FFB020</Color>
+    <Color x:Key="StatusBad">#FF4757</Color>
+
+    <!-- SolidColorBrushes (use these for Background, Foreground, Fill, Stroke etc.) -->
+    <SolidColorBrush x:Key="BgBaseBrush"     Color="#0A0E14" />
+    <SolidColorBrush x:Key="BgPanelBrush"    Color="#10151D" />
+    <SolidColorBrush x:Key="BgCardBrush"     Color="#0D1420" />
+    <SolidColorBrush x:Key="BorderBrush"     Color="#1A2230" />
+    <SolidColorBrush x:Key="AccentBrush"     Color="#00C2FF" />
+    <SolidColorBrush x:Key="AccentDeepBrush" Color="#0B5ED7" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#E8EDF5" />
+    <SolidColorBrush x:Key="TextMutedBrush"  Color="#6B7684" />
+    <SolidColorBrush x:Key="StatusGoodBrush" Color="#2ED573" />
+    <SolidColorBrush x:Key="StatusWarnBrush" Color="#FFB020" />
+    <SolidColorBrush x:Key="StatusBadBrush"  Color="#FF4757" />
+
+    <!-- Accent gradient -->
+    <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#00C2FF" Offset="0" />
+        <GradientStop Color="#0B5ED7" Offset="1" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="RouteXia.App.Views.ConnectView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+    Background="{StaticResource BgBaseBrush}"
+    Title="Connect">
+
+    <Page.Resources>
+        <!-- Radar pulse ring animation -->
+        <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring1" Storyboard.TargetProperty="Width">
+                <LinearDoubleKeyFrame KeyTime="0:0:0" Value="80"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:1.5" Value="160"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring1" Storyboard.TargetProperty="Height">
+                <LinearDoubleKeyFrame KeyTime="0:0:0" Value="80"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:1.5" Value="160"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring1" Storyboard.TargetProperty="Opacity">
+                <LinearDoubleKeyFrame KeyTime="0:0:0" Value="0.7"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:1.5" Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+            <!-- Ring 2 -->
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring2" Storyboard.TargetProperty="Width">
+                <LinearDoubleKeyFrame KeyTime="0:0:0.5" Value="80"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:2" Value="160"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring2" Storyboard.TargetProperty="Height">
+                <LinearDoubleKeyFrame KeyTime="0:0:0.5" Value="80"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:2" Value="160"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring2" Storyboard.TargetProperty="Opacity">
+                <LinearDoubleKeyFrame KeyTime="0:0:0.5" Value="0.5"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:2" Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+            <!-- Ring 3 -->
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring3" Storyboard.TargetProperty="Width">
+                <LinearDoubleKeyFrame KeyTime="0:0:1" Value="80"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:2.5" Value="160"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring3" Storyboard.TargetProperty="Height">
+                <LinearDoubleKeyFrame KeyTime="0:0:1" Value="80"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:2.5" Value="160"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Ring3" Storyboard.TargetProperty="Opacity">
+                <LinearDoubleKeyFrame KeyTime="0:0:1" Value="0.3"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:2.5" Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Left: connect panel -->
+            <ColumnDefinition Width="*" />
+            <!-- Right: stats + graph -->
+            <ColumnDefinition Width="340" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ===== LEFT PANEL: Connect Button + Status ===== -->
+        <Border
+            Grid.Column="0"
+            Background="{StaticResource BgBaseBrush}"
+            Padding="40,24">
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+
+                <!-- Game Auto-Detect Status Banner -->
+                <Border
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="20"
+                    Padding="16,8"
+                    Margin="0,0,0,12"
+                    HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Games24" FontSize="16" Foreground="{StaticResource AccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock
+                            Text="{Binding GameStatusText}"
+                            FontFamily="/Resources/Fonts/#Rajdhani"
+                            FontSize="13"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Match Server Info Indicator -->
+                <Border
+                    Background="#0D1E2A"
+                    BorderBrush="{StaticResource AccentBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="12,6"
+                    Margin="0,0,0,20"
+                    HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Globe24" FontSize="14" Foreground="{StaticResource StatusGoodBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock
+                            Text="{Binding MatchStatusText}"
+                            FontFamily="/Resources/Fonts/#JetBrains Mono"
+                            FontSize="11"
+                            FontWeight="Medium"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Status label -->
+                <TextBlock
+                    x:Name="TxtStatus"
+                    Text="DISCONNECTED"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="13"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,28" />
+
+                <!-- Connect Button with Pulse Rings -->
+                <Grid Width="170" Height="170" HorizontalAlignment="Center">
+
+                    <!-- Pulse rings (behind button) -->
+                    <Ellipse
+                        x:Name="Ring3"
+                        Width="80" Height="80"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Stroke="#00C2FF"
+                        StrokeThickness="1.5"
+                        Opacity="0"
+                        Panel.ZIndex="0" />
+                    <Ellipse
+                        x:Name="Ring2"
+                        Width="80" Height="80"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Stroke="#00C2FF"
+                        StrokeThickness="1.5"
+                        Opacity="0"
+                        Panel.ZIndex="1" />
+                    <Ellipse
+                        x:Name="Ring1"
+                        Width="80" Height="80"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Stroke="#00C2FF"
+                        StrokeThickness="2"
+                        Opacity="0"
+                        Panel.ZIndex="2" />
+
+                    <!-- Main connect button -->
+                    <Button
+                        x:Name="BtnConnect"
+                        Width="100" Height="100"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Panel.ZIndex="3"
+                        Click="BtnConnect_Click"
+                        Style="{StaticResource ConnectButtonStyle}"
+                        ToolTip="Click to Connect/Disconnect RouteXia">
+
+                        <Grid>
+                            <ui:SymbolIcon
+                                x:Name="IconPower"
+                                Symbol="Power28"
+                                FontSize="36"
+                                Foreground="{StaticResource AccentBrush}" />
+                            <ui:ProgressRing
+                                x:Name="LoadingRing"
+                                IsIndeterminate="True"
+                                Width="48" Height="48"
+                                Foreground="{StaticResource AccentBrush}"
+                                Visibility="Collapsed" />
+                        </Grid>
+                    </Button>
+                </Grid>
+
+                <!-- Target Region -->
+                <TextBlock
+                    Text="OPTIMIZED NODE"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    HorizontalAlignment="Center"
+                    Margin="0,28,0,10" />
+
+                <!-- Server Card -->
+                <Border
+                    x:Name="ServerCard"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16,12"
+                    Width="260">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Column="0"
+                            Text="🇸🇬"
+                            FontSize="22"
+                            VerticalAlignment="Center"
+                            Margin="0,0,12,0" />
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock
+                                Text="Singapore Relay"
+                                FontFamily="/Resources/Fonts/#Rajdhani"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock
+                                Text="PUBG SEA Optimizer"
+                                FontSize="11"
+                                Foreground="{StaticResource TextMutedBrush}" />
+                        </StackPanel>
+
+                        <Border
+                            Grid.Column="2"
+                            Background="#1A2230"
+                            CornerRadius="6"
+                            Padding="8,4"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                x:Name="TxtRelayPing"
+                                Text="--ms"
+                                FontFamily="/Resources/Fonts/#JetBrains Mono"
+                                FontSize="12"
+                                FontWeight="Medium"
+                                Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Activity Log -->
+                <Border
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,8"
+                    Margin="0,16,0,0"
+                    Width="260"
+                    Height="70">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock
+                            x:Name="TxtLog"
+                            Text="Ready to optimize."
+                            FontFamily="/Resources/Fonts/#JetBrains Mono"
+                            FontSize="10"
+                            Foreground="{StaticResource TextMutedBrush}"
+                            TextWrapping="Wrap" />
+                    </ScrollViewer>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== RIGHT PANEL: Stats + Live Ping Graph ===== -->
+        <Border
+            Grid.Column="1"
+            Background="{StaticResource BgPanelBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1,0,0,0"
+            Padding="24,32">
+
+            <StackPanel>
+
+                <!-- Section title -->
+                <TextBlock
+                    Text="PING MONITOR"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    Margin="0,0,0,20" />
+
+                <!-- Before/After ping comparison -->
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Direct (ISP) ping -->
+                    <Border
+                        Grid.Column="0"
+                        Background="{StaticResource BgCardBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="14,12"
+                        Margin="0,0,6,0">
+                        <StackPanel>
+                            <TextBlock
+                                Text="DIRECT ISP"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,0,0,4" />
+                            <TextBlock
+                                x:Name="TxtDirectPing"
+                                Text="{Binding DirectPingText}"
+                                FontFamily="/Resources/Fonts/#Rajdhani"
+                                FontSize="40"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource StatusWarnBrush}" />
+                            <TextBlock
+                                Text="ms"
+                                FontSize="11"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,-4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Via relay ping -->
+                    <Border
+                        Grid.Column="1"
+                        Background="{StaticResource BgCardBrush}"
+                        BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="14,12"
+                        Margin="6,0,0,0">
+                        <StackPanel>
+                            <TextBlock
+                                Text="ROUTEXIA"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{StaticResource AccentBrush}"
+                                Margin="0,0,0,4" />
+                            <TextBlock
+                                x:Name="TxtRelayPingLarge"
+                                Text="{Binding PingText}"
+                                FontFamily="/Resources/Fonts/#Rajdhani"
+                                FontSize="40"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource StatusGoodBrush}" />
+                            <TextBlock
+                                Text="ms"
+                                FontSize="11"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,-4,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Improvement badge -->
+                <Border
+                    x:Name="ImprovementBadge"
+                    Background="#0D2A1A"
+                    BorderBrush="{StaticResource StatusGoodBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="14,10"
+                    Margin="0,0,0,24">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock
+                            Text="↓ "
+                            FontFamily="/Resources/Fonts/#Rajdhani"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource StatusGoodBrush}" />
+                        <TextBlock
+                            x:Name="TxtImprovement"
+                            Text="{Binding ImprovementText}"
+                            FontFamily="/Resources/Fonts/#Rajdhani"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource StatusGoodBrush}" />
+                        <TextBlock
+                            Text=" ms reduction"
+                            FontSize="13"
+                            Foreground="{StaticResource StatusGoodBrush}"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Section title -->
+                <TextBlock
+                    Text="LIVE STABILITY"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    Margin="0,0,0,12" />
+
+                <!-- LiveCharts2 Ping Graph -->
+                <Border
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Height="180">
+                    <lvc:CartesianChart
+                        x:Name="PingChart"
+                        Series="{Binding PingSeries}"
+                        XAxes="{Binding XAxes}"
+                        YAxes="{Binding YAxes}"
+                        Background="Transparent"
+                        Margin="8" />
+                </Border>
+
+                <!-- Connection status footer -->
+                <Grid Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="SESSION UPTIME" FontSize="10"
+                            Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4" />
+                        <TextBlock x:Name="TxtUptime"
+                            Text="--:--:--"
+                            FontFamily="/Resources/Fonts/#JetBrains Mono"
+                            FontSize="16"
+                            Foreground="{StaticResource TextPrimaryBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="OPTIMIZER STATE" FontSize="10"
+                            Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4" />
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="StatusDot" Width="8" Height="8"
+                                Fill="{StaticResource StatusBadBrush}"
+                                VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock x:Name="TxtStatusSmall"
+                                Text="Disabled"
+                                FontSize="13"
+                                Foreground="{StaticResource TextPrimaryBrush}"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>

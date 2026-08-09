@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>RouteXia</AssemblyName>
+    <RootNamespace>RouteXia.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF-UI: Fluent Design, Mica/Acrylic, dark theme -->
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
+    <!-- Live ping charts -->
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc3" />
+    <!-- DI container -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <!-- JSON deserialization -->
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference sibling projects -->
+    <ProjectReference Include="..\RouteXia.VpnClient\RouteXia.VpnClient.csproj" />
+    <ProjectReference Include="..\RouteXia.WfpFilter\RouteXia.WfpFilter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bundle PUBG CIDR list -->
+    <None Update="Data\pubg-cidr-ranges.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinDivert binaries — packet interception engine (basil00/WinDivert) -->
+    <!-- Place WinDivert.dll + WinDivert64.sys in client\windivert\ -->
+    <Content Include="..\windivert\WinDivert.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>WinDivert.dll</Link>
+    </Content>
+    <Content Include="..\windivert\WinDivert64.sys">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>WinDivert64.sys</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embedded font resources -->
+    <Resource Include="Resources\Fonts\Rajdhani-SemiBold.ttf" />
+    <Resource Include="Resources\Fonts\Rajdhani-Bold.ttf" />
+    <Resource Include="Resources\Fonts\JetBrainsMono-Medium.ttf" />
+    <Resource Include="Resources\Fonts\JetBrainsMono-Bold.ttf" />
+  </ItemGroup>
+</Project>

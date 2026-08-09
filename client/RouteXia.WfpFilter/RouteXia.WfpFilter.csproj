@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>RouteXia.WfpFilter</RootNamespace>
+    <AssemblyName>RouteXia.WfpFilter</AssemblyName>
+    <Description>WFP-based packet filter for PUBG process-level traffic interception</Description>
+  </PropertyGroup>
+
+</Project>

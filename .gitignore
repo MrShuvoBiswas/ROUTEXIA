@@ -1,0 +1,17 @@
+# Visual Studio / .NET build outputs
+**/[Bb]in/
+**/[Oo]bj/
+**/publish/
+**/publish_single/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build symbols
+*.pdb
+
+# OS generated files
+.DS_Store
+Thumbs.db
