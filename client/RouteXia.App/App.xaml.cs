@@ -5,6 +5,7 @@ using RouteXia.App.Views;
 using RouteXia.VpnClient.Routing;
 using RouteXia.VpnClient.KillSwitch;
 using RouteXia.VpnClient.Interception;
+using RouteXia.VpnClient.Api;
 using System.Security.Principal;
 using System;
 
@@ -44,15 +45,17 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // ── Relay endpoints (Singapore + India + Dubai) ────────────────────────
-        // TODO: Replace with actual VPS IPs once servers are deployed
-        var relayEndpoints = new[]
+        // ── Backend API Client (Handles Auth, dynamic relays, trial/subscription) ──
+        services.AddSingleton<RouteXiaApiClient>();
+
+        // ── Relay endpoints (Default fallback Singapore) ───────────────────────
+        var defaultRelays = new[]
         {
             new RelayEndpoint("3.1.31.201", 9001, "SG"),   // Singapore AWS EC2 VPS
         };
 
         // ── Core routing + interception services ───────────────────────────────
-        services.AddSingleton(_ => new MultipathRouter(relayEndpoints));
+        services.AddSingleton(_ => new MultipathRouter(defaultRelays));
         services.AddSingleton<KillSwitchManager>();
 
         // WinDivert packet interceptor — the real network layer
@@ -63,6 +66,7 @@ public partial class App : Application
 
         // ── ViewModels ─────────────────────────────────────────────────────────
         services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<AuthViewModel>();
         services.AddSingleton<ConnectViewModel>();
 
         // ── Views ──────────────────────────────────────────────────────────────

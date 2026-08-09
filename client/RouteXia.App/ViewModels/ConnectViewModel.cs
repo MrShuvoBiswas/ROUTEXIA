@@ -11,6 +11,7 @@ using System.Linq;
 using RouteXia.VpnClient.Routing;
 using RouteXia.VpnClient.KillSwitch;
 using RouteXia.VpnClient.Interception;
+using RouteXia.VpnClient.Api;
 
 namespace RouteXia.App.ViewModels;
 
@@ -27,6 +28,7 @@ public class ConnectViewModel : INotifyPropertyChanged
     private readonly SettingsViewModel    _settingsVm;
     private readonly WinDivertInterceptor _interceptor;
     private readonly PubgServerTracker    _serverTracker;
+    private readonly RouteXiaApiClient    _apiClient;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private ConnectionState _state = ConnectionState.Disconnected;
@@ -56,6 +58,8 @@ public class ConnectViewModel : INotifyPropertyChanged
         ConnectionState.Disconnected => "DISCONNECTED",
         _ => "UNKNOWN"
     };
+
+    public RouteXiaApiClient ApiClient => _apiClient;
 
     // PUBG process detection
     private bool _isGameRunning;
@@ -183,16 +187,21 @@ public class ConnectViewModel : INotifyPropertyChanged
         KillSwitchManager    killSwitch,
         SettingsViewModel    settingsVm,
         WinDivertInterceptor interceptor,
-        PubgServerTracker    serverTracker)
+        PubgServerTracker    serverTracker,
+        RouteXiaApiClient    apiClient)
     {
         _router        = router;
         _killSwitch    = killSwitch;
         _settingsVm    = settingsVm;
         _interceptor   = interceptor;
         _serverTracker = serverTracker;
+        _apiClient     = apiClient;
 
         // Pre-fill chart with 60 zeros
         for (int i = 0; i < 60; i++) PingHistory.Add(0);
+
+        // Fetch dynamic relays from API in background on start
+        _ = FetchDynamicRelaysAsync();
 
         // Wire kill-switch events
         _killSwitch.KillSwitchActivated   += (_, _) => { KillSwitchActive = true;  LogMessage?.Invoke(this, "⚠️  Kill-switch ACTIVATED — PUBG traffic blocked (tunnel down)"); };
@@ -218,6 +227,21 @@ public class ConnectViewModel : INotifyPropertyChanged
         // Start PUBG process polling + Direct ISP baseline ping polling
         StartGameDetector();
         StartDirectPingPoller();
+    }
+
+    private async Task FetchDynamicRelaysAsync()
+    {
+        try
+        {
+            var relays = await _apiClient.FetchActiveRelaysAsync();
+            if (relays.Count > 0)
+            {
+                var endpoints = relays.Select(r => new RelayEndpoint(r.Host, (ushort)r.Port, r.RegionCode));
+                _router.UpdateRelayEndpoints(endpoints);
+                LogMessage?.Invoke(this, $"🌐 Synced {relays.Count} active relay servers from backend");
+            }
+        }
+        catch { /* Fallback to default */ }
     }
 
     // ── WinDivert event handlers ──────────────────────────────────────────────
@@ -256,6 +280,13 @@ public class ConnectViewModel : INotifyPropertyChanged
     public async Task ConnectAsync()
     {
         if (!CanConnect) return;
+
+        // Check subscription / trial validity
+        if (_apiClient.IsAuthenticated && !_apiClient.CanConnect)
+        {
+            LogMessage?.Invoke(this, "⚠️ Subscription expired. Please renew your plan in the Account tab.");
+            return;
+        }
 
         State = ConnectionState.Connecting;
         _connectionCts = new CancellationTokenSource();

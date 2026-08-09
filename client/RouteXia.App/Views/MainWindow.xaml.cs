@@ -8,6 +8,7 @@ public partial class MainWindow : FluentWindow
 {
     private ConnectView? _connectView;
     private SettingsView? _settingsView;
+    private AuthView? _authView;
 
     public MainWindow()
     {
@@ -24,6 +25,15 @@ public partial class MainWindow : FluentWindow
     {
         NavigateToConnect();
         BtnNavConnect.Tag = "active";
+        BtnNavAccount.Tag = null;
+        BtnNavSettings.Tag = null;
+    }
+
+    private void BtnNavAccount_Click(object sender, RoutedEventArgs e)
+    {
+        NavigateToAccount();
+        BtnNavAccount.Tag = "active";
+        BtnNavConnect.Tag = null;
         BtnNavSettings.Tag = null;
     }
 
@@ -32,12 +42,19 @@ public partial class MainWindow : FluentWindow
         NavigateToSettings();
         BtnNavSettings.Tag = "active";
         BtnNavConnect.Tag = null;
+        BtnNavAccount.Tag = null;
     }
 
     private void NavigateToConnect()
     {
         _connectView ??= new ConnectView();
         MainFrame.Navigate(_connectView);
+    }
+
+    private void NavigateToAccount()
+    {
+        _authView ??= new AuthView();
+        MainFrame.Navigate(_authView);
     }
 
     private void NavigateToSettings()

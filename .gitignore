@@ -3,6 +3,11 @@
 **/[Oo]bj/
 **/publish/
 **/publish_single/
+**/publish_v2/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 **/.vs/
 *.user
 *.suo

@@ -80,6 +80,17 @@
                         </StackPanel>
                     </Button>
 
+                    <!-- Nav: Account / Subscription -->
+                    <Button
+                        x:Name="BtnNavAccount"
+                        Style="{StaticResource NavButtonStyle}"
+                        Click="BtnNavAccount_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Person32" FontSize="18" Margin="0,0,12,0" />
+                            <TextBlock Text="Account" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
                     <!-- Nav: Settings -->
                     <Button
                         x:Name="BtnNavSettings"

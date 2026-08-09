@@ -67,6 +67,31 @@ namespace RouteXia.VpnClient.Routing
                 TimeSpan.FromMilliseconds(MetricsPollIntervalMs));
         }
 
+        public void UpdateRelayEndpoints(IEnumerable<RelayEndpoint> newEndpoints)
+        {
+            lock (_routeLock)
+            {
+                var existingHosts = new HashSet<string>(_routes.Select(r => $"{r.Endpoint.Host}:{r.Endpoint.Port}"));
+                foreach (var ep in newEndpoints)
+                {
+                    string key = $"{ep.Host}:{ep.Port}";
+                    if (!existingHosts.Contains(key))
+                    {
+                        var route = new RelayRoute(ep);
+                        _routes.Add(route);
+                        if (_receiveCts != null)
+                        {
+                            var r = route;
+                            var task = Task.Run(() => ReceiveLoop(r, _receiveCts.Token), _receiveCts.Token);
+                            _receiveTasks.Add(task);
+                        }
+                    }
+                }
+            }
+
+            MeasureAllRoutes(null);
+        }
+
         // ── Start/Stop inbound listener ───────────────────────────────────────────
 
         public void StartReceiving(CancellationToken ct)
