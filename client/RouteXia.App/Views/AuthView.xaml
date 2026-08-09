@@ -8,182 +8,153 @@
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- Profile Card Gradient -->
+        <LinearGradientBrush x:Key="ProfileCardBg" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#121D2B" Offset="0" />
+            <GradientStop Color="#090E17" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="ProfileCardBorder" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#00C2FF" Offset="0" />
+            <GradientStop Color="#162738" Offset="1" />
+        </LinearGradientBrush>
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="32,24,32,32" MaxWidth="600" HorizontalAlignment="Center">
+        <Grid Margin="36,24,36,36" MaxWidth="620" HorizontalAlignment="Center">
             
-            <!-- ── 1. Authenticated User Profile View ────────────────────────────── -->
-            <StackPanel x:Name="PanelProfile" Visibility="Collapsed">
+            <!-- ── Authenticated User Profile View ────────────────────────────── -->
+            <StackPanel x:Name="PanelProfile">
                 
-                <!-- Profile Header Card -->
+                <!-- Main Gamer Profile Card -->
                 <Border
-                    Background="{StaticResource BgPanelBrush}"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="16"
-                    Padding="24"
-                    Margin="0,0,0,20">
+                    Background="{StaticResource ProfileCardBg}"
+                    BorderBrush="{StaticResource ProfileCardBorder}"
+                    BorderThickness="1.5"
+                    CornerRadius="20"
+                    Padding="28"
+                    Margin="0,0,0,24">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" BlurRadius="30" Opacity="0.5" ShadowDepth="6" />
+                    </Border.Effect>
+
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                            <Border Width="48" Height="48" CornerRadius="24" Background="#142B3B" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" Margin="0,0,16,0">
-                                <ui:SymbolIcon Symbol="Person24" FontSize="22" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        
+                        <!-- User Header -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Avatar Badge -->
+                            <Border
+                                Grid.Column="0"
+                                Width="52" Height="52"
+                                CornerRadius="26"
+                                Background="#102A3D"
+                                BorderBrush="#00E5FF"
+                                BorderThickness="1.5"
+                                Margin="0,0,16,0">
+                                <ui:SymbolIcon Symbol="Person24" FontSize="24" Foreground="#00E5FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding UserEmail}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                <TextBlock Text="RouteXia Member" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+
+                            <!-- User Info -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="{Binding UserEmail}"
+                                    FontFamily="/Resources/Fonts/#Rajdhani"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="#FFFFFF" />
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <Border Background="#133624" BorderBrush="#00E676" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="0,0,8,0">
+                                        <TextBlock Text="VERIFIED GAMER" FontSize="9" FontWeight="Bold" Foreground="#00E676" />
+                                    </Border>
+                                    <TextBlock Text="RouteXia Cloud Network" FontSize="11" Foreground="#748CA3" VerticalAlignment="Center" />
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
 
-                        <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,0,0,16" />
+                            <!-- Plan Badge -->
+                            <Border
+                                Grid.Column="2"
+                                Background="#102A3D"
+                                BorderBrush="#00C2FF"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="12,6"
+                                VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="{Binding PlanBadgeText}"
+                                    FontFamily="/Resources/Fonts/#Rajdhani"
+                                    FontSize="12"
+                                    FontWeight="Bold"
+                                    Foreground="#00E5FF" />
+                            </Border>
+                        </Grid>
 
-                        <!-- Subscription Status -->
-                        <Grid Margin="0,0,0,12">
+                        <Rectangle Height="1" Fill="#192A3C" Margin="0,0,0,20" />
+
+                        <!-- Subscription Status Grid -->
+                        <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="SUBSCRIPTION PLAN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
-                                <TextBlock Text="{Binding SubscriptionStatusText}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                                <TextBlock Text="SUBSCRIPTION STATUS" FontSize="10" FontWeight="Bold" Foreground="#6C849B" />
+                                <TextBlock Text="{Binding SubscriptionStatusText}" FontSize="15" FontWeight="SemiBold" Foreground="#E6EFF8" Margin="0,4,0,0" />
                             </StackPanel>
-                            <Border Grid.Column="1" Background="#133827" BorderBrush="{StaticResource StatusGoodBrush}" BorderThickness="1" CornerRadius="8" Padding="10,4" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding DaysLeftText}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource StatusGoodBrush}" />
+                            <Border Grid.Column="1" Background="#0C1D2B" BorderBrush="#00E5FF" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding DaysLeftText}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="14" FontWeight="Bold" Foreground="#00E5FF" />
                             </Border>
                         </Grid>
 
-                        <!-- HWID Fingerprint -->
-                        <Border Background="#09141D" CornerRadius="8" Padding="12,8" Margin="0,8,0,0">
+                        <!-- Hardware Device Binding -->
+                        <Border Background="#070C12" BorderBrush="#14202E" BorderThickness="1" CornerRadius="12" Padding="14,10" Margin="0,6,0,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ui:SymbolIcon Symbol="ShieldCheckmark20" FontSize="14" Foreground="{StaticResource AccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="{Binding HwidPreview, StringFormat='HWID Protected: {0}'}" FontSize="11" FontFamily="/Resources/Fonts/#JetBrains Mono" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <ui:SymbolIcon Symbol="ShieldCheckmark20" FontSize="16" Foreground="#00E676" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="HARDWARE SECURITY LOCK (HWID)" FontSize="10" FontWeight="Bold" Foreground="#5E758C" />
+                                    <TextBlock Text="{Binding HwidPreview, StringFormat='Device: {0}'}" FontSize="11" FontFamily="/Resources/Fonts/#JetBrains Mono" Foreground="#9BB2C8" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Border Grid.Column="2" Background="#11291F" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                                    <TextBlock Text="BOUND" FontSize="9" FontWeight="Bold" Foreground="#00E676" />
+                                </Border>
                             </Grid>
                         </Border>
+
                     </StackPanel>
                 </Border>
 
-                <!-- Logout Button -->
-                <Button
-                    Content="Sign Out"
+                <!-- Actions / Sign Out Button -->
+                <ui:Button
+                    Content="Sign Out of RouteXia"
                     Click="BtnLogout_Click"
                     HorizontalAlignment="Right"
-                    Background="Transparent"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    Foreground="{StaticResource TextMutedBrush}"
-                    Padding="16,8" />
+                    Background="#141E2B"
+                    BorderBrush="#233448"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Foreground="#A0B6CB"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontWeight="Bold"
+                    FontSize="13"
+                    Padding="20,10"
+                    Cursor="Hand" />
             </StackPanel>
 
-            <!-- ── 2. Login / Register Form View ──────────────────────────────────── -->
-            <Border
-                x:Name="PanelAuth"
-                Background="{StaticResource BgPanelBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="16"
-                Padding="32">
-                <StackPanel>
-                    
-                    <!-- Header -->
-                    <TextBlock
-                        Text="{Binding ModeTitle}"
-                        FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="24"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource TextPrimaryBrush}"
-                        Margin="0,0,0,6" />
-                    
-                    <TextBlock
-                        Text="Experience ultra-low latency &amp; packet loss protection on PUBG PC."
-                        FontSize="12"
-                        Foreground="{StaticResource TextMutedBrush}"
-                        Margin="0,0,0,24" />
-
-                    <!-- ── Primary Action: Browser Sign-In (Firebase/Google) ──────────── -->
-                    <Button
-                        x:Name="BtnBrowserAuth"
-                        Click="BtnBrowserAuth_Click"
-                        Height="48"
-                        Background="{StaticResource AccentBrush}"
-                        Foreground="#0A0E17"
-                        FontWeight="Bold"
-                        FontSize="14"
-                        Margin="0,0,0,16">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Globe24" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Sign In with Browser / Google" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-
-                    <TextBlock
-                        Text="Opens your web browser to sign in or claim 4 days free trial."
-                        FontSize="11"
-                        Foreground="{StaticResource TextMutedBrush}"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,20" />
-
-                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,0,0,20" />
-
-                    <!-- Direct Email Login Accordion / Fallback -->
-                    <TextBlock Text="OR SIGN IN WITH EMAIL" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,12" />
-
-                    <!-- Email Field -->
-                    <TextBlock Text="EMAIL ADDRESS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
-                    <ui:TextBox
-                        x:Name="TxtEmail"
-                        Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="Enter your email"
-                        Margin="0,0,0,16" />
-
-                    <!-- Password Field -->
-                    <TextBlock Text="PASSWORD" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
-                    <ui:PasswordBox
-                        x:Name="TxtPassword"
-                        PasswordChanged="TxtPassword_PasswordChanged"
-                        PlaceholderText="Enter your password (min 6 characters)"
-                        Margin="0,0,0,20" />
-
-                    <!-- Status / Error Banner -->
-                    <Border
-                        x:Name="StatusBanner"
-                        Visibility="{Binding StatusMessage, Converter={StaticResource BoolToVis}}"
-                        Background="#142B3B"
-                        BorderBrush="{StaticResource AccentBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="12,8"
-                        Margin="0,0,0,16">
-                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" />
-                    </Border>
-
-                    <!-- Submit Button -->
-                    <Button
-                        x:Name="BtnSubmit"
-                        Content="{Binding ModeTitle}"
-                        Click="BtnSubmit_Click"
-                        Height="40"
-                        Background="#141C28"
-                        BorderBrush="{StaticResource BorderBrush}"
-                        Foreground="{StaticResource TextPrimaryBrush}"
-                        FontWeight="SemiBold"
-                        FontSize="13"
-                        Margin="0,0,0,16" />
-
-                    <!-- Switch Mode Button -->
-                    <Button
-                        Content="{Binding SwitchButtonText}"
-                        Click="BtnSwitchMode_Click"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Foreground="{StaticResource AccentBrush}"
-                        HorizontalAlignment="Center"
-                        FontSize="12" />
-
-                </StackPanel>
-            </Border>
+            <!-- ── Fallback Auth Panel (if opened directly) ────────────────────────── -->
+            <StackPanel x:Name="PanelAuth" Visibility="Collapsed">
+                <TextBlock Text="Please sign in from the login window." Foreground="#A0B6CB" HorizontalAlignment="Center" Margin="0,40" />
+            </StackPanel>
 
         </Grid>
     </ScrollViewer>

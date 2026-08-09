@@ -26,7 +26,7 @@ namespace RouteXia.App.Views
 
         private void TxtPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            if (sender is Wpf.Ui.Controls.PasswordBox pb)
+            if (sender is System.Windows.Controls.PasswordBox pb)
             {
                 _vm.Password = pb.Password;
             }

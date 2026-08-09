@@ -44,41 +44,9 @@ namespace RouteXia.App.Views
             }
         }
 
-        private void TxtPassword_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (sender is Wpf.Ui.Controls.PasswordBox pb)
-            {
-                _vm.Password = pb.Password;
-            }
-        }
-
-        private async void BtnBrowserAuth_Click(object sender, RoutedEventArgs e)
-        {
-            bool success = await _vm.SignInWithBrowserAsync();
-            if (success)
-            {
-                UpdateViewVisibility();
-            }
-        }
-
-        private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
-        {
-            bool success = await _vm.SubmitAuthAsync();
-            if (success)
-            {
-                UpdateViewVisibility();
-            }
-        }
-
-        private void BtnSwitchMode_Click(object sender, RoutedEventArgs e)
-        {
-            _vm.ToggleMode();
-        }
-
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             _vm.Logout();
-            TxtPassword.Password = string.Empty;
 
             // Open LoginWindow and close MainWindow
             var loginWindow = App.Services.GetRequiredService<LoginWindow>();
