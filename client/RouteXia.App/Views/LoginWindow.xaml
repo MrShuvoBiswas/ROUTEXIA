@@ -4,17 +4,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="RouteXia"
-    Width="980"
-    Height="580"
-    MinWidth="980"
-    MinHeight="580"
-    MaxWidth="980"
-    MaxHeight="580"
+    Width="1200"
+    Height="760"
+    MinWidth="1080"
+    MinHeight="680"
     WindowStartupLocation="CenterScreen"
-    ResizeMode="NoResize"
     ExtendsContentIntoTitleBar="True"
     WindowBackdropType="Mica"
-    Background="#080C12">
+    Background="#080C12"
+    RenderTransformOrigin="0.5,0.5"
+    Closing="LoginWindow_Closing">
 
     <ui:FluentWindow.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -22,12 +21,19 @@
         <!-- Red Accent for Errors / ExitLag aesthetic -->
         <SolidColorBrush x:Key="ErrorRedBrush" Color="#FF3B30" />
         <SolidColorBrush x:Key="CardDarkBg" Color="#0D121B" />
+
+        <!-- Smooth 60 FPS rotation animation for Login spinner -->
+        <Storyboard x:Key="LoginSpinnerAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="LoginSpinnerTransform"
+                Storyboard.TargetProperty="Angle"
+                From="0" To="360" Duration="0:0:1.0" />
+        </Storyboard>
     </ui:FluentWindow.Resources>
 
-    <Grid>
+    <Grid KeyDown="Window_KeyDown">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <!-- Custom Titlebar -->
+            <!-- Custom Titlebar & Draggable Header -->
             <RowDefinition Height="*" />
             <!-- Split Content Area -->
         </Grid.RowDefinitions>
@@ -35,19 +41,19 @@
         <!-- Ambient Background Orbital Rings (ExitLag Vector Graphics) -->
         <Canvas Grid.RowSpan="2" IsHitTestVisible="False" ClipToBounds="True">
             <Ellipse
-                Width="900" Height="900"
+                Width="1100" Height="1100"
                 Stroke="#0E2235" StrokeThickness="1.5"
                 Canvas.Left="-150" Canvas.Top="-150" Opacity="0.6" />
             <Ellipse
-                Width="700" Height="700"
+                Width="850" Height="850"
                 Stroke="#00E5FF" StrokeThickness="1" StrokeDashArray="4 8"
                 Canvas.Left="-50" Canvas.Top="-50" Opacity="0.18" />
             <Ellipse
-                Width="1100" Height="1100"
+                Width="1300" Height="1300"
                 Stroke="#143048" StrokeThickness="1"
                 Canvas.Left="-250" Canvas.Top="-250" Opacity="0.4" />
             <Ellipse
-                Width="400" Height="400"
+                Width="500" Height="500"
                 Canvas.Left="-100" Canvas.Top="50" Opacity="0.15">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
@@ -58,27 +64,81 @@
             </Ellipse>
         </Canvas>
 
-        <!-- Custom Titlebar -->
-        <ui:TitleBar
-            Grid.Row="0"
-            Title=""
-            ShowMaximize="False"
-            ShowMinimize="True"
-            Background="Transparent" />
+        <!-- Custom Draggable Titlebar -->
+        <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- App Logo on top-left -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                <Border
+                    Width="24" Height="24"
+                    CornerRadius="6"
+                    Background="#0D1929"
+                    BorderBrush="{StaticResource AccentBrush}"
+                    BorderThickness="1"
+                    Margin="0,0,8,0">
+                    <TextBlock Text="X" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="ROUTEXIA" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                <Button
+                    Click="BtnMinimize_Click"
+                    Width="36" Height="28"
+                    Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="Transparent" CornerRadius="4" SnapsToDevicePixels="True">
+                                <TextBlock Text="—" FontSize="12" Foreground="#8CA3B8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#202A38" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <Button
+                    Click="BtnClose_Click"
+                    Width="36" Height="28"
+                    Cursor="Hand"
+                    ToolTip="Close RouteXia">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="Transparent" CornerRadius="4" SnapsToDevicePixels="True">
+                                <TextBlock x:Name="txt" Text="✕" FontSize="12" Foreground="#8CA3B8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#E81123" />
+                                    <Setter TargetName="txt" Property="Foreground" Value="#FFFFFF" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- ── Main 2-Column Split Content (ExitLag Layout) ───────────────── -->
-        <Grid Grid.Row="1" Margin="48,0,48,28">
+        <Grid Grid.Row="1" Margin="64,20,64,36">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="1.3*" />
                 <!-- Left Showcase -->
-                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="420" />
                 <!-- Right Login Box -->
             </Grid.ColumnDefinitions>
 
             <!-- ══════════════════════════════════════════════════════════════ -->
             <!-- ── LEFT COLUMN: Gamer Showcase & Latency Benefits ───────────── -->
             <!-- ══════════════════════════════════════════════════════════════ -->
-            <Grid Grid.Column="0" VerticalAlignment="Center" Margin="0,0,40,0">
+            <Grid Grid.Column="0" VerticalAlignment="Center" Margin="0,0,56,0">
                 <StackPanel>
 
                     <!-- Language Selector Pill -->
@@ -87,12 +147,12 @@
                         BorderBrush="#1B283A"
                         BorderThickness="1"
                         CornerRadius="8"
-                        Padding="10,5"
+                        Padding="12,6"
                         HorizontalAlignment="Left"
-                        Margin="0,0,0,28">
+                        Margin="0,0,0,32">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Globe20" FontSize="14" Foreground="#8CA3B8" Margin="0,0,6,0" VerticalAlignment="Center" />
-                            <TextBlock Text="English (US)" FontSize="11" FontWeight="SemiBold" Foreground="#CCD8E5" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock Text="English (US)" FontSize="12" FontWeight="SemiBold" Foreground="#CCD8E5" VerticalAlignment="Center" Margin="0,0,6,0" />
                             <ui:SymbolIcon Symbol="ChevronDown16" FontSize="10" Foreground="#6C8399" VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
@@ -101,25 +161,25 @@
                     <TextBlock
                         Text="AN AI-POWERED"
                         FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="36"
+                        FontSize="42"
                         FontWeight="Bold"
                         Foreground="#FFFFFF" />
                     <TextBlock
                         Text="GAME OPTIMIZATION"
                         FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="36"
+                        FontSize="42"
                         FontWeight="Bold"
                         Foreground="#FFFFFF" />
                     <TextBlock
                         Text="PLATFORM"
                         FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="36"
+                        FontSize="42"
                         FontWeight="Bold"
                         Foreground="#00E5FF"
-                        Margin="0,0,0,32" />
+                        Margin="0,0,0,36" />
 
                     <!-- Live Gamer Metrics -->
-                    <Grid Margin="0,0,0,28">
+                    <Grid Margin="0,0,0,36">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
@@ -127,44 +187,44 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Stat 1 -->
-                        <StackPanel Grid.Column="0" Margin="0,0,32,0">
-                            <TextBlock Text="Multipath" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" />
-                            <TextBlock Text="Technology®" FontSize="10" Foreground="#7E95AC" />
+                        <StackPanel Grid.Column="0" Margin="0,0,40,0">
+                            <TextBlock Text="Multipath" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" />
+                            <TextBlock Text="Technology®" FontSize="11" Foreground="#7E95AC" />
                         </StackPanel>
 
                         <!-- Stat 2 -->
-                        <StackPanel Grid.Column="1" Margin="0,0,32,0">
-                            <TextBlock Text="0% PACKET LOSS" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="16" FontWeight="Bold" Foreground="#00E676" />
-                            <TextBlock Text="TARGET STABILITY" FontSize="10" Foreground="#7E95AC" />
+                        <StackPanel Grid.Column="1" Margin="0,0,40,0">
+                            <TextBlock Text="0% PACKET LOSS" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="18" FontWeight="Bold" Foreground="#00E676" />
+                            <TextBlock Text="TARGET STABILITY" FontSize="11" Foreground="#7E95AC" />
                         </StackPanel>
 
                         <!-- Stat 3 -->
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="LOWEST PING" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="16" FontWeight="Bold" Foreground="#00E5FF" />
-                            <TextBlock Text="REAL-TIME ROUTING" FontSize="10" Foreground="#7E95AC" />
+                            <TextBlock Text="LOWEST PING" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="18" FontWeight="Bold" Foreground="#00E5FF" />
+                            <TextBlock Text="REAL-TIME ROUTING" FontSize="11" Foreground="#7E95AC" />
                         </StackPanel>
                     </Grid>
 
                     <!-- Bottom Feature Badges -->
                     <StackPanel Orientation="Horizontal">
-                        <Border Background="#121824" BorderBrush="#1C283A" BorderThickness="1" CornerRadius="8" Padding="10,5" Margin="0,0,8,0">
+                        <Border Background="#121824" BorderBrush="#1C283A" BorderThickness="1" CornerRadius="8" Padding="12,7" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Flash20" FontSize="12" Foreground="#00E5FF" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                <TextBlock Text="A.I. Route Optimizer" FontSize="11" FontWeight="SemiBold" Foreground="#95ACC4" VerticalAlignment="Center" />
+                                <ui:SymbolIcon Symbol="Flash20" FontSize="14" Foreground="#00E5FF" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="A.I. Route Optimizer" FontSize="12" FontWeight="SemiBold" Foreground="#95ACC4" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
 
-                        <Border Background="#121824" BorderBrush="#1C283A" BorderThickness="1" CornerRadius="8" Padding="10,5" Margin="0,0,8,0">
+                        <Border Background="#121824" BorderBrush="#1C283A" BorderThickness="1" CornerRadius="8" Padding="12,7" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="ShieldCheckmark20" FontSize="12" Foreground="#00E676" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                <TextBlock Text="Dynamic Stabilizer" FontSize="11" FontWeight="SemiBold" Foreground="#95ACC4" VerticalAlignment="Center" />
+                                <ui:SymbolIcon Symbol="ShieldCheckmark20" FontSize="14" Foreground="#00E676" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Dynamic Stabilizer" FontSize="12" FontWeight="SemiBold" Foreground="#95ACC4" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
 
-                        <Border Background="#121824" BorderBrush="#1C283A" BorderThickness="1" CornerRadius="8" Padding="10,5">
+                        <Border Background="#121824" BorderBrush="#1C283A" BorderThickness="1" CornerRadius="8" Padding="12,7">
                             <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Globe24" FontSize="12" Foreground="#00E5FF" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                <TextBlock Text="Global Routing" FontSize="11" FontWeight="SemiBold" Foreground="#95ACC4" VerticalAlignment="Center" />
+                                <ui:SymbolIcon Symbol="Globe24" FontSize="14" Foreground="#00E5FF" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Global Routing" FontSize="12" FontWeight="SemiBold" Foreground="#95ACC4" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -180,28 +240,28 @@
                 Background="{StaticResource CardDarkBg}"
                 BorderBrush="#1A2536"
                 BorderThickness="1"
-                CornerRadius="18"
-                Padding="32,28"
+                CornerRadius="20"
+                Padding="36,32"
                 VerticalAlignment="Center">
                 <Border.Effect>
-                    <DropShadowEffect Color="#000000" BlurRadius="40" Opacity="0.6" ShadowDepth="10" />
+                    <DropShadowEffect Color="#000000" BlurRadius="50" Opacity="0.7" ShadowDepth="12" />
                 </Border.Effect>
 
                 <StackPanel>
 
                     <!-- Logo Header -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
+                    <StackPanel HorizontalAlignment="Center" Margin="0,0,0,26">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock
                                 Text="ROUTE"
                                 FontFamily="/Resources/Fonts/#Rajdhani"
-                                FontSize="28"
+                                FontSize="30"
                                 FontWeight="Bold"
                                 Foreground="#00E5FF" />
                             <TextBlock
                                 Text="XIA"
                                 FontFamily="/Resources/Fonts/#Rajdhani"
-                                FontSize="28"
+                                FontSize="30"
                                 FontWeight="Bold"
                                 Foreground="#FFFFFF" />
                         </StackPanel>
@@ -212,7 +272,7 @@
                         x:Name="TxtEmail"
                         Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="Enter email"
-                        Height="42"
+                        Height="44"
                         FontSize="13"
                         Margin="0,0,0,4" />
 
@@ -220,7 +280,7 @@
                     <TextBlock
                         x:Name="LblEmailError"
                         Text="Email cannot be empty"
-                        FontSize="10"
+                        FontSize="11"
                         Foreground="{StaticResource ErrorRedBrush}"
                         Visibility="Collapsed"
                         Margin="2,0,0,8" />
@@ -230,7 +290,7 @@
                         x:Name="TxtPassword"
                         PasswordChanged="TxtPassword_PasswordChanged"
                         PlaceholderText="Enter password"
-                        Height="42"
+                        Height="44"
                         FontSize="13"
                         Margin="0,8,0,4" />
 
@@ -238,7 +298,7 @@
                     <TextBlock
                         x:Name="LblPasswordError"
                         Text="Password cannot be empty"
-                        FontSize="10"
+                        FontSize="11"
                         Foreground="{StaticResource ErrorRedBrush}"
                         Visibility="Collapsed"
                         Margin="2,0,0,8" />
@@ -251,13 +311,13 @@
                         BorderBrush="{StaticResource ErrorRedBrush}"
                         BorderThickness="1"
                         CornerRadius="6"
-                        Padding="8,4"
-                        Margin="0,4,0,6">
+                        Padding="10,6"
+                        Margin="0,4,0,8">
                         <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="#FFA5A0" TextWrapping="Wrap" HorizontalAlignment="Center" />
                     </Border>
 
                     <!-- Remember Me & Forgot Password Row -->
-                    <Grid Margin="2,8,2,16">
+                    <Grid Margin="2,8,2,18">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -268,7 +328,7 @@
                             Grid.Column="0"
                             Content="Keep me logged in"
                             IsChecked="True"
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="#8FA5BB"
                             VerticalAlignment="Center" />
 
@@ -276,19 +336,18 @@
                         <TextBlock
                             Grid.Column="1"
                             Text="Forgot password?"
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="#8FA5BB"
                             Cursor="Hand"
                             VerticalAlignment="Center"
                             MouseLeftButtonUp="LnkForgotPassword_Click" />
                     </Grid>
 
-                    <!-- Full-Width In-App Login Button -->
+                    <!-- Full-Width In-App Login Button with Smooth Loading Spinner -->
                     <ui:Button
                         x:Name="BtnLogin"
-                        Content="Login"
                         Click="BtnLogin_Click"
-                        Height="42"
+                        Height="46"
                         HorizontalAlignment="Stretch"
                         Background="#1A2433"
                         BorderBrush="#25354C"
@@ -299,7 +358,34 @@
                         FontWeight="Bold"
                         FontSize="15"
                         Cursor="Hand"
-                        Margin="0,0,0,16" />
+                        Margin="0,0,0,18">
+                        <Grid>
+                            <!-- Normal State -->
+                            <StackPanel x:Name="LoginNormalState" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="Login" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Smooth Spinning Loading State -->
+                            <StackPanel x:Name="LoginLoadingState" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                                <Ellipse
+                                    Width="18" Height="18"
+                                    Stroke="#00E5FF"
+                                    StrokeThickness="2.5"
+                                    StrokeDashArray="16 10"
+                                    StrokeDashCap="Round"
+                                    RenderTransformOrigin="0.5,0.5"
+                                    Margin="0,0,10,0">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform x:Name="LoginSpinnerTransform" Angle="0" />
+                                    </Ellipse.RenderTransform>
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect Color="#00E5FF" BlurRadius="10" Opacity="0.8" ShadowDepth="0" />
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                <TextBlock Text="Verifying..." FontFamily="/Resources/Fonts/#Rajdhani" FontSize="15" FontWeight="Bold" Foreground="#00E5FF" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:Button>
 
                     <!-- "Or continue with" -->
                     <TextBlock
@@ -314,24 +400,24 @@
                         <ui:Button
                             x:Name="BtnGoogleAuth"
                             Click="BtnGoogleAuth_Click"
-                            Width="44" Height="44"
-                            CornerRadius="22"
+                            Width="46" Height="46"
+                            CornerRadius="23"
                             Background="#141B26"
                             BorderBrush="#253346"
                             BorderThickness="1"
                             Cursor="Hand"
                             Padding="0">
-                            <TextBlock Text="G" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="18" FontWeight="Bold" Foreground="#EA4335" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="G" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="19" FontWeight="Bold" Foreground="#EA4335" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </ui:Button>
                         <TextBlock Text="Google" FontSize="10" Foreground="#6C8399" HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
 
                     <!-- Register Link (Opens Web Portal for 4-day trial) -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="Don't have an account? " FontSize="11" Foreground="#6E849A" />
+                        <TextBlock Text="Don't have an account? " FontSize="12" Foreground="#6E849A" />
                         <TextBlock
                             Text="Register"
-                            FontSize="11"
+                            FontSize="12"
                             FontWeight="Bold"
                             Foreground="#FFFFFF"
                             Cursor="Hand"
@@ -341,6 +427,71 @@
                 </StackPanel>
             </Border>
 
+        </Grid>
+
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- ── INDUSTRY STANDARD CLOSING OVERLAY ─────────────────── -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <Grid
+            x:Name="ClosingOverlay"
+            Grid.RowSpan="2"
+            Background="#EE080C12"
+            Visibility="Collapsed"
+            Opacity="0"
+            Panel.ZIndex="99999">
+            <Border
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#0D131C"
+                BorderBrush="#1B283A"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="36,28"
+                Width="340">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Spinning Circular Ring / Spinner -->
+                    <Border
+                        Width="44" Height="44"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,16"
+                        RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <RotateTransform x:Name="ClosingSpinnerTransform" Angle="0" />
+                        </Border.RenderTransform>
+                        <Grid>
+                            <!-- Background Track Circle -->
+                            <Ellipse
+                                Width="44" Height="44"
+                                Stroke="#1B283A"
+                                StrokeThickness="3" />
+                            <!-- Active Glowing Gradient Arc Spinner -->
+                            <Ellipse
+                                Width="44" Height="44"
+                                Stroke="{StaticResource AccentBrush}"
+                                StrokeThickness="3"
+                                StrokeDashArray="25 40"
+                                StrokeDashOffset="0" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Text Status -->
+                    <TextBlock
+                        Text="CLOSING ROUTEXIA"
+                        FontFamily="/Resources/Fonts/#Rajdhani"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="#FFFFFF"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,4" />
+                    <TextBlock
+                        Text="Releasing network filters &amp; terminating session..."
+                        FontSize="11"
+                        Foreground="#8CA3B8"
+                        HorizontalAlignment="Center"
+                        TextWrapping="Wrap"
+                        TextAlignment="Center" />
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </ui:FluentWindow>

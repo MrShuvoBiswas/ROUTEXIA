@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== Stat Card Style (ping, jitter, etc.) ===== -->
+    <Style x:Key="StatCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="14,12" />
+    </Style>
+
+    <!-- ===== Category Pill Badge ===== -->
+    <Style x:Key="CategoryPillStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BadgeBgBrush}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+
+    <!-- ===== Status Badge (Connected/Disconnected) ===== -->
+    <Style x:Key="StatusBadgeStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="10,5" />
+    </Style>
+
+    <!-- ===== Section Header Separator ===== -->
+    <Style x:Key="SectionSeparatorStyle" TargetType="Rectangle">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Fill" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Margin" Value="0,8" />
+    </Style>
+
+    <!-- ===== Info Card (with border glow) ===== -->
+    <Style x:Key="InfoCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16,12" />
+    </Style>
+
+    <!-- ===== Top Bar Card Style ===== -->
+    <Style x:Key="TopBarCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="16,8" />
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "version": "0.5.0",
+    "updated": "2026-08-06",
+    "description": "ACTUAL PUBG server ranges from Wireshark capture - VERIFIED WORKING",
+    "verified_ips": [
+      "57.129.90.115 (PUBG match server)",
+      "20.205.177.143 (PUBG main server - Microsoft Azure)"
+    ]
+  },
+  "cidr_blocks": [
+    {
+      "cidr": "20.205.0.0/16",
+      "provider": "Microsoft Azure Southeast Asia",
+      "notes": "PUBG MAIN SERVER - VERIFIED from capture"
+    },
+    {
+      "cidr": "20.43.0.0/16",
+      "provider": "Microsoft Azure",
+      "notes": "Azure Southeast Asia"
+    },
+    {
+      "cidr": "20.79.0.0/16",
+      "provider": "Microsoft Azure",
+      "notes": "Azure Southeast Asia"
+    },
+    {
+      "cidr": "20.196.0.0/16",
+      "provider": "Microsoft Azure",
+      "notes": "Azure Southeast Asia"
+    },
+    {
+      "cidr": "20.201.0.0/16",
+      "provider": "Microsoft Azure",
+      "notes": "Azure Southeast Asia"
+    },
+    {
+      "cidr": "52.158.0.0/16",
+      "provider": "Microsoft Azure",
+      "notes": "Azure Southeast Asia"
+    },
+    {
+      "cidr": "57.129.0.0/16",
+      "provider": "PUBG Match Servers",
+      "notes": "PUBG match server - VERIFIED from capture"
+    },
+    {
+      "cidr": "13.228.0.0/16",
+      "provider": "AWS Singapore",
+      "notes": "PUBG lobby servers"
+    },
+    {
+      "cidr": "13.229.0.0/16",
+      "provider": "AWS Singapore",
+      "notes": "PUBG matchmaking"
+    },
+    {
+      "cidr": "18.136.0.0/16",
+      "provider": "AWS Singapore",
+      "notes": "PUBG infrastructure"
+    },
+    {
+      "cidr": "52.74.0.0/16",
+      "provider": "AWS Singapore",
+      "notes": "AWS game servers"
+    },
+    {
+      "cidr": "54.169.0.0/16",
+      "provider": "AWS Singapore",
+      "notes": "AWS game servers"
+    }
+  ],
+  "wireguard_allowed_ips": "20.205.0.0/16, 20.43.0.0/16, 20.79.0.0/16, 20.196.0.0/16, 20.201.0.0/16, 52.158.0.0/16, 57.129.0.0/16, 13.228.0.0/16, 13.229.0.0/16, 18.136.0.0/16, 52.74.0.0/16, 54.169.0.0/16"
+}

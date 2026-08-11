@@ -1,59 +1,75 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using RouteXia.App.ViewModels;
 
-namespace RouteXia.App.Views
+namespace RouteXia.App.Views;
+
+public partial class AuthView : Page
 {
-    public partial class AuthView : Page
+    private AuthViewModel _vm = null!;
+
+    public AuthView()
     {
-        private AuthViewModel _vm = null!;
+        InitializeComponent();
+        Loaded += OnLoaded;
+    }
 
-        public AuthView()
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _vm = App.Services.GetRequiredService<AuthViewModel>();
+        DataContext = _vm;
+    }
+
+    private void BtnMoreDetails_Click(object sender, RoutedEventArgs e)
+    {
+        try
         {
-            InitializeComponent();
-            Loaded += OnLoaded;
-        }
-
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            _vm = App.Services.GetRequiredService<AuthViewModel>();
-            DataContext = _vm;
-
-            UpdateViewVisibility();
-            _vm.PropertyChanged += (_, args) =>
+            Process.Start(new ProcessStartInfo
             {
-                if (args.PropertyName == nameof(AuthViewModel.IsAuthenticated))
-                {
-                    Dispatcher.Invoke(UpdateViewVisibility);
-                }
-            };
+                FileName = "https://routexia.com/dashboard/profile",
+                UseShellExecute = true
+            });
         }
+        catch { }
+    }
 
-        private void UpdateViewVisibility()
+    private void BtnActivateAffiliate_Click(object sender, RoutedEventArgs e)
+    {
+        try
         {
-            if (_vm.IsAuthenticated)
+            Process.Start(new ProcessStartInfo
             {
-                PanelProfile.Visibility = Visibility.Visible;
-                PanelAuth.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                PanelProfile.Visibility = Visibility.Collapsed;
-                PanelAuth.Visibility = Visibility.Visible;
-            }
+                FileName = "https://routexia.com/affiliate/activate",
+                UseShellExecute = true
+            });
         }
+        catch { }
+    }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+    private void BtnSubscribe_Click(object sender, RoutedEventArgs e)
+    {
+        try
         {
-            _vm.Logout();
-
-            // Open LoginWindow and close MainWindow
-            var loginWindow = App.Services.GetRequiredService<LoginWindow>();
-            loginWindow.Show();
-
-            var currentWindow = Window.GetWindow(this);
-            currentWindow?.Close();
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://routexia.com/pricing",
+                UseShellExecute = true
+            });
         }
+        catch { }
+    }
+
+    private void BtnLogout_Click(object sender, RoutedEventArgs e)
+    {
+        _vm.Logout();
+
+        // Open LoginWindow and close MainWindow
+        var loginWindow = App.Services.GetRequiredService<LoginWindow>();
+        loginWindow.Show();
+
+        var currentWindow = Window.GetWindow(this);
+        currentWindow?.Close();
     }
 }

@@ -19,6 +19,21 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Global exception handling to log and show crashes
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                MessageBox.Show($"Fatal error: {ex.Message}\n\nStack:\n{ex.StackTrace}", "RouteXia Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        };
+
+        DispatcherUnhandledException += (s, args) =>
+        {
+            MessageBox.Show($"Application Error: {args.Exception.Message}\n\nStack:\n{args.Exception.StackTrace}", "RouteXia Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;
+        };
+
         // Check admin privileges — required for WinDivert + kill-switch firewall rules
         if (!IsRunningAsAdmin())
         {
@@ -33,6 +48,9 @@ public partial class App : Application
             return;
         }
 
+        // Ensure WPF does not auto-shutdown when switching between LoginWindow and MainWindow
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         // Build DI container
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -44,11 +62,13 @@ public partial class App : Application
         if (apiClient.IsAuthenticated)
         {
             var mainWindow = Services.GetRequiredService<MainWindow>();
+            MainWindow = mainWindow;
             mainWindow.Show();
         }
         else
         {
             var loginWindow = Services.GetRequiredService<LoginWindow>();
+            MainWindow = loginWindow;
             loginWindow.Show();
         }
     }
@@ -78,6 +98,11 @@ public partial class App : Application
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<AuthViewModel>();
         services.AddSingleton<ConnectViewModel>();
+        services.AddSingleton<GameLibraryViewModel>();
+        services.AddSingleton<RoutesViewModel>();
+        services.AddSingleton<NetworkShieldViewModel>();
+        services.AddSingleton<SpeedTestViewModel>();
+        services.AddSingleton<DiagnosticsViewModel>();
 
         // ── Views ──────────────────────────────────────────────────────────────
         services.AddTransient<LoginWindow>();
@@ -91,20 +116,41 @@ public partial class App : Application
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
+    public static void PerformFullShutdown()
+    {
+        try
+        {
+            // 1. Stop WinDivert interceptor & release native kernel driver handle
+            var interceptor = Services?.GetService<WinDivertInterceptor>();
+            interceptor?.Dispose();
+
+            // 2. Emergency cleanup on kill switch (remove any netsh firewall rules)
+            var killSwitch = Services?.GetService<KillSwitchManager>();
+            killSwitch?.EmergencyCleanup();
+            killSwitch?.Dispose();
+
+            // 3. Dispose multipath router (close UDP sockets & metrics timers)
+            var router = Services?.GetService<MultipathRouter>();
+            router?.Dispose();
+        }
+        catch { /* best effort on exit */ }
+
+        try
+        {
+            if (Current != null)
+            {
+                Current.Shutdown();
+            }
+        }
+        catch { }
+
+        // Guarantee 100% process termination from Task Manager without residual background threads
+        Environment.Exit(0);
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
-        // Stop WinDivert interceptor first (closes kernel driver handle)
-        var interceptor = Services?.GetService<WinDivertInterceptor>();
-        interceptor?.Dispose();
-
-        // Ensure kill-switch is cleaned up and all firewall rules removed on exit
-        var killSwitch = Services?.GetService<KillSwitchManager>();
-        killSwitch?.EmergencyCleanup();
-
-        // Dispose multipath router
-        var router = Services?.GetService<MultipathRouter>();
-        router?.Dispose();
-
+        PerformFullShutdown();
         base.OnExit(e);
     }
 }

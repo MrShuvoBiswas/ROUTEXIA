@@ -4,123 +4,294 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    xmlns:local="clr-namespace:RouteXia.App.Views"
     Title="RouteXia"
-    Width="900"
-    Height="620"
-    MinWidth="800"
-    MinHeight="580"
+    Width="1200"
+    Height="760"
+    MinWidth="1080"
+    MinHeight="680"
     WindowStartupLocation="CenterScreen"
     ExtendsContentIntoTitleBar="True"
     WindowBackdropType="Mica"
-    Background="{StaticResource BgBaseBrush}">
+    Background="{StaticResource BgBaseBrush}"
+    Closing="MainWindow_Closing">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <!-- Title bar -->
-            <RowDefinition Height="*" />
-            <!-- Content -->
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="188" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Custom Title Bar -->
-        <ui:TitleBar
-            Grid.Row="0"
-            Title="RouteXia"
-            Icon="pack://application:,,,/Resources/Icons/routexia.ico"
-            ShowMaximize="False"
-            Background="Transparent">
-            <ui:TitleBar.Header>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <!-- Logo text -->
+        <Border
+            Grid.Column="0"
+            Background="{StaticResource BgSidebarBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="20,22,20,24">
                     <TextBlock
-                        Text="ROUTE"
+                        Text="ROUTEXIA"
                         FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="18"
+                        FontSize="28"
                         FontWeight="Bold"
-                        Foreground="{StaticResource AccentBrush}"
-                        VerticalAlignment="Center" />
-                    <TextBlock
-                        Text="XIA"
-                        FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource TextPrimaryBrush}"
-                        VerticalAlignment="Center" />
+                        Foreground="{StaticResource TextPrimaryBrush}" />
+                    <Border
+                        HorizontalAlignment="Left"
+                        Margin="0,8,0,0"
+                        Padding="8,3"
+                        Background="#132636"
+                        CornerRadius="4">
+                        <TextBlock
+                            Text="PUBG SG"
+                            FontSize="11"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource AccentBrush}" />
+                    </Border>
                 </StackPanel>
-            </ui:TitleBar.Header>
-        </ui:TitleBar>
 
-        <!-- Main Content Area -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <!-- Left sidebar nav -->
-                <ColumnDefinition Width="200" />
-                <!-- Main content -->
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Left Navigation Sidebar -->
-            <Border
-                Grid.Column="0"
-                Background="{StaticResource BgPanelBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="0,0,1,0">
-                <StackPanel Margin="0,24,0,0">
-
-                    <!-- Nav: Connect -->
+                <StackPanel Grid.Row="1" Margin="0,0,0,18">
                     <Button
-                        x:Name="BtnNavConnect"
+                        x:Name="BtnNavHome"
                         Style="{StaticResource NavButtonStyle}"
-                        Click="BtnNavConnect_Click"
-                        Tag="active">
+                        Tag="active"
+                        Click="BtnNavHome_Click">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Globe32" FontSize="18" Margin="0,0,12,0" />
-                            <TextBlock Text="Connect" VerticalAlignment="Center" />
+                            <ui:SymbolIcon
+                                Symbol="Rocket24"
+                                FontSize="18"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Text="Boost"
+                                FontWeight="SemiBold"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                         </StackPanel>
                     </Button>
 
-                    <!-- Nav: Account / Subscription -->
                     <Button
-                        x:Name="BtnNavAccount"
+                        x:Name="BtnNavNetwork"
                         Style="{StaticResource NavButtonStyle}"
-                        Click="BtnNavAccount_Click">
+                        Click="BtnNavNetwork_Click">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Person32" FontSize="18" Margin="0,0,12,0" />
-                            <TextBlock Text="Account" VerticalAlignment="Center" />
+                            <ui:SymbolIcon
+                                Symbol="ShieldCheckmark24"
+                                FontSize="18"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Text="Protection"
+                                FontWeight="SemiBold"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                         </StackPanel>
                     </Button>
 
-                    <!-- Nav: Settings -->
                     <Button
                         x:Name="BtnNavSettings"
                         Style="{StaticResource NavButtonStyle}"
                         Click="BtnNavSettings_Click">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Settings32" FontSize="18" Margin="0,0,12,0" />
-                            <TextBlock Text="Settings" VerticalAlignment="Center" />
+                            <ui:SymbolIcon
+                                Symbol="Settings24"
+                                FontSize="18"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Text="Settings"
+                                FontWeight="SemiBold"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                         </StackPanel>
                     </Button>
 
-                    <!-- Spacer -->
-                    <Rectangle Height="1" Margin="16,16" Fill="{StaticResource BorderBrush}" />
+                    <Button
+                        x:Name="BtnNavAccount"
+                        Style="{StaticResource NavButtonStyle}"
+                        Click="BtnNavAccount_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon
+                                Symbol="Person24"
+                                FontSize="18"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Text="Account"
+                                FontWeight="SemiBold"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
+                    </Button>
 
-                    <!-- App version -->
-                    <TextBlock
-                        Text="v0.1.0-beta"
-                        FontSize="11"
-                        Foreground="{StaticResource TextMutedBrush}"
-                        HorizontalAlignment="Center"
-                        Margin="0,8" />
+                    <Button
+                        x:Name="BtnNavHelp"
+                        Style="{StaticResource NavButtonStyle}"
+                        Click="BtnNavHelp_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon
+                                Symbol="QuestionCircle24"
+                                FontSize="18"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Text="Help"
+                                FontWeight="SemiBold"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
+
+                <Border
+                    Grid.Row="2"
+                    Margin="20,0,20,22"
+                    Padding="12"
+                    Background="#0F1723"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock
+                            Text="Ready for match"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock
+                            Text="SG route active when boosted"
+                            Margin="0,4,0,0"
+                            FontSize="11"
+                            Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="58" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border
+                x:Name="TopBar"
+                Grid.Row="0"
+                Background="{StaticResource TopBarBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
+                <Grid Margin="24,0,12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel
+                        Grid.Column="0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                        <ui:SymbolIcon
+                            Symbol="Pulse24"
+                            FontSize="18"
+                            Foreground="{StaticResource StatusGoodBrush}"
+                            Margin="0,0,10,0" />
+                        <TextBlock
+                            Text="PUBG optimizer ready"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{StaticResource TextPrimaryBrush}" />
+                        <Border
+                            Margin="12,0,0,0"
+                            Padding="8,3"
+                            Background="#111F2B"
+                            CornerRadius="4">
+                            <TextBlock
+                                Text="BETA"
+                                FontSize="10"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                        <Button
+                            x:Name="BtnMinimize"
+                            Width="36"
+                            Height="30"
+                            Margin="0,0,6,0"
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="BtnMinimize_Click">
+                            <TextBlock
+                                Text="-"
+                                FontSize="18"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Button>
+                        <Button
+                            x:Name="BtnClose"
+                            Width="36"
+                            Height="30"
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="BtnClose_Click">
+                            <TextBlock
+                                Text="X"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
             </Border>
 
-            <!-- Content Frame -->
             <Frame
                 x:Name="MainFrame"
-                Grid.Column="1"
+                Grid.Row="1"
                 NavigationUIVisibility="Hidden"
-                Background="Transparent" />
+                Background="{StaticResource BgBaseBrush}" />
         </Grid>
+
+        <Border
+            x:Name="ClosingOverlay"
+            Grid.ColumnSpan="2"
+            Visibility="Collapsed"
+            Opacity="0"
+            Background="#E60A0E14"
+            Panel.ZIndex="99">
+            <Grid>
+                <Grid
+                    Width="72"
+                    Height="72"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <Ellipse
+                        Stroke="#243244"
+                        StrokeThickness="6" />
+                    <Path
+                        Stroke="{StaticResource AccentBrush}"
+                        StrokeThickness="6"
+                        StrokeStartLineCap="Round"
+                        StrokeEndLineCap="Round"
+                        Data="M36,4 A32,32 0 0 1 68,36">
+                        <Path.RenderTransform>
+                            <RotateTransform
+                                x:Name="ClosingSpinnerTransform"
+                                CenterX="36"
+                                CenterY="36" />
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </ui:FluentWindow>

@@ -3,12 +3,13 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ===== RouteXia Color Palette ===== -->
+    <!-- ===== RouteXia Color Palette — ExitLag-Inspired Dark Theme ===== -->
 
     <!-- Solid colors (use these only where Color type is needed) -->
     <Color x:Key="BgBase">#0A0E14</Color>
     <Color x:Key="BgPanel">#10151D</Color>
     <Color x:Key="BgCard">#0D1420</Color>
+    <Color x:Key="BgSidebar">#0B0F15</Color>
     <Color x:Key="BorderColor">#1A2230</Color>
     <Color x:Key="Accent">#00C2FF</Color>
     <Color x:Key="AccentDeep">#0B5ED7</Color>
@@ -19,22 +20,44 @@
     <Color x:Key="StatusBad">#FF4757</Color>
 
     <!-- SolidColorBrushes (use these for Background, Foreground, Fill, Stroke etc.) -->
-    <SolidColorBrush x:Key="BgBaseBrush"     Color="#0A0E14" />
-    <SolidColorBrush x:Key="BgPanelBrush"    Color="#10151D" />
-    <SolidColorBrush x:Key="BgCardBrush"     Color="#0D1420" />
-    <SolidColorBrush x:Key="BorderBrush"     Color="#1A2230" />
-    <SolidColorBrush x:Key="AccentBrush"     Color="#00C2FF" />
-    <SolidColorBrush x:Key="AccentDeepBrush" Color="#0B5ED7" />
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#E8EDF5" />
-    <SolidColorBrush x:Key="TextMutedBrush"  Color="#6B7684" />
-    <SolidColorBrush x:Key="StatusGoodBrush" Color="#2ED573" />
-    <SolidColorBrush x:Key="StatusWarnBrush" Color="#FFB020" />
-    <SolidColorBrush x:Key="StatusBadBrush"  Color="#FF4757" />
+    <SolidColorBrush x:Key="BgBaseBrush"       Color="#0A0E14" />
+    <SolidColorBrush x:Key="BgPanelBrush"      Color="#10151D" />
+    <SolidColorBrush x:Key="BgCardBrush"       Color="#0D1420" />
+    <SolidColorBrush x:Key="BgSidebarBrush"    Color="#0B0F15" />
+    <SolidColorBrush x:Key="BorderBrush"       Color="#1A2230" />
+    <SolidColorBrush x:Key="AccentBrush"       Color="#00C2FF" />
+    <SolidColorBrush x:Key="AccentDeepBrush"   Color="#0B5ED7" />
+    <SolidColorBrush x:Key="TextPrimaryBrush"  Color="#E8EDF5" />
+    <SolidColorBrush x:Key="TextMutedBrush"    Color="#6B7684" />
+    <SolidColorBrush x:Key="StatusGoodBrush"   Color="#2ED573" />
+    <SolidColorBrush x:Key="StatusWarnBrush"   Color="#FFB020" />
+    <SolidColorBrush x:Key="StatusBadBrush"    Color="#FF4757" />
+
+    <!-- ExitLag-style extra brushes -->
+    <SolidColorBrush x:Key="CardHoverBrush"    Color="#141C28" />
+    <SolidColorBrush x:Key="NavActiveBgBrush"  Color="#0D1929" />
+    <SolidColorBrush x:Key="NavHoverBgBrush"   Color="#12192A" />
+    <SolidColorBrush x:Key="TopBarBrush"       Color="#0C1018" />
+    <SolidColorBrush x:Key="ComingSoonBrush"   Color="#3A4A5A" />
+    <SolidColorBrush x:Key="BadgeBgBrush"      Color="#1A2230" />
 
     <!-- Accent gradient -->
     <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#00C2FF" Offset="0" />
         <GradientStop Color="#0B5ED7" Offset="1" />
     </LinearGradientBrush>
+
+    <!-- Red accent gradient for ExitLag-style header decoration -->
+    <LinearGradientBrush x:Key="RedAccentGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF1744" Offset="0" />
+        <GradientStop Color="#D50000" Offset="0.5" />
+        <GradientStop Color="#0A0E14" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Sidebar glow effect -->
+    <RadialGradientBrush x:Key="AccentGlowBrush">
+        <GradientStop Color="#3000C2FF" Offset="0" />
+        <GradientStop Color="#0000C2FF" Offset="1" />
+    </RadialGradientBrush>
 
 </ResourceDictionary>

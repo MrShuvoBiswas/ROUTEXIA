@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Microsoft.Extensions.DependencyInjection;
 using RouteXia.App.ViewModels;
 using Wpf.Ui.Controls;
@@ -12,7 +12,7 @@ namespace RouteXia.App.Views
     public partial class LoginWindow : FluentWindow
     {
         private readonly AuthViewModel _vm;
-        private readonly SolidColorBrush _errorBorderBrush = new(Color.FromRgb(0xFF, 0x3B, 0x30));
+        private Storyboard? _spinnerStoryboard;
 
         public LoginWindow()
         {
@@ -21,6 +21,10 @@ namespace RouteXia.App.Views
             _vm.IsRegisterMode = false; // Standard in-app login mode
             DataContext = _vm;
 
+            _spinnerStoryboard = Resources.Contains("LoginSpinnerAnimation")
+                ? (Storyboard)Resources["LoginSpinnerAnimation"]
+                : null;
+
             _vm.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(AuthViewModel.IsAuthenticated) && _vm.IsAuthenticated)
@@ -28,6 +32,91 @@ namespace RouteXia.App.Views
                     Dispatcher.Invoke(ProceedToMainWindow);
                 }
             };
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
+        private void BtnMinimize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        private bool _isClosingAnimated;
+        private bool _isSwitchingToMainWindow;
+
+        private void LoginWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (_isSwitchingToMainWindow)
+            {
+                return; // Closing login window to display MainWindow — do NOT shutdown app
+            }
+
+            if (!_isClosingAnimated)
+            {
+                e.Cancel = true;
+                AnimateAndClose();
+            }
+        }
+
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        {
+            AnimateAndClose();
+        }
+
+        private async void AnimateAndClose()
+        {
+            if (_isClosingAnimated || _isSwitchingToMainWindow) return;
+            _isClosingAnimated = true;
+
+            if (ClosingOverlay != null)
+            {
+                ClosingOverlay.Visibility = Visibility.Visible;
+
+                // 1. Fade in the Industry Standard Closing Overlay (0 -> 1)
+                var overlayFade = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(150));
+                ClosingOverlay.BeginAnimation(UIElement.OpacityProperty, overlayFade);
+
+                // 2. Start smooth 360 degree spin on center circular ring
+                if (ClosingSpinnerTransform != null)
+                {
+                    var spinAnim = new DoubleAnimation
+                    {
+                        From = 0,
+                        To = 360,
+                        Duration = TimeSpan.FromMilliseconds(800),
+                        RepeatBehavior = RepeatBehavior.Forever
+                    };
+                    ClosingSpinnerTransform.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, spinAnim);
+                }
+            }
+
+            // Allow industry standard spinning closing feedback while cleaning network resources
+            await System.Threading.Tasks.Task.Delay(450);
+
+            // 3. Smooth fade out window and perform full process exit
+            var windowFade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(150));
+            windowFade.Completed += (_, _) =>
+            {
+                if (!_isSwitchingToMainWindow)
+                {
+                    App.PerformFullShutdown();
+                }
+            };
+            this.BeginAnimation(Window.OpacityProperty, windowFade);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                BtnLogin_Click(BtnLogin, new RoutedEventArgs());
+            }
         }
 
         private void TxtPassword_PasswordChanged(object sender, RoutedEventArgs e)
@@ -64,8 +153,11 @@ namespace RouteXia.App.Views
 
             if (hasError) return;
 
+            // Start smooth loading spinner state
             BtnLogin.IsEnabled = false;
-            BtnLogin.Content = "Signing In...";
+            LoginNormalState.Visibility = Visibility.Collapsed;
+            LoginLoadingState.Visibility = Visibility.Visible;
+            _spinnerStoryboard?.Begin();
 
             try
             {
@@ -79,8 +171,10 @@ namespace RouteXia.App.Views
             }
             finally
             {
+                _spinnerStoryboard?.Stop();
+                LoginLoadingState.Visibility = Visibility.Collapsed;
+                LoginNormalState.Visibility = Visibility.Visible;
                 BtnLogin.IsEnabled = true;
-                BtnLogin.Content = "Login";
             }
         }
 
@@ -123,7 +217,12 @@ namespace RouteXia.App.Views
 
         private void ProceedToMainWindow()
         {
+            _isSwitchingToMainWindow = true;
             var mainWindow = App.Services.GetRequiredService<MainWindow>();
+            if (Application.Current != null)
+            {
+                Application.Current.MainWindow = mainWindow;
+            }
             mainWindow.Show();
             this.Close();
         }

@@ -16,6 +16,7 @@
                 <ResourceDictionary Source="Resources/Styles/ColorPalette.xaml" />
                 <ResourceDictionary Source="Resources/Styles/ButtonStyle.xaml" />
                 <ResourceDictionary Source="Resources/Styles/TextStyles.xaml" />
+                <ResourceDictionary Source="Resources/Styles/CardStyles.xaml" />
                 <ResourceDictionary Source="Resources/Animations/PulseRing.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

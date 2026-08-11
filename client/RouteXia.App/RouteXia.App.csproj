@@ -52,10 +52,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Embedded font resources -->
+    <!-- Embedded font and image resources -->
     <Resource Include="Resources\Fonts\Rajdhani-SemiBold.ttf" />
     <Resource Include="Resources\Fonts\Rajdhani-Bold.ttf" />
     <Resource Include="Resources\Fonts\JetBrainsMono-Medium.ttf" />
     <Resource Include="Resources\Fonts\JetBrainsMono-Bold.ttf" />
+    <Resource Include="Resources\Images\pubg_icon.png" />
+    <Resource Include="Resources\Images\cs2_icon.png" />
+    <Resource Include="Resources\Images\apex_icon.png" />
+    <Resource Include="Resources\Images\valorant_icon.png" />
+    <Resource Include="Resources\Images\fortnite_icon.png" />
+    <Resource Include="Resources\Images\discord_icon.png" />
+    <Resource Include="Resources\Images\warzone_icon.png" />
   </ItemGroup>
 </Project>

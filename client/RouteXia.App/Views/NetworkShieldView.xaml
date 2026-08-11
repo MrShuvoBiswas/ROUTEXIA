@@ -1,0 +1,106 @@
+<Page
+    x:Class="RouteXia.App.Views.NetworkShieldView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Background="{StaticResource BgBaseBrush}"
+    Title="Network Shield">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="32,24,32,32" MaxWidth="850">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock
+                    Text="Network Shield &amp; Firewall"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="26"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock
+                    Text="Protect your connection against ISP throttling, packet loss, and IP leakage"
+                    FontSize="12"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    Margin="0,2,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1">
+                <!-- Kill Switch Card with Toggle -->
+                <Border
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="22,18"
+                    Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="20" Foreground="{StaticResource StatusGoodBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Gaming Kill-Switch (Firewall Guard)" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <Border Background="#122B1E" BorderBrush="{StaticResource StatusGoodBrush}" BorderThickness="1" CornerRadius="6" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding KillSwitchStatusText}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="10" FontWeight="Bold" Foreground="{StaticResource StatusGoodBrush}" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Instantly cuts off un-optimized fallback game traffic if your tunnel connection ever drops, preventing ISP lag spikes or match IP leaks." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="30,4,20,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding IsKillSwitchEnabled}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Kernel Filter Interception Card -->
+                <Border
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="22,18"
+                    Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Pulse24" FontSize="20" Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="WinDivert Kernel Filter Driver" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="Low-level kernel packet filtering diverts game UDP packets without creating virtual TUN adapters or interfering with Discord/browsers." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="30,4,20,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#0D1E2A" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DriverStatusText}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Split-Tunneling Engine Card -->
+                <Border
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="22,18">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <ui:SymbolIcon Symbol="ArrowRouting24" FontSize="20" Foreground="{StaticResource StatusWarnBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Smart Split-Tunneling Protection" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="Only designated game processes (PUBG, Valorant, CS2) are routed through the low-latency gaming relays. All downloads, YouTube, and browser traffic remain on your standard ISP connection for maximum overall bandwidth." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="30,0,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

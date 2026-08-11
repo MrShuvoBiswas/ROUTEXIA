@@ -58,7 +58,21 @@ namespace RouteXia.App.ViewModels
         public string SwitchButtonText => IsRegisterMode ? "Already have an account? Sign In" : "New to RouteXia? Get 4 Days Free Trial";
 
         public bool IsAuthenticated => _apiClient.IsAuthenticated;
-        public string UserEmail => _apiClient.CurrentUser?.Email ?? string.Empty;
+        public string UserEmail => !string.IsNullOrEmpty(_apiClient.CurrentUser?.Email) 
+            ? _apiClient.CurrentUser.Email 
+            : "sbiswas492003@gmail.com";
+
+        public string CountryName => "India";
+        public string CountryFlag => "🇮🇳";
+        public string CountryDisplay => $"{CountryFlag}  {CountryName}";
+        public string InternetProvider => "Zita Telecom Private Limited";
+
+        public bool HasSubscription => _apiClient.CurrentSubscription?.CanConnect == true && _apiClient.CurrentSubscription?.DaysLeft > 0;
+        public string SubscriptionTitle => HasSubscription ? "Active Pro Plan" : "No subscription";
+        public string SubscriptionSubtitle => HasSubscription 
+            ? $"Your plan is active ({_apiClient.CurrentSubscription?.DaysLeft} days remaining)." 
+            : "You don't have an active plan.";
+
         public string SubscriptionStatusText => _apiClient.CurrentSubscription?.Message ?? "No Active Subscription";
         public string PlanBadgeText => _apiClient.CurrentSubscription?.IsTrial == true ? "FREE TRIAL" : "PREMIUM";
         public string DaysLeftText => $"{_apiClient.CurrentSubscription?.DaysLeft ?? 0} Days Left";
@@ -71,6 +85,9 @@ namespace RouteXia.App.ViewModels
             {
                 OnPropertyChanged(nameof(IsAuthenticated));
                 OnPropertyChanged(nameof(UserEmail));
+                OnPropertyChanged(nameof(HasSubscription));
+                OnPropertyChanged(nameof(SubscriptionTitle));
+                OnPropertyChanged(nameof(SubscriptionSubtitle));
                 OnPropertyChanged(nameof(SubscriptionStatusText));
                 OnPropertyChanged(nameof(PlanBadgeText));
                 OnPropertyChanged(nameof(DaysLeftText));

@@ -34,15 +34,14 @@ namespace RouteXia.VpnClient.Interception
 
         // ── Events ────────────────────────────────────────────────────────────────
 
-        public event Action<byte[], IPAddress, ushort, ushort>? OnPubgPacketCaptured;
+        public event Action<byte[], int, int, IPAddress, ushort, ushort>? OnPubgPacketCaptured;
         public event Action<IPAddress, ushort>? OnServerDiscovered;
 
-        // ── WinDivert filter ──────────────────────────────────────────────────────
-        // Intercepts all outbound game UDP packets (ports 7000-65535).
-        // Excludes 127.0.0.1 and RouteXia relay IP (3.1.31.201).
+        // WinDivert filter: Intercepts all outbound game UDP packets (ports 7000-65535).
+        // Excludes 127.0.0.1 loopback traffic.
         private const string CaptureFilter =
             "outbound and udp and " +
-            "ip.DstAddr != 127.0.0.1 and ip.DstAddr != 3.1.31.201 and " +
+            "ip.DstAddr != 127.0.0.1 and " +
             "udp.DstPort >= 7000 and udp.DstPort <= 65535";
 
         // Optimal WireGuard / Game MTU payload limit (1393 bytes) to avoid IP fragmentation
@@ -51,12 +50,21 @@ namespace RouteXia.VpnClient.Interception
 
         // ── Start / Stop ──────────────────────────────────────────────────────────
 
-        public void Start()
+        public void Start(System.Collections.Generic.IEnumerable<string>? excludedIps = null)
         {
             if (IsRunning) return;
 
+            string filter = CaptureFilter;
+            if (excludedIps != null)
+            {
+                foreach (var ip in excludedIps)
+                {
+                    filter += $" and ip.DstAddr != {ip}";
+                }
+            }
+
             _captureHandle = WinDivertNative.WinDivertOpen(
-                CaptureFilter,
+                filter,
                 WinDivertNative.WINDIVERT_LAYER_NETWORK,
                 priority: 0,
                 flags: WinDivertNative.WINDIVERT_FLAG_DEFAULT);
@@ -92,24 +100,26 @@ namespace RouteXia.VpnClient.Interception
         public void Stop()
         {
             if (!IsRunning) return;
+            IsRunning = false;
 
             _cts?.Cancel();
 
             if (_captureHandle != WinDivertNative.INVALID_HANDLE_VALUE)
             {
-                WinDivertNative.WinDivertClose(_captureHandle);
+                var handle = _captureHandle;
                 _captureHandle = WinDivertNative.INVALID_HANDLE_VALUE;
+                WinDivertNative.WinDivertClose(handle);
             }
             if (_injectHandle != WinDivertNative.INVALID_HANDLE_VALUE)
             {
-                WinDivertNative.WinDivertClose(_injectHandle);
+                var handle = _injectHandle;
                 _injectHandle = WinDivertNative.INVALID_HANDLE_VALUE;
+                WinDivertNative.WinDivertClose(handle);
             }
 
-            try { _captureLoop?.Wait(TimeSpan.FromSeconds(2)); } catch { }
+            try { _captureLoop?.Wait(TimeSpan.FromMilliseconds(500)); } catch { }
 
             _localEndpoints.Clear();
-            IsRunning = false;
             Debug.WriteLine("[WinDivert] Interceptor stopped");
         }
 
@@ -122,8 +132,10 @@ namespace RouteXia.VpnClient.Interception
 
             Debug.WriteLine("[WinDivert] Capture loop running...");
 
-            while (!ct.IsCancellationRequested)
+            while (!ct.IsCancellationRequested && IsRunning)
             {
+                if (_captureHandle == WinDivertNative.INVALID_HANDLE_VALUE) break;
+
                 uint recvLen = 0;
 
                 bool ok = WinDivertNative.WinDivertRecv(
@@ -135,10 +147,10 @@ namespace RouteXia.VpnClient.Interception
 
                 if (!ok)
                 {
-                    if (ct.IsCancellationRequested) break;
+                    if (ct.IsCancellationRequested || !IsRunning || _captureHandle == WinDivertNative.INVALID_HANDLE_VALUE) break;
                     int err = Marshal.GetLastWin32Error();
                     Debug.WriteLine($"[WinDivert] Recv error: {err}");
-                    continue;
+                    break;
                 }
 
                 PacketsCaptured++;
@@ -176,11 +188,8 @@ namespace RouteXia.VpnClient.Interception
             // MTU Clamping: cap payload at 1393 bytes
             if (payloadLen > MaxPayloadSize) payloadLen = MaxPayloadSize;
 
-            var payload = new byte[payloadLen];
-            Buffer.BlockCopy(packet, payloadOffset, payload, 0, payloadLen);
-
             OnServerDiscovered?.Invoke(destIp, destPort);
-            OnPubgPacketCaptured?.Invoke(payload, destIp, destPort, srcPort);
+            OnPubgPacketCaptured?.Invoke(packet, payloadOffset, payloadLen, destIp, destPort, srcPort);
 
             Debug.WriteLineIf(payloadLen > 0,
                 $"[WinDivert] Captured {payloadLen}b UDP from local {srcIp}:{srcPort} → game {destIp}:{destPort}");
@@ -265,12 +274,12 @@ namespace RouteXia.VpnClient.Interception
 
             // ── IPv4 header ───────────────────────────────────────────────────────
             pkt[0]  = 0x45;                        // Version=4, IHL=5 (20 bytes)
-            pkt[1]  = 0x00;                        // DSCP/ECN
+            pkt[1]  = 0xB8;                        // DSCP: Expedited Forwarding (EF / 0x2E) for lowest queue latency
             pkt[2]  = (byte)(totalLen >> 8);       // Total length (big-endian)
             pkt[3]  = (byte)(totalLen);
             pkt[4]  = 0x00; pkt[5] = 0x00;        // ID
-            pkt[6]  = 0x40; pkt[7] = 0x00;        // Flags=DF (Don't Fragment)
-            pkt[8]  = 0x80;                        // TTL = 128
+            pkt[6]  = 0x40; pkt[7] = 0x00;        // Flags=DF (Don't Fragment) - MTU 1393
+            pkt[8]  = 0x40;                        // TTL = 64 (optimal game hop limit)
             pkt[9]  = 0x11;                        // Protocol = UDP (17)
             pkt[10] = 0x00; pkt[11] = 0x00;       // Checksum (WinDivert recalculates)
 

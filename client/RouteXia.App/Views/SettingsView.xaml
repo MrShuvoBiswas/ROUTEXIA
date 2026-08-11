@@ -8,7 +8,7 @@
     Title="Settings">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="40,32" MaxWidth="560">
+        <StackPanel Margin="40,28" MaxWidth="560">
 
             <TextBlock
                 Text="SETTINGS"
@@ -16,9 +16,9 @@
                 FontSize="22"
                 FontWeight="Bold"
                 Foreground="{StaticResource TextPrimaryBrush}"
-                Margin="0,0,0,32" />
+                Margin="0,0,0,28" />
 
-            <!-- Optimization Preferences -->
+            <!-- Game Optimization -->
             <TextBlock
                 Text="GAME OPTIMIZATION"
                 FontSize="11" FontWeight="SemiBold"
@@ -37,9 +37,9 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Auto-Connect on PUBG Launch" FontSize="13"
+                            <TextBlock Text="Auto-Connect on Game Launch" FontSize="13"
                                 FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Automatically optimize routes as soon as PUBG PC starts"
+                            <TextBlock Text="Automatically optimize routes when the selected game starts"
                                 FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoConnectOnGameLaunch}"
@@ -56,7 +56,7 @@
                         <StackPanel>
                             <TextBlock Text="Route Optimization Mode" FontSize="13"
                                 FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="PUBG PC Split-Tunneling (Game traffic only)"
+                            <TextBlock Text="Game-specific Split-Tunneling (Game traffic only)"
                                 FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
                         </StackPanel>
                         <Border Grid.Column="1" Background="#1A2230" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
@@ -66,7 +66,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- Application Preferences -->
+            <!-- System -->
             <TextBlock
                 Text="SYSTEM"
                 FontSize="11" FontWeight="SemiBold"
@@ -113,7 +113,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- About RouteXia -->
+            <!-- About -->
             <TextBlock
                 Text="ABOUT"
                 FontSize="11" FontWeight="SemiBold"

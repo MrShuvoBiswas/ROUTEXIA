@@ -110,7 +110,7 @@ namespace RouteXia.VpnClient.Routing
         {
             Debug.WriteLine($"[Multipath] Listening on route {route.Endpoint}");
 
-            while (!ct.IsCancellationRequested)
+            while (!ct.IsCancellationRequested && !_disposed)
             {
                 try
                 {
@@ -125,10 +125,12 @@ namespace RouteXia.VpnClient.Routing
                     Debug.WriteLine($"[Multipath] Relay response: {payload.Length}b from {origSrcIp}:{origSrcPort}");
                 }
                 catch (OperationCanceledException) { break; }
+                catch (ObjectDisposedException) { break; }
                 catch (Exception ex)
                 {
+                    if (ct.IsCancellationRequested || _disposed) break;
                     Debug.WriteLine($"[Multipath] Receive error on {route.Endpoint}: {ex.Message}");
-                    await Task.Delay(100, ct).ConfigureAwait(false);
+                    try { await Task.Delay(100, ct).ConfigureAwait(false); } catch { break; }
                 }
             }
         }
@@ -136,45 +138,55 @@ namespace RouteXia.VpnClient.Routing
         // ── Send ──────────────────────────────────────────────────────────────────
 
         public async Task SendAsync(
-            byte[] payload,
+            byte[] packet,
+            int offset,
+            int length,
             IPAddress destIp,
             ushort destPort,
             ushort localPort,
             CancellationToken ct = default)
         {
             var seq = Interlocked.Increment(ref _sequence);
-            var frame = BuildFrame(payload, seq, destIp, destPort, localPort);
-
-            var activeRoutes = GetSortedActiveRoutes();
-
-            if (activeRoutes.Count == 0)
-            {
-                Stats.DroppedPackets++;
-                Debug.WriteLine("[Multipath] No active routes — packet dropped");
-                return;
-            }
-
-            // Send on top routes simultaneously
-            var sendTargets = activeRoutes.Take(2).ToList();
-            var tasks = sendTargets.Select(r => r.SendAsync(frame, ct)).ToArray();
-
+            var frame = System.Buffers.ArrayPool<byte>.Shared.Rent(18 + length);
+            
             try
             {
+                BuildFrameInPlace(frame, packet, offset, length, seq, destIp, destPort, localPort);
+
+                var activeRoutes = GetSortedActiveRoutes();
+                if (activeRoutes.Count == 0)
+                {
+                    Stats.DroppedPackets++;
+                    Debug.WriteLine("[Multipath] No active routes — packet dropped");
+                    return;
+                }
+
+                // Send on top routes simultaneously (fast-path non-blocking)
+                var sendTargets = activeRoutes.Take(2).ToList();
+                var tasks = new List<Task>(sendTargets.Count);
+                for (int i = 0; i < sendTargets.Count; i++)
+                {
+                    tasks.Add(sendTargets[i].SendAsync(frame.AsMemory(0, 18 + length), ct).AsTask());
+                }
+
                 await Task.WhenAll(tasks);
+                
                 Stats.SentPackets++;
                 Stats.LastSentRoute = sendTargets[0].Endpoint.ToString();
             }
-            catch (Exception ex)
+            finally
             {
-                Stats.Errors++;
-                Debug.WriteLine($"[Multipath] Send error: {ex.Message}");
+                System.Buffers.ArrayPool<byte>.Shared.Return(frame);
             }
         }
 
         // ── Frame construction ────────────────────────────────────────────────────
 
-        private static byte[] BuildFrame(
+        private static void BuildFrameInPlace(
+            byte[] frame,
             byte[] payload,
+            int payloadOffset,
+            int payloadLen,
             uint seq,
             IPAddress destIp,
             ushort destPort,
@@ -182,7 +194,6 @@ namespace RouteXia.VpnClient.Routing
         {
             var destBytes = destIp.GetAddressBytes();
             const int headerSize = 18;
-            var frame = new byte[headerSize + payload.Length];
 
             // Magic RXIA
             frame[0] = 0x52; frame[1] = 0x58; frame[2] = 0x49; frame[3] = 0x41;
@@ -204,12 +215,10 @@ namespace RouteXia.VpnClient.Routing
             frame[14] = (byte)(localPort >> 8); frame[15] = (byte)(localPort);
 
             // Payload length
-            frame[16] = (byte)(payload.Length >> 8); frame[17] = (byte)(payload.Length);
+            frame[16] = (byte)(payloadLen >> 8); frame[17] = (byte)(payloadLen);
 
             // Payload
-            Buffer.BlockCopy(payload, 0, frame, headerSize, payload.Length);
-
-            return frame;
+            Buffer.BlockCopy(payload, payloadOffset, frame, headerSize, payloadLen);
         }
 
         // ── Route scoring ─────────────────────────────────────────────────────────
@@ -296,12 +305,23 @@ namespace RouteXia.VpnClient.Routing
             Endpoint = endpoint;
             _remoteEp = new IPEndPoint(IPAddress.Parse(endpoint.Host), endpoint.Port);
             _udp = new UdpClient();
+
+            // Low-latency socket tuning (MTU 1393 DF / DSCP EF / 256KB fast buffer)
+            try
+            {
+                _udp.Client.ReceiveBufferSize = 256 * 1024;
+                _udp.Client.SendBufferSize = 256 * 1024;
+                _udp.DontFragment = true;
+                _udp.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.TypeOfService, 0xB8); // DSCP EF (Expedited Forwarding)
+            }
+            catch { }
+
             _udp.Connect(_remoteEp);
         }
 
-        public async Task SendAsync(byte[] frame, CancellationToken ct)
+        public ValueTask<int> SendAsync(ReadOnlyMemory<byte> frame, CancellationToken ct)
         {
-            await _udp.SendAsync(frame, frame.Length);
+            return _udp.Client.SendAsync(frame, SocketFlags.None, ct);
         }
 
         /// <summary>Sends an outgoing ping probe packet on this route's UDP socket.</summary>

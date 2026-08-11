@@ -67,7 +67,7 @@
         </Setter>
     </Style>
 
-    <!-- ===== Sidebar Nav Button ===== -->
+    <!-- ===== Sidebar Nav Button (LEGACY — text style, kept for compatibility) ===== -->
     <Style x:Key="NavButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -103,6 +103,108 @@
                             <Setter TargetName="NavBorder" Property="BorderBrush"
                                 Value="{StaticResource AccentBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Icon-Only Nav Button (ExitLag-style 56px sidebar) ===== -->
+    <Style x:Key="IconNavButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Width" Value="56" />
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <!-- Left accent bar (ExitLag active indicator) -->
+                        <Border
+                            x:Name="AccentBar"
+                            HorizontalAlignment="Left"
+                            Width="3"
+                            CornerRadius="0,2,2,0"
+                            Background="Transparent" />
+
+                        <!-- Hover background -->
+                        <Border
+                            x:Name="HoverBg"
+                            Background="Transparent"
+                            CornerRadius="6"
+                            Margin="6,2,6,2">
+                            <ContentPresenter
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HoverBg" Property="Background">
+                                <Setter.Value><SolidColorBrush Color="#12192A" /></Setter.Value>
+                            </Setter>
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="Tag" Value="active">
+                            <Setter TargetName="AccentBar" Property="Background"
+                                Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="HoverBg" Property="Background">
+                                <Setter.Value><SolidColorBrush Color="#0D1929" /></Setter.Value>
+                            </Setter>
+                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Game Card Button (Library Grid) ===== -->
+    <Style x:Key="GameCardButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="CardBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="10"
+                        Padding="12"
+                        MinWidth="110"
+                        MinHeight="110">
+                        <ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="CardBorder" Property="Background">
+                                <Setter.Value><SolidColorBrush Color="#141C28" /></Setter.Value>
+                            </Setter>
+                            <Setter TargetName="CardBorder" Property="BorderBrush"
+                                Value="{StaticResource AccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="CardBorder" Property="Background">
+                                <Setter.Value><SolidColorBrush Color="#1A2435" /></Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="CardBorder" Property="Opacity" Value="0.5" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
