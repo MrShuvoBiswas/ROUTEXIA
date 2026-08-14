@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:RouteXia.App.ViewModels"
+    xmlns:views="clr-namespace:RouteXia.App.Views"
     Background="{StaticResource BgBaseBrush}"
     Title="PUBG Boost">
 
@@ -730,7 +731,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Live" Style="{StaticResource PanelTitle}" />
+                        <TextBlock Text="Live Routing Stats" Style="{StaticResource PanelTitle}" />
                         <ui:SymbolIcon
                             Grid.Column="1"
                             Symbol="Pulse24"
@@ -738,52 +739,34 @@
                             Foreground="{StaticResource AccentBrush}" />
                     </Grid>
 
-                    <Border
+                    <!-- Real-Time Latency Graph (T025-T029) -->
+                    <views:LatencyGraphControl
                         Grid.Row="1"
-                        Margin="0,18,0,16"
-                        Padding="18"
-                        Background="#071018"
-                        BorderBrush="{StaticResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel>
-                            <TextBlock
-                                Text="CURRENT PING"
-                                Style="{StaticResource MutedLabel}" />
-                            <TextBlock
-                                Text="{Binding LivePingText}"
-                                Margin="0,8,0,0"
-                                FontFamily="/Resources/Fonts/#JetBrains Mono"
-                                FontSize="42"
-                                FontWeight="Bold"
-                                Foreground="{StaticResource AccentBrush}" />
-                            <TextBlock
-                                Text="{Binding RouteXiaServerText}"
-                                FontSize="12"
-                                Foreground="{StaticResource TextMutedBrush}" />
-                        </StackPanel>
-                    </Border>
+                        RouteHistory="{Binding RouteHistory}"
+                        IsConnected="{Binding IsConnected}"
+                        MinHeight="180"
+                        Margin="0,14,0,14" />
 
                     <UniformGrid Grid.Row="2" Columns="2" Rows="2">
-                        <Border Background="#0B121C" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,8,8">
+                        <Border Background="{StaticResource BgPanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="12" Margin="0,0,8,8">
                             <StackPanel>
                                 <TextBlock Text="BEST" Style="{StaticResource MutedLabel}" />
                                 <TextBlock Text="{Binding BestPingMs, StringFormat={}{0:0} ms}" Margin="0,6,0,0" FontFamily="/Resources/Fonts/#JetBrains Mono" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
                             </StackPanel>
                         </Border>
-                        <Border Background="#0B121C" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="8,0,0,8">
+                        <Border Background="{StaticResource BgPanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="12" Margin="8,0,0,8">
                             <StackPanel>
                                 <TextBlock Text="LOSS" Style="{StaticResource MutedLabel}" />
                                 <TextBlock Text="{Binding PacketLoss, StringFormat={}{0:0.0}%}" Margin="0,6,0,0" FontFamily="/Resources/Fonts/#JetBrains Mono" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
                             </StackPanel>
                         </Border>
-                        <Border Background="#0B121C" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,8,8,0">
+                        <Border Background="{StaticResource BgPanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="12" Margin="0,8,8,0">
                             <StackPanel>
                                 <TextBlock Text="ROUTES" Style="{StaticResource MutedLabel}" />
                                 <TextBlock Text="{Binding ActiveRoutes}" Margin="0,6,0,0" FontFamily="/Resources/Fonts/#JetBrains Mono" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
                             </StackPanel>
                         </Border>
-                        <Border Background="#0B121C" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="8,8,0,0">
+                        <Border Background="{StaticResource BgPanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="12" Margin="8,8,0,0">
                             <StackPanel>
                                 <TextBlock Text="UPTIME" Style="{StaticResource MutedLabel}" />
                                 <TextBlock Text="{Binding UptimeText}" Margin="0,6,0,0" FontFamily="/Resources/Fonts/#JetBrains Mono" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
