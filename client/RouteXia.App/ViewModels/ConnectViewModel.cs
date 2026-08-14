@@ -20,7 +20,17 @@ public enum ConnectionState
 {
     Disconnected,
     Connecting,
-    Connected
+    Connected,
+    /// <summary>
+    /// Route scoring is actively running. Tunnel remains up — only the status indicator changes.
+    /// <br/>Treated as a visual sub-state of Connected (IsConnected returns true).
+    /// </summary>
+    Optimizing,
+    /// <summary>
+    /// Tunnel has dropped and the Windows Firewall kill-switch rule is active.
+    /// Game traffic is blocked until the user reconnects or the tunnel recovers.
+    /// </summary>
+    KillSwitchActive
 }
 
 public enum ConnectFlowStep
@@ -520,6 +530,10 @@ public class ConnectViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(ConnectButtonBorder));
             OnPropertyChanged(nameof(ConnectButtonFg));
             OnPropertyChanged(nameof(IsConnected));
+            OnPropertyChanged(nameof(IsConnecting));
+            OnPropertyChanged(nameof(IsDisconnected));
+            OnPropertyChanged(nameof(IsOptimizing));
+            OnPropertyChanged(nameof(IsKillSwitchActive));
             OnPropertyChanged(nameof(CanConnect));
             OnPropertyChanged(nameof(CanToggleConnection));
             OnPropertyChanged(nameof(IsOptimized));
@@ -534,18 +548,26 @@ public class ConnectViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool IsConnected  => State == ConnectionState.Connected;
+    // Granular connection state booleans — bind to DataTriggers in views
+    public bool IsConnected        => State == ConnectionState.Connected || State == ConnectionState.Optimizing;
+    public bool IsConnecting       => State == ConnectionState.Connecting;
+    public bool IsDisconnected     => State == ConnectionState.Disconnected;
+    public bool IsOptimizing       => State == ConnectionState.Optimizing;
+    public bool IsKillSwitchActive => State == ConnectionState.KillSwitchActive;
+
     public bool CanConnect   => State == ConnectionState.Disconnected && SelectedServer != null;
     public bool CanToggleConnection => State != ConnectionState.Connecting && (IsConnected || SelectedServer != null);
-    public bool IsOptimized  => State == ConnectionState.Connected;
+    public bool IsOptimized  => State == ConnectionState.Connected || State == ConnectionState.Optimizing;
     public bool IsProbing    => State == ConnectionState.Connecting;
     public bool IsGlobalOptimizationActive => IsConnected && ConfiguredGames.Any(g => g.IsEnabled);
 
     public string ActiveRouteColor => State switch
     {
-        ConnectionState.Connected    => "#2ED573",
-        ConnectionState.Connecting   => "#00C2FF",
-        ConnectionState.Disconnected => "#1B2A3A",
+        ConnectionState.Connected        => "#2ED573",
+        ConnectionState.Optimizing       => "#00C2FF",
+        ConnectionState.Connecting       => "#00C2FF",
+        ConnectionState.KillSwitchActive => "#FF4757",
+        ConnectionState.Disconnected     => "#1B2A3A",
         _ => "#1B2A3A"
     };
 
@@ -554,57 +576,71 @@ public class ConnectViewModel : INotifyPropertyChanged
 
     public string YouNodeBorder => State switch
     {
-        ConnectionState.Connected    => "#2ED573",
-        ConnectionState.Connecting   => "#00C2FF",
-        ConnectionState.Disconnected => "#1F2E40",
+        ConnectionState.Connected        => "#2ED573",
+        ConnectionState.Optimizing       => "#00C2FF",
+        ConnectionState.Connecting       => "#00C2FF",
+        ConnectionState.KillSwitchActive => "#FF4757",
+        ConnectionState.Disconnected     => "#1F2E40",
         _ => "#1F2E40"
     };
 
     public string RelayNodeBorder => State switch
     {
-        ConnectionState.Connected    => "#2ED573",
-        ConnectionState.Connecting   => "#FFB020",
-        ConnectionState.Disconnected => "#1F2E40",
+        ConnectionState.Connected        => "#2ED573",
+        ConnectionState.Optimizing       => "#FFB020",
+        ConnectionState.Connecting       => "#FFB020",
+        ConnectionState.KillSwitchActive => "#FF4757",
+        ConnectionState.Disconnected     => "#1F2E40",
         _ => "#1F2E40"
     };
 
     public string GameServerNodeBorder => State switch
     {
-        ConnectionState.Connected    => "#2ED573",
-        ConnectionState.Connecting   => "#1C2B3C",
-        ConnectionState.Disconnected => "#1C2B3C",
+        ConnectionState.Connected        => "#2ED573",
+        ConnectionState.Optimizing       => "#2ED573",
+        ConnectionState.Connecting       => "#1C2B3C",
+        ConnectionState.KillSwitchActive => "#FF4757",
+        ConnectionState.Disconnected     => "#1C2B3C",
         _ => "#1C2B3C"
     };
 
     public string StateText  => State switch
     {
-        ConnectionState.Connected    => "CONNECTED",
-        ConnectionState.Connecting   => "CONNECTING...",
-        ConnectionState.Disconnected => "DISCONNECTED",
-        _ => "UNKNOWN"
+        ConnectionState.Connected        => "CONNECTED",
+        ConnectionState.Optimizing       => "OPTIMIZING",
+        ConnectionState.Connecting       => "CONNECTING...",
+        ConnectionState.KillSwitchActive => "KILL-SWITCH ACTIVE",
+        ConnectionState.Disconnected     => "DISCONNECTED",
+        _ => "DISCONNECTED"
     };
 
     public string ConnectActionText => State switch
     {
-        ConnectionState.Connected    => "STOP BOOST",
-        ConnectionState.Connecting   => "BOOSTING...",
-        ConnectionState.Disconnected => SelectedServer == null ? "WAITING FOR SERVER" : "BOOST PUBG",
+        ConnectionState.Connected        => "STOP BOOST",
+        ConnectionState.Optimizing       => "BOOSTING...",
+        ConnectionState.Connecting       => "BOOSTING...",
+        ConnectionState.KillSwitchActive => "RECONNECT",
+        ConnectionState.Disconnected     => SelectedServer == null ? "WAITING FOR SERVER" : "BOOST PUBG",
         _ => "BOOST PUBG"
     };
 
     public string ConnectButtonBg => State switch
     {
-        ConnectionState.Connected    => "#091A14",
-        ConnectionState.Connecting   => "#2A1E0D",
-        ConnectionState.Disconnected => "#0D1929",
+        ConnectionState.Connected        => "#091A14",
+        ConnectionState.Optimizing       => "#091A14",
+        ConnectionState.Connecting       => "#2A1E0D",
+        ConnectionState.KillSwitchActive => "#200A0C",
+        ConnectionState.Disconnected     => "#0D1929",
         _ => "#0D1929"
     };
 
     public string ConnectButtonBorder => State switch
     {
-        ConnectionState.Connected    => "#2ED573",
-        ConnectionState.Connecting   => "#FFB020",
-        ConnectionState.Disconnected => "#00C2FF",
+        ConnectionState.Connected        => "#2ED573",
+        ConnectionState.Optimizing       => "#00C2FF",
+        ConnectionState.Connecting       => "#FFB020",
+        ConnectionState.KillSwitchActive => "#FF4757",
+        ConnectionState.Disconnected     => "#00C2FF",
         _ => "#00C2FF"
     };
 

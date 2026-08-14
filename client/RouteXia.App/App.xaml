@@ -14,10 +14,12 @@
                 <ui:ControlsDictionary />
                 <!-- Our custom styles -->
                 <ResourceDictionary Source="Resources/Styles/ColorPalette.xaml" />
+                <ResourceDictionary Source="Resources/Styles/SpacingTokens.xaml" />
                 <ResourceDictionary Source="Resources/Styles/ButtonStyle.xaml" />
                 <ResourceDictionary Source="Resources/Styles/TextStyles.xaml" />
                 <ResourceDictionary Source="Resources/Styles/CardStyles.xaml" />
                 <ResourceDictionary Source="Resources/Animations/PulseRing.xaml" />
+                <ResourceDictionary Source="Resources/Animations/StatusTransitions.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

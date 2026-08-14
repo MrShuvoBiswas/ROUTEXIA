@@ -31,4 +31,54 @@
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
     </Style>
 
+    <!-- ===== Typography Scale — Design Token Styles ===== -->
+
+    <!-- HeadingXLStyle — App logo / splash screen titles (Rajdhani Bold 28) -->
+    <Style x:Key="HeadingXLStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="/Resources/Fonts/#Rajdhani" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- HeadingLStyle — Page / view headings (Rajdhani Bold 22) -->
+    <Style x:Key="HeadingLStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="/Resources/Fonts/#Rajdhani" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- HeadingMStyle — Section / panel titles (Rajdhani Bold 18) -->
+    <Style x:Key="HeadingMStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="/Resources/Fonts/#Rajdhani" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- HeadingSmStyle — Card headings / sub-panel labels (Rajdhani SemiBold 14) -->
+    <Style x:Key="HeadingSmStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="/Resources/Fonts/#Rajdhani" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- CaptionStyle — Muted secondary labels / subtitles (Inter Regular 11) -->
+    <Style x:Key="CaptionStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="/Resources/Fonts/#Inter" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Regular" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+    </Style>
+
+    <!-- BadgeLabelStyle — Status pills / badge chips (Rajdhani SemiBold 11) -->
+    <Style x:Key="BadgeLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="/Resources/Fonts/#Rajdhani" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    </Style>
+
 </ResourceDictionary>
