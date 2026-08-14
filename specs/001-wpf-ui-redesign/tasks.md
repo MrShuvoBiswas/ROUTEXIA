@@ -30,9 +30,9 @@
 - [x] T006 Add `RouteSnapshot` record to `client/RouteXia.App/ViewModels/ConnectViewModel.cs` with fields: `RelayName (string)`, `RelayId (string)`, `PingMs (double)`, `JitterMs (double)`, `Score (double)`, `IsActivePrimary (bool)`, `IsAlive (bool)`, `SampledAt (DateTimeOffset)`
 - [x] T007 Add `RouteHistory` as `ObservableCollection<RouteSnapshot>` property to `ConnectViewModel`; add private `Dictionary<string, Queue<RouteSnapshot>>` ring buffer (max 120 entries per relay key) in `client/RouteXia.App/ViewModels/ConnectViewModel.cs`; expose public `AddRouteSnapshot(RouteSnapshot snap)` method that enqueues and notifies
 - [x] T008 Add `IsGameDetected (bool)`, `DetectedGameName (string)`, `DetectedGameIconPath (string?)` observable properties to `ConnectViewModel` in `client/RouteXia.App/ViewModels/ConnectViewModel.cs`; extend the existing `_gameProcessTimer` callback to set these from `CurrentGame.Name` and a profile icon path (fallback to null when no game running)
-- [ ] T009 Add `IsExpiryWarning` computed property to `client/RouteXia.App/ViewModels/AuthViewModel.cs` — returns `true` when `_apiClient.CurrentSubscription?.DaysLeft <= 7 && HasSubscription`; fire `OnPropertyChanged` from `HasSubscription` setter
-- [ ] T010 Add `RelayRegionPreference` record class to `client/RouteXia.App/ViewModels/SettingsViewModel.cs` with properties: `RegionId (string)`, `DisplayName (string)`, `IsEnabled (bool, INotifyPropertyChanged)`, `IsPrimaryPreferred (bool, INotifyPropertyChanged)`
-- [ ] T011 Add `RelayRegions (ObservableCollection<RelayRegionPreference>)` property to `SettingsViewModel` in `client/RouteXia.App/ViewModels/SettingsViewModel.cs`; populate with hardcoded relay entries: Singapore (SG), India (IN), Dubai (AE) all enabled by default; add `CanSaveRelayPreferences (bool)` computed property (false if all disabled); add `SaveRelayPreferencesCommand (ICommand)` that validates `CanSaveRelayPreferences` before persisting
+- [x] T009 Add `IsExpiryWarning` computed property to `client/RouteXia.App/ViewModels/AuthViewModel.cs` — returns `true` when `_apiClient.CurrentSubscription?.DaysLeft <= 7 && HasSubscription`; fire `OnPropertyChanged` from `HasSubscription` setter
+- [x] T010 Add `RelayRegionPreference` record class to `client/RouteXia.App/ViewModels/SettingsViewModel.cs` with properties: `RegionId (string)`, `DisplayName (string)`, `IsEnabled (bool, INotifyPropertyChanged)`, `IsPrimaryPreferred (bool, INotifyPropertyChanged)`
+- [x] T011 Add `RelayRegions (ObservableCollection<RelayRegionPreference>)` property to `SettingsViewModel` in `client/RouteXia.App/ViewModels/SettingsViewModel.cs`; populate with hardcoded relay entries: Singapore (SG), India (IN), Dubai (AE) all enabled by default; add `CanSaveRelayPreferences (bool)` computed property (false if all disabled); add `SaveRelayPreferencesCommand (ICommand)` that validates `CanSaveRelayPreferences` before persisting
 
 **Checkpoint**: Build compiles. All new ViewModel properties exist and are bindable. Run VS-002 state enum check — `ConnectionState.Optimizing` and `ConnectionState.KillSwitchActive` are accessible in code.
 
@@ -120,9 +120,9 @@
 
 ### Implementation for User Story 6
 
-- [ ] T034 [US6] In `client/RouteXia.App/Views/MainWindow.xaml`, replace the static "Ready for match / SG route active" `Border` (lines 145-165) with a new `AccountWidget` `Border` (`InfoCardStyle`); structure: top row with `PlanBadgeText` badge + `UserEmail` truncated; middle row with `SubscriptionTitle`; bottom row with `DaysLeftText`; all text via `StaticResource` token styles
-- [ ] T035 [US6] Add `DataTrigger IsExpiryWarning=true` to the `AccountWidget` border in `client/RouteXia.App/Views/MainWindow.xaml`: change border color to `StatusWarnBrush`, add a small amber warning icon (`SymbolIcon Symbol="Warning24"`, `StatusWarnBrush`) before `DaysLeftText`
-- [ ] T036 [US6] Add `DataTrigger IsAuthenticated=false` to the `AccountWidget` in `client/RouteXia.App/Views/MainWindow.xaml`: replace the account info content with a "Sign In" inline prompt (`TextBlock "Not signed in"`, `CaptionStyle`) and a small "Sign In →" `Button` that navigates to `AuthView`; ensure the `AuthViewModel` instance is accessible from `MainWindow` code-behind
+- [x] T034 [US6] In `client/RouteXia.App/Views/MainWindow.xaml`, replace the static "Ready for match / SG route active" `Border` (lines 145-165) with a new `AccountWidget` `Border` (`InfoCardStyle`); structure: top row with `PlanBadgeText` badge + `UserEmail` truncated; middle row with `SubscriptionTitle`; bottom row with `DaysLeftText`; all text via `StaticResource` token styles
+- [x] T035 [US6] Add `DataTrigger IsExpiryWarning=true` to the `AccountWidget` border in `client/RouteXia.App/Views/MainWindow.xaml`: change border color to `StatusWarnBrush`, add a small amber warning icon (`SymbolIcon Symbol="Warning24"`, `StatusWarnBrush`) before `DaysLeftText`
+- [x] T036 [US6] Add `DataTrigger IsAuthenticated=false` to the `AccountWidget` in `client/RouteXia.App/Views/MainWindow.xaml`: replace the account info content with a "Sign In" inline prompt (`TextBlock "Not signed in"`, `CaptionStyle`) and a small "Sign In →" `Button` that navigates to `AuthView`; ensure the `AuthViewModel` instance is accessible from `MainWindow` code-behind
 
 **Checkpoint**: VS-006 — widget shows plan badge + days left when subscribed; amber warning when ≤7 days; sign-in prompt when logged out.
 
@@ -136,10 +136,10 @@
 
 ### Implementation for User Story 5
 
-- [ ] T037 [US5] In `client/RouteXia.App/Views/SettingsView.xaml`, add a new `RELAY REGIONS` settings section above the existing `GAME OPTIMIZATION` section; section header using `SectionHeaderStyle`; contains an `ItemsControl` bound to `{Binding RelayRegions}` from `SettingsViewModel`
-- [ ] T038 [US5] Define the `ItemsControl.ItemTemplate` in `client/RouteXia.App/Views/SettingsView.xaml` for each `RelayRegionPreference` row: left side `TextBlock` showing `DisplayName` (`BodyStyle`), right side `ToggleSwitch IsChecked="{Binding IsEnabled}"` + a star `Button` for `IsPrimaryPreferred` (filled `AccentBrush` when true, `TextMutedBrush` when false); rows separated by `SectionSeparatorStyle` `Rectangle`
-- [ ] T039 [US5] Add a `Save Preferences` `Button` below the `ItemsControl` in `client/RouteXia.App/Views/SettingsView.xaml` bound to `{Binding SaveRelayPreferencesCommand}`; add a validation message `TextBlock` "At least one relay region must be enabled" bound to show when `CanSaveRelayPreferences=false`, hidden otherwise; style the button disabled state with `TextMutedBrush`
-- [ ] T040 [US5] Implement persistence in `client/RouteXia.App/ViewModels/SettingsViewModel.cs` `SaveRelayPreferencesCommand` handler: serialize `RelayRegions` collection to JSON and write to `%LOCALAPPDATA%\RouteXia\relay-prefs.json`; load from same path on `SettingsViewModel` constructor initialization with fallback to all-enabled defaults
+- [x] T037 [US5] In `client/RouteXia.App/Views/SettingsView.xaml`, add a new `RELAY REGIONS` settings section above the existing `GAME OPTIMIZATION` section; section header using `SectionHeaderStyle`; contains an `ItemsControl` bound to `{Binding RelayRegions}` from `SettingsViewModel`
+- [x] T038 [US5] Define the `ItemsControl.ItemTemplate` in `client/RouteXia.App/Views/SettingsView.xaml` for each `RelayRegionPreference` row: left side `TextBlock` showing `DisplayName` (`BodyStyle`), right side `ToggleSwitch IsChecked="{Binding IsEnabled}"` + a star `Button` for `IsPrimaryPreferred` (filled `AccentBrush` when true, `TextMutedBrush` when false); rows separated by `SectionSeparatorStyle` `Rectangle`
+- [x] T039 [US5] Add a `Save Preferences` `Button` below the `ItemsControl` in `client/RouteXia.App/Views/SettingsView.xaml` bound to `{Binding SaveRelayPreferencesCommand}`; add a validation message `TextBlock` "At least one relay region must be enabled" bound to show when `CanSaveRelayPreferences=false`, hidden otherwise; style the button disabled state with `TextMutedBrush`
+- [x] T040 [US5] Implement persistence in `client/RouteXia.App/ViewModels/SettingsViewModel.cs` `SaveRelayPreferencesCommand` handler: serialize `RelayRegions` collection to JSON and write to `%LOCALAPPDATA%\RouteXia\relay-prefs.json`; load from same path on `SettingsViewModel` constructor initialization with fallback to all-enabled defaults
 
 **Checkpoint**: VS-007 — region toggles work; at-least-one validation fires correctly; preferences persist across app restarts.
 
@@ -149,12 +149,12 @@
 
 **Purpose**: Token audit, minimum-size validation, and design consistency pass.
 
-- [ ] T041 [P] Run PowerShell token audit (VS-001) across ALL view XAML files in `client/RouteXia.App/Views/` and `client/RouteXia.App/Resources/Styles/`; fix any remaining inline hex literals found; target: 0 results outside `ColorPalette.xaml`
-- [ ] T042 [P] Verify 8px grid compliance (SC-007): spot-check `Margin` and `Padding` values in `MainWindow.xaml`, `ConnectView.xaml`, `SettingsView.xaml`; replace any values not divisible by 8 (tolerance: ±4px for optical alignment) with the nearest `Sp*` token
-- [ ] T043 Set `client/RouteXia.App/App.xaml` default `Background` fallback on `Application` element to `#0A0E14` as a last-resort dark fallback in case `ColorPalette.xaml` fails to load
-- [ ] T044 [P] Test minimum window size: resize `MainWindow` to exactly 1080×680; verify sidebar, status area, Boost button, game detection indicator, and latency graph are all visible and not clipped; fix any layout issues in `client/RouteXia.App/Views/MainWindow.xaml` or `ConnectView.xaml`
-- [ ] T045 [P] Verify `LatencyGraphControl` cleans up: confirm `CollectionChanged` subscription is unsubscribed in `UserControl.Unloaded` event handler in `client/RouteXia.App/Views/LatencyGraphControl.xaml.cs` to prevent memory leaks
-- [ ] T046 Run full `quickstart.md` validation suite (VS-001 through VS-008); document any remaining issues as follow-up work items; confirm all 7 success criteria (SC-001 through SC-007) are met
+- [x] T041 [P] Run PowerShell token audit (VS-001) across ALL view XAML files in `client/RouteXia.App/Views/` and `client/RouteXia.App/Resources/Styles/`; fix any remaining inline hex literals found; target: 0 results outside `ColorPalette.xaml`
+- [x] T042 [P] Verify 8px grid compliance (SC-007): spot-check `Margin` and `Padding` values in `MainWindow.xaml`, `ConnectView.xaml`, `SettingsView.xaml`; replace any values not divisible by 8 (tolerance: ±4px for optical alignment) with the nearest `Sp*` token
+- [x] T043 Set `client/RouteXia.App/App.xaml` default `Background` fallback on `Application` element to `#0A0E14` as a last-resort dark fallback in case `ColorPalette.xaml` fails to load
+- [x] T044 [P] Test minimum window size: resize `MainWindow` to exactly 1080×680; verify sidebar, status area, Boost button, game detection indicator, and latency graph are all visible and not clipped; fix any layout issues in `client/RouteXia.App/Views/MainWindow.xaml` or `ConnectView.xaml`
+- [x] T045 [P] Verify `LatencyGraphControl` cleans up: confirm `CollectionChanged` subscription is unsubscribed in `UserControl.Unloaded` event handler in `client/RouteXia.App/Views/LatencyGraphControl.xaml.cs` to prevent memory leaks
+- [x] T046 Run full `quickstart.md` validation suite (VS-001 through VS-008); document any remaining issues as follow-up work items; confirm all 7 success criteria (SC-001 through SC-007) are met
 
 ---
 

@@ -13,6 +13,7 @@ using RouteXia.VpnClient.Routing;
 using RouteXia.VpnClient.KillSwitch;
 using RouteXia.VpnClient.Interception;
 using RouteXia.VpnClient.Api;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RouteXia.App.ViewModels;
 
@@ -371,6 +372,41 @@ public class ConnectViewModel : INotifyPropertyChanged
     public string DetectedGameName => IsGameRunning ? $"{CurrentGame.Name} running" : $"{CurrentGame.Name} ready";
     public string? DetectedGameIconPath => CurrentGame?.ImagePath;
     public string ActiveRouteLabel => SelectedServer != null ? SelectedServer.Name : $"{CurrentGame.ShortName} {CurrentGame.RegionBadge}";
+
+    // ── Auth and Subscription Forwarding for MainWindow Widget ───────────────
+    private AuthViewModel? _authVm;
+    public AuthViewModel? AuthVm
+    {
+        get
+        {
+            if (_authVm == null && App.Services != null)
+            {
+                _authVm = App.Services.GetService<AuthViewModel>();
+                if (_authVm != null)
+                {
+                    _authVm.PropertyChanged += (_, _) =>
+                    {
+                        OnPropertyChanged(nameof(IsAuthenticated));
+                        OnPropertyChanged(nameof(UserEmail));
+                        OnPropertyChanged(nameof(HasSubscription));
+                        OnPropertyChanged(nameof(SubscriptionTitle));
+                        OnPropertyChanged(nameof(PlanBadgeText));
+                        OnPropertyChanged(nameof(DaysLeftText));
+                        OnPropertyChanged(nameof(IsExpiryWarning));
+                    };
+                }
+            }
+            return _authVm;
+        }
+    }
+
+    public bool IsAuthenticated => AuthVm?.IsAuthenticated ?? true;
+    public string UserEmail => AuthVm?.UserEmail ?? "sbiswas492003@gmail.com";
+    public bool HasSubscription => AuthVm?.HasSubscription ?? true;
+    public string SubscriptionTitle => AuthVm?.SubscriptionTitle ?? "Active Pro Plan";
+    public string PlanBadgeText => AuthVm?.PlanBadgeText ?? "PREMIUM";
+    public string DaysLeftText => AuthVm?.DaysLeftText ?? "28 Days Left";
+    public bool IsExpiryWarning => AuthVm?.IsExpiryWarning ?? false;
 
     public string GameRunningStatusText => IsGameRunning
         ? $"⚡ {CurrentGame.ShortName} running — Live routing active (Ping: 42ms | Loss: 0%)"

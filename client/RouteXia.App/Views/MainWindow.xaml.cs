@@ -63,6 +63,11 @@ public partial class MainWindow : FluentWindow
             System.Windows.MessageBoxImage.Information);
     }
 
+    private void BtnSidebarSignIn_Click(object sender, RoutedEventArgs e)
+    {
+        NavigateToAccount();
+    }
+
     private void BtnMinimize_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;

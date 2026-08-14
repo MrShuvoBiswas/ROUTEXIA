@@ -46,7 +46,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="20" Foreground="{StaticResource StatusGoodBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
                                 <TextBlock Text="Gaming Kill-Switch (Firewall Guard)" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                                <Border Background="#122B1E" BorderBrush="{StaticResource StatusGoodBrush}" BorderThickness="1" CornerRadius="6" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <Border Background="{StaticResource BadgeBgBrush}" BorderBrush="{StaticResource StatusGoodBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding KillSwitchStatusText}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="10" FontWeight="Bold" Foreground="{StaticResource StatusGoodBrush}" />
                                 </Border>
                             </StackPanel>
@@ -64,7 +64,7 @@
                     Background="{StaticResource BgCardBrush}"
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="14"
+                    CornerRadius="{StaticResource RadiusLg}"
                     Padding="22,18"
                     Margin="0,0,0,16">
                     <Grid>
@@ -79,7 +79,7 @@
                             </StackPanel>
                             <TextBlock Text="Low-level kernel packet filtering diverts game UDP packets without creating virtual TUN adapters or interfering with Discord/browsers." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="30,4,20,0" TextWrapping="Wrap" />
                         </StackPanel>
-                        <Border Grid.Column="1" Background="#0D1E2A" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                        <Border Grid.Column="1" Background="{StaticResource NavActiveBgBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="12,6" VerticalAlignment="Center">
                             <TextBlock Text="{Binding DriverStatusText}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                         </Border>
                     </Grid>

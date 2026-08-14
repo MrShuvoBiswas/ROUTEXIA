@@ -40,10 +40,10 @@
                     x:Name="BtnRunTest"
                     Grid.Column="1"
                     Click="BtnRunTest_Click"
-                    Background="#0D1929"
+                    Background="{StaticResource NavActiveBgBrush}"
                     BorderBrush="{StaticResource AccentBrush}"
                     BorderThickness="1"
-                    CornerRadius="8"
+                    CornerRadius="{StaticResource RadiusMd}"
                     Padding="16,8"
                     Cursor="Hand"
                     VerticalAlignment="Center">
@@ -60,7 +60,7 @@
                 Background="{StaticResource BgCardBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="1"
-                CornerRadius="14"
+                CornerRadius="{StaticResource RadiusLg}"
                 Padding="20,16"
                 Margin="0,0,0,24">
                 <Grid>
@@ -72,7 +72,7 @@
                         <TextBlock Text="RECOMMENDED OPTIMAL REGION" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
                         <TextBlock Text="{Binding BestRegionText}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="20" FontWeight="Bold" Foreground="{StaticResource StatusGoodBrush}" Margin="0,4,0,0" />
                     </StackPanel>
-                    <Border Grid.Column="1" Background="#0D2A1A" BorderBrush="{StaticResource StatusGoodBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                    <Border Grid.Column="1" Background="{StaticResource BadgeBgBrush}" BorderBrush="{StaticResource StatusGoodBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="12,6" VerticalAlignment="Center">
                         <TextBlock Text="LOWEST PING ROUTE" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="11" FontWeight="Bold" Foreground="{StaticResource StatusGoodBrush}" />
                     </Border>
                 </Grid>
@@ -91,7 +91,7 @@
                             Background="{StaticResource BgCardBrush}"
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1"
-                            CornerRadius="12"
+                            CornerRadius="{StaticResource RadiusLg}"
                             Padding="18,16"
                             Margin="0,0,14,14"
                             Width="250">
@@ -104,7 +104,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Flag}" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1" Text="{Binding RegionName}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <Border Grid.Column="2" Background="#121D2B" CornerRadius="6" Padding="6,2">
+                                    <Border Grid.Column="2" Background="{StaticResource NavActiveBgBrush}" CornerRadius="{StaticResource RadiusSm}" Padding="6,2">
                                         <TextBlock Text="{Binding RegionCode}" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                                     </Border>
                                 </Grid>

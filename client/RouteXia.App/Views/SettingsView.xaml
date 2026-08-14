@@ -8,28 +8,28 @@
     Title="Settings">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="40,28" MaxWidth="560">
+        <StackPanel Margin="40,28" MaxWidth="580">
 
             <TextBlock
                 Text="SETTINGS"
-                FontFamily="/Resources/Fonts/#Rajdhani"
-                FontSize="22"
-                FontWeight="Bold"
-                Foreground="{StaticResource TextPrimaryBrush}"
-                Margin="0,0,0,28" />
+                Style="{StaticResource HeadingXLStyle}"
+                Margin="0,0,0,24" />
 
-            <!-- Game Optimization -->
+            <!-- ── Game Optimization ──────────────────────────────────────── -->
             <TextBlock
                 Text="GAME OPTIMIZATION"
-                FontSize="11" FontWeight="SemiBold"
+                Style="{StaticResource CaptionStyle}"
                 Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
                 Margin="0,0,0,12" />
 
             <Border
                 Background="{StaticResource BgCardBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1" CornerRadius="12"
-                Padding="20,16" Margin="0,0,0,24">
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16"
+                Margin="0,0,0,24">
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
@@ -37,16 +37,26 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Auto-Connect on Game Launch" FontSize="13"
-                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Automatically optimize routes when the selected game starts"
-                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            <TextBlock
+                                Text="Auto-Connect on Game Launch"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Automatically optimize routes when the selected game starts"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoConnectOnGameLaunch}"
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding AutoConnectOnGameLaunch}"
                             VerticalAlignment="Center" />
                     </Grid>
 
-                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,4,0,16" />
+                    <Rectangle
+                        Height="1"
+                        Fill="{StaticResource BorderBrush}"
+                        Margin="0,4,0,16" />
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -54,30 +64,174 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Route Optimization Mode" FontSize="13"
-                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Game-specific Split-Tunneling (Game traffic only)"
-                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            <TextBlock
+                                Text="Route Optimization Mode"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Game-specific Split-Tunneling (Game traffic only)"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
                         </StackPanel>
-                        <Border Grid.Column="1" Background="#1A2230" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
-                            <TextBlock Text="⚡ Smart Split" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                        <Border
+                            Grid.Column="1"
+                            Background="{StaticResource BadgeBgBrush}"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            Padding="10,4"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Text="⚡ Smart Split"
+                                Style="{StaticResource BadgeLabelStyle}"
+                                Foreground="{StaticResource AccentBrush}" />
                         </Border>
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- System -->
+            <!-- ── Relay Region Preferences (T037, T038, T039, T040) ─────── -->
             <TextBlock
-                Text="SYSTEM"
-                FontSize="11" FontWeight="SemiBold"
+                Text="RELAY REGION PREFERENCES"
+                Style="{StaticResource CaptionStyle}"
                 Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
                 Margin="0,0,0,12" />
 
             <Border
                 Background="{StaticResource BgCardBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1" CornerRadius="12"
-                Padding="20,16" Margin="0,0,0,24">
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16"
+                Margin="0,0,0,24">
+                <StackPanel>
+                    <TextBlock
+                        Text="Select which regional relay VPS nodes RouteXia should include during multipath parallel routing and dynamic route scoring."
+                        Style="{StaticResource CaptionStyle}"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        TextWrapping="Wrap"
+                        Margin="0,0,0,16" />
+
+                    <!-- ItemsControl of Relay Regions (T037, T038) -->
+                    <ItemsControl ItemsSource="{Binding RelayRegions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,6,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Flag / Code Badge -->
+                                    <Border
+                                        Grid.Column="0"
+                                        Background="{StaticResource BadgeBgBrush}"
+                                        CornerRadius="{StaticResource RadiusXs}"
+                                        Padding="8,4"
+                                        Margin="0,0,12,0"
+                                        VerticalAlignment="Center">
+                                        <TextBlock
+                                            Text="{Binding FlagEmoji}"
+                                            FontSize="14"
+                                            VerticalAlignment="Center" />
+                                    </Border>
+
+                                    <!-- Region Display Name -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock
+                                            Text="{Binding DisplayName}"
+                                            Style="{StaticResource HeadingSmStyle}"
+                                            FontSize="13"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <!-- Region ToggleSwitch -->
+                                    <ui:ToggleSwitch
+                                        Grid.Column="2"
+                                        IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Validation Error when all disabled (T039) -->
+                    <Border
+                        Margin="0,12,0,0"
+                        Padding="10,6"
+                        Background="{StaticResource BgPanelBrush}"
+                        BorderBrush="{StaticResource StatusBadBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusXs}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasRegionValidationError}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon
+                                Symbol="Warning24"
+                                FontSize="14"
+                                Foreground="{StaticResource StatusBadBrush}"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Text="At least one relay region must remain enabled."
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource StatusBadBrush}"
+                                FontWeight="SemiBold"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Save Status / Action Button -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Column="0"
+                            Text="{Binding SaveStatusMessage}"
+                            Style="{StaticResource CaptionStyle}"
+                            Foreground="{StaticResource StatusGoodBrush}"
+                            VerticalAlignment="Center" />
+
+                        <Button
+                            Grid.Column="1"
+                            Content="Save Preferences"
+                            Command="{Binding SaveRelayPreferencesCommand}"
+                            Style="{StaticResource ConnectButtonStyle}"
+                            Padding="16,6"
+                            FontSize="12"
+                            Height="32"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ── System ────────────────────────────────────────────────── -->
+            <TextBlock
+                Text="SYSTEM"
+                Style="{StaticResource CaptionStyle}"
+                Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
+                Margin="0,0,0,12" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16"
+                Margin="0,0,0,24">
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
@@ -85,16 +239,26 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Minimize to System Tray" FontSize="13"
-                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Keep running in background for game detection"
-                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            <TextBlock
+                                Text="Minimize to System Tray"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Keep running in background for game detection"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding MinimizeToTray}"
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding MinimizeToTray}"
                             VerticalAlignment="Center" />
                     </Grid>
 
-                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,4,0,16" />
+                    <Rectangle
+                        Height="1"
+                        Fill="{StaticResource BorderBrush}"
+                        Margin="0,4,0,16" />
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -102,28 +266,37 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Start with Windows" FontSize="13"
-                                FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Launch RouteXia silently when Windows starts"
-                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            <TextBlock
+                                Text="Start with Windows"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Launch RouteXia silently when Windows starts"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding StartWithWindows}"
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding StartWithWindows}"
                             VerticalAlignment="Center" />
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- About -->
+            <!-- ── About ─────────────────────────────────────────────────── -->
             <TextBlock
                 Text="ABOUT"
-                FontSize="11" FontWeight="SemiBold"
+                Style="{StaticResource CaptionStyle}"
                 Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
                 Margin="0,0,0,12" />
 
             <Border
                 Background="{StaticResource BgCardBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1" CornerRadius="12"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
                 Padding="20,16">
                 <StackPanel>
                     <Grid Margin="0,0,0,12">
@@ -132,21 +305,39 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="RouteXia" FontSize="14"
-                                FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="AI-Powered Game Route Optimizer"
-                                FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            <TextBlock
+                                Text="RouteXia"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="14" />
+                            <TextBlock
+                                Text="AI-Powered Game Route Optimizer"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
                         </StackPanel>
-                        <Border Grid.Column="1" Background="#1A2230" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
-                            <TextBlock Text="v0.1.0-beta" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                        <Border
+                            Grid.Column="1"
+                            Background="{StaticResource BadgeBgBrush}"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            Padding="10,4"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Text="v0.1.0-beta"
+                                Style="{StaticResource BadgeLabelStyle}"
+                                Foreground="{StaticResource AccentBrush}" />
                         </Border>
                     </Grid>
 
-                    <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,4,0,12" />
+                    <Rectangle
+                        Height="1"
+                        Fill="{StaticResource BorderBrush}"
+                        Margin="0,4,0,12" />
 
                     <TextBlock
                         Text="RouteXia uses Multipath Routing Technology to find the fastest path for your game traffic, reducing ping and eliminating packet loss."
-                        FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
+                        Style="{StaticResource CaptionStyle}"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 

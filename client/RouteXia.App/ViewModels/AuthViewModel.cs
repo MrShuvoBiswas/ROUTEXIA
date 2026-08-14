@@ -76,6 +76,7 @@ namespace RouteXia.App.ViewModels
         public string SubscriptionStatusText => _apiClient.CurrentSubscription?.Message ?? "No Active Subscription";
         public string PlanBadgeText => _apiClient.CurrentSubscription?.IsTrial == true ? "FREE TRIAL" : "PREMIUM";
         public string DaysLeftText => $"{_apiClient.CurrentSubscription?.DaysLeft ?? 0} Days Left";
+        public bool IsExpiryWarning => HasSubscription && (_apiClient.CurrentSubscription?.DaysLeft <= 7);
         public string HwidPreview => HwidGenerator.GetHwid()[..16] + "...";
 
         public AuthViewModel(RouteXiaApiClient apiClient)
@@ -91,6 +92,7 @@ namespace RouteXia.App.ViewModels
                 OnPropertyChanged(nameof(SubscriptionStatusText));
                 OnPropertyChanged(nameof(PlanBadgeText));
                 OnPropertyChanged(nameof(DaysLeftText));
+                OnPropertyChanged(nameof(IsExpiryWarning));
             };
         }
 

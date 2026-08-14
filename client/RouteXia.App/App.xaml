@@ -21,6 +21,9 @@
                 <ResourceDictionary Source="Resources/Animations/PulseRing.xaml" />
                 <ResourceDictionary Source="Resources/Animations/StatusTransitions.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Fallback dark background (T043) -->
+            <SolidColorBrush x:Key="AppFallbackBackground" Color="#0A0E14" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

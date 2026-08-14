@@ -33,7 +33,7 @@
         <Style x:Key="SegmentButton" TargetType="Button">
             <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="12,0" />
-            <Setter Property="Background" Value="#0B121C" />
+            <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
@@ -65,7 +65,7 @@
         <Style x:Key="PrimaryAction" TargetType="Button">
             <Setter Property="Height" Value="58" />
             <Setter Property="Padding" Value="20,0" />
-            <Setter Property="Background" Value="#0D1929" />
+            <Setter Property="Background" Value="{StaticResource NavActiveBgBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
@@ -101,7 +101,7 @@
         <Style x:Key="SecondaryAction" TargetType="Button">
             <Setter Property="Height" Value="58" />
             <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Background" Value="#0B121C" />
+            <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
@@ -138,7 +138,7 @@
             <Setter Property="MinHeight" Value="68" />
             <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="Padding" Value="12" />
-            <Setter Property="Background" Value="#0B121C" />
+            <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
@@ -165,7 +165,7 @@
             </Setter>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter Property="Background" Value="#10283A" />
+                    <Setter Property="Background" Value="{StaticResource NavActiveBgBrush}" />
                     <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                 </DataTrigger>
             </Style.Triggers>
@@ -184,15 +184,8 @@
             Height="110"
             VerticalAlignment="Top"
             Opacity="0.75"
-            IsHitTestVisible="False">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#2616222E" Offset="0" />
-                    <GradientStop Color="#241B3847" Offset="0.42" />
-                    <GradientStop Color="#22FF3344" Offset="1" />
-                </LinearGradientBrush>
-            </Border.Background>
-        </Border>
+            IsHitTestVisible="False"
+            Background="{StaticResource AccentGlowBrush}" />
 
         <Grid Grid.Row="0" Margin="0,0,0,18">
             <Grid.ColumnDefinitions>
@@ -505,7 +498,7 @@
                         <Border
                             Grid.Column="1"
                             Padding="9,4"
-                            Background="#111F2B"
+                            Background="{StaticResource BadgeBgBrush}"
                             CornerRadius="5">
                             <TextBlock
                                 Text="{Binding ServerModeBadgeText}"
@@ -523,7 +516,7 @@
                                         <DataTrigger Binding="{Binding IsAutoServerSelection}" Value="True">
                                             <Setter Property="Background" Value="{StaticResource AccentBrush}" />
                                             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                                            <Setter Property="Foreground" Value="#071019" />
+                                            <Setter Property="Foreground" Value="{StaticResource BgBaseBrush}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -546,7 +539,7 @@
                                 <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsManualServerSelection}" Value="True">
-                                            <Setter Property="Background" Value="#172332" />
+                                            <Setter Property="Background" Value="{StaticResource NavActiveBgBrush}" />
                                             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                                         </DataTrigger>
@@ -569,7 +562,7 @@
 
                     <Border
                         Grid.Row="2"
-                        Background="#0B121C"
+                        Background="{StaticResource BgCardBrush}"
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -614,7 +607,7 @@
 
                     <Border
                         Grid.Row="3"
-                        Background="#0B121C"
+                        Background="{StaticResource BgCardBrush}"
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -664,7 +657,7 @@
                                                 Grid.Column="0"
                                                 Width="42"
                                                 Height="42"
-                                                Background="#111B28"
+                                                Background="{StaticResource BadgeBgBrush}"
                                                 CornerRadius="8">
                                                 <TextBlock
                                                     Text="{Binding Flag}"
@@ -815,7 +808,7 @@
                         </Grid>
 
                         <Border
-                            Background="#0B121C"
+                            Background="{StaticResource BgCardBrush}"
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="8"

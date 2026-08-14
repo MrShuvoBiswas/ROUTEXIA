@@ -257,26 +257,162 @@
                     </Grid>
                 </Border>
 
+                <!-- ── Account & Subscription Widget (T034, T035, T036) ────── -->
                 <Border
+                    x:Name="AccountWidget"
                     Grid.Row="3"
-                    Margin="20,0,20,22"
-                    Padding="12"
-                    Background="{StaticResource BgCardBrush}"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusMd}">
-                    <StackPanel>
-                        <TextBlock
-                            Text="Ready for match"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Foreground="{StaticResource TextPrimaryBrush}" />
-                        <TextBlock
-                            Text="SG route active when boosted"
-                            Margin="0,4,0,0"
-                            FontSize="11"
-                            Foreground="{StaticResource TextMutedBrush}" />
-                    </StackPanel>
+                    Margin="16,0,16,20"
+                    Padding="12,10"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsExpiryWarning}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{StaticResource StatusWarnBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <Grid>
+                        <!-- Authenticated State Content -->
+                        <Grid x:Name="AuthAccountPanel">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAuthenticated}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Top Row: Plan Badge + User Email (T034) -->
+                            <Grid Grid.Row="0" Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Grid.Column="0"
+                                    Background="{StaticResource AccentGlowBrush}"
+                                    CornerRadius="{StaticResource RadiusXs}"
+                                    Padding="6,2"
+                                    Margin="0,0,8,0">
+                                    <TextBlock
+                                        Text="{Binding PlanBadgeText, FallbackValue='PREMIUM'}"
+                                        Style="{StaticResource BadgeLabelStyle}"
+                                        FontSize="9"
+                                        FontWeight="Bold"
+                                        Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding UserEmail, FallbackValue='user@routexia.com'}"
+                                    Style="{StaticResource CaptionStyle}"
+                                    Foreground="{StaticResource TextMutedBrush}"
+                                    TextTrimming="CharacterEllipsis"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Middle Row: Subscription Title (T034) -->
+                            <TextBlock
+                                Grid.Row="1"
+                                Text="{Binding SubscriptionTitle, FallbackValue='Active Pro Plan'}"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="12"
+                                Margin="0,0,0,4" />
+
+                            <!-- Bottom Row: Days Left + Expiry Warning Icon (T034, T035) -->
+                            <StackPanel
+                                Grid.Row="2"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                                <ui:SymbolIcon
+                                    Symbol="Warning24"
+                                    FontSize="12"
+                                    Foreground="{StaticResource StatusWarnBrush}"
+                                    Margin="0,0,5,0">
+                                    <ui:SymbolIcon.Style>
+                                        <Style TargetType="ui:SymbolIcon">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsExpiryWarning}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:SymbolIcon.Style>
+                                </ui:SymbolIcon>
+                                <TextBlock
+                                    Text="{Binding DaysLeftText, FallbackValue='28 Days Left'}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource CaptionStyle}">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsExpiryWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource StatusWarnBrush}" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Unauthenticated State Content (T036) -->
+                        <Grid x:Name="UnauthAccountPanel">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAuthenticated}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock
+                                    Text="Not signed in"
+                                    Style="{StaticResource CaptionStyle}"
+                                    Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBlock
+                                    Text="Get 4-Day Trial"
+                                    Style="{StaticResource HeadingSmStyle}"
+                                    FontSize="11"
+                                    Foreground="{StaticResource TextPrimaryBrush}"
+                                    Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <Button
+                                Grid.Column="1"
+                                Content="Sign In →"
+                                Style="{StaticResource ComingSoonButtonStyle}"
+                                Padding="8,4"
+                                Click="BtnSidebarSignIn_Click"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>
