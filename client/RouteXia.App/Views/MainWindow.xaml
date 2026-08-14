@@ -31,6 +31,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="20,22,20,24">
@@ -148,8 +149,116 @@
                     </Button>
                 </StackPanel>
 
+                <!-- ── Game Detection Indicator (T031, T032, T033) ──────── -->
                 <Border
+                    x:Name="GameDetectionIndicator"
                     Grid.Row="2"
+                    Margin="16,0,16,14"
+                    Padding="12,10"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsGameDetected}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource StatusGoodBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsGameDetected}" Value="False">
+                                    <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Game Icon with Fallback (T033) -->
+                        <Grid Grid.Column="0" Width="26" Height="26" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <!-- Generic Fallback SymbolIcon -->
+                            <ui:SymbolIcon
+                                x:Name="FallbackGameIcon"
+                                Symbol="Games24"
+                                FontSize="18"
+                                Foreground="{StaticResource AccentBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                            <!-- Game Image Icon -->
+                            <Image
+                                x:Name="GameIconImage"
+                                Source="{Binding DetectedGameIconPath}"
+                                Stretch="Uniform"
+                                RenderOptions.BitmapScalingMode="HighQuality">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DetectedGameIconPath}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                        </Grid>
+
+                        <!-- Game Name & Status (T031, T032) -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock
+                                Text="ACTIVE GAME"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                FontSize="10"
+                                FontWeight="Bold" />
+                            <TextBlock
+                                Text="{Binding DetectedGameName, FallbackValue='PUBG: Battlegrounds'}"
+                                FontSize="12"
+                                TextTrimming="CharacterEllipsis"
+                                Margin="0,2,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource HeadingSmStyle}">
+                                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsGameDetected}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Status Dot Indicator (T031, T032) -->
+                        <Ellipse
+                            Grid.Column="2"
+                            Width="8"
+                            Height="8"
+                            VerticalAlignment="Center"
+                            Margin="4,0,0,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsGameDetected}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource StatusGoodBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                    </Grid>
+                </Border>
+
+                <Border
+                    Grid.Row="3"
                     Margin="20,0,20,22"
                     Padding="12"
                     Background="{StaticResource BgCardBrush}"
