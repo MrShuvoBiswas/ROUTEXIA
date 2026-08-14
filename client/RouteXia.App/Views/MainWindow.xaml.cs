@@ -1,4 +1,6 @@
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using RouteXia.App.ViewModels;
 using Wpf.Ui.Controls;
 
 namespace RouteXia.App.Views;
@@ -24,6 +26,7 @@ public partial class MainWindow : FluentWindow
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        DataContext = App.Services.GetRequiredService<ConnectViewModel>();
         _navButtons = [BtnNavHome, BtnNavNetwork, BtnNavSettings, BtnNavAccount, BtnNavHelp];
         NavigateToHome();
     }

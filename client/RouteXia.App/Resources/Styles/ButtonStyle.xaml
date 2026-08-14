@@ -18,14 +18,8 @@
                             x:Name="GlowEllipse"
                             Width="{TemplateBinding Width}"
                             Height="{TemplateBinding Height}"
-                            Opacity="0">
-                            <Ellipse.Fill>
-                                <RadialGradientBrush>
-                                    <GradientStop Color="#4000C2FF" Offset="0" />
-                                    <GradientStop Color="#0000C2FF" Offset="1" />
-                                </RadialGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
+                            Opacity="0"
+                            Fill="{StaticResource AccentGlowBrush}" />
 
                         <!-- Button body -->
                         <Ellipse
@@ -50,16 +44,10 @@
                             <Setter TargetName="ButtonBody" Property="StrokeThickness" Value="3" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBody" Property="Fill">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#15202D" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="ButtonBody" Property="Fill" Value="{StaticResource CardHoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBody" Property="Stroke">
-                                <Setter.Value><SolidColorBrush Color="#3A4A5A" /></Setter.Value>
-                            </Setter>
+                            <Setter TargetName="ButtonBody" Property="Stroke" Value="{StaticResource ComingSoonBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -67,7 +55,7 @@
         </Setter>
     </Style>
 
-    <!-- ===== Sidebar Nav Button (LEGACY — text style, kept for compatibility) ===== -->
+    <!-- ===== Sidebar Nav Button (T023: Hover + Active state with left accent stripe) ===== -->
     <Style x:Key="NavButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -80,28 +68,29 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border
-                        x:Name="NavBorder"
-                        Background="{TemplateBinding Background}"
-                        BorderThickness="3,0,0,0"
-                        BorderBrush="Transparent"
-                        Padding="{TemplateBinding Padding}">
-                        <ContentPresenter
-                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
-                    </Border>
+                    <Grid>
+                        <!-- Left accent bar (active indicator) -->
+                        <Rectangle
+                            x:Name="ActiveAccentBar"
+                            HorizontalAlignment="Left"
+                            Width="2"
+                            Fill="Transparent" />
+                        <Border
+                            x:Name="NavBorder"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                            <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="NavBorder" Property="Background">
-                                <Setter.Value><SolidColorBrush Color="#12192A" /></Setter.Value>
-                            </Setter>
+                            <Setter TargetName="NavBorder" Property="Background" Value="{StaticResource NavHoverBgBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="Tag" Value="active">
-                            <Setter TargetName="NavBorder" Property="Background">
-                                <Setter.Value><SolidColorBrush Color="#0D1929" /></Setter.Value>
-                            </Setter>
-                            <Setter TargetName="NavBorder" Property="BorderBrush"
-                                Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="ActiveAccentBar" Property="Fill" Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="NavBorder" Property="Background" Value="{StaticResource NavActiveBgBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -137,7 +126,7 @@
                         <Border
                             x:Name="HoverBg"
                             Background="Transparent"
-                            CornerRadius="6"
+                            CornerRadius="{StaticResource RadiusSm}"
                             Margin="6,2,6,2">
                             <ContentPresenter
                                 HorizontalAlignment="Center"
@@ -147,17 +136,12 @@
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="HoverBg" Property="Background">
-                                <Setter.Value><SolidColorBrush Color="#12192A" /></Setter.Value>
-                            </Setter>
+                            <Setter TargetName="HoverBg" Property="Background" Value="{StaticResource NavHoverBgBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="Tag" Value="active">
-                            <Setter TargetName="AccentBar" Property="Background"
-                                Value="{StaticResource AccentBrush}" />
-                            <Setter TargetName="HoverBg" Property="Background">
-                                <Setter.Value><SolidColorBrush Color="#0D1929" /></Setter.Value>
-                            </Setter>
+                            <Setter TargetName="AccentBar" Property="Background" Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="HoverBg" Property="Background" Value="{StaticResource NavActiveBgBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -181,7 +165,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="10"
+                        CornerRadius="{StaticResource RadiusMd}"
                         Padding="12"
                         MinWidth="110"
                         MinHeight="110">
@@ -192,16 +176,11 @@
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="CardBorder" Property="Background">
-                                <Setter.Value><SolidColorBrush Color="#141C28" /></Setter.Value>
-                            </Setter>
-                            <Setter TargetName="CardBorder" Property="BorderBrush"
-                                Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="CardBorder" Property="Background" Value="{StaticResource CardHoverBrush}" />
+                            <Setter TargetName="CardBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="CardBorder" Property="Background">
-                                <Setter.Value><SolidColorBrush Color="#1A2435" /></Setter.Value>
-                            </Setter>
+                            <Setter TargetName="CardBorder" Property="Background" Value="{StaticResource NavActiveBgBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="CardBorder" Property="Opacity" Value="0.5" />

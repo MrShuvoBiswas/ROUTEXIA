@@ -8,20 +8,20 @@
         <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
         <Setter Property="Padding" Value="14,12" />
     </Style>
 
     <!-- ===== Category Pill Badge ===== -->
     <Style x:Key="CategoryPillStyle" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource BadgeBgBrush}" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
         <Setter Property="Padding" Value="10,4" />
     </Style>
 
     <!-- ===== Status Badge (Connected/Disconnected) ===== -->
     <Style x:Key="StatusBadgeStyle" TargetType="Border">
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
         <Setter Property="Padding" Value="10,5" />
     </Style>
 
@@ -37,7 +37,7 @@
         <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusLg}" />
         <Setter Property="Padding" Value="16,12" />
     </Style>
 
@@ -46,7 +46,7 @@
         <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusXl}" />
         <Setter Property="Padding" Value="16,8" />
     </Style>
 

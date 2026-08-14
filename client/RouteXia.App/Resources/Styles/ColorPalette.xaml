@@ -40,6 +40,7 @@
     <SolidColorBrush x:Key="TopBarBrush"       Color="#0C1018" />
     <SolidColorBrush x:Key="ComingSoonBrush"   Color="#3A4A5A" />
     <SolidColorBrush x:Key="BadgeBgBrush"      Color="#1A2230" />
+    <SolidColorBrush x:Key="OverlayDimBrush"   Color="#E60A0E14" />
 
     <!-- Accent gradient -->
     <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">

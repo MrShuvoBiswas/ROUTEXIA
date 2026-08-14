@@ -349,10 +349,18 @@ public class ConnectViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(GameRunningStatusText));
             OnPropertyChanged(nameof(HasNoGameRunning));
+            OnPropertyChanged(nameof(IsGameDetected));
+            OnPropertyChanged(nameof(DetectedGameName));
+            OnPropertyChanged(nameof(DetectedGameIconPath));
         }
     }
 
     public bool HasNoGameRunning => !IsGameRunning;
+
+    public bool IsGameDetected => IsGameRunning;
+    public string DetectedGameName => IsGameRunning ? $"{CurrentGame.Name} running" : $"{CurrentGame.Name} ready";
+    public string? DetectedGameIconPath => CurrentGame?.ImagePath;
+    public string ActiveRouteLabel => SelectedServer != null ? SelectedServer.Name : $"{CurrentGame.ShortName} {CurrentGame.RegionBadge}";
 
     public string GameRunningStatusText => IsGameRunning
         ? $"⚡ {CurrentGame.ShortName} running — Live routing active (Ping: 42ms | Loss: 0%)"

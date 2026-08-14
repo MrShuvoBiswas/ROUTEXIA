@@ -36,20 +36,26 @@
                 <StackPanel Grid.Row="0" Margin="20,22,20,24">
                     <TextBlock
                         Text="ROUTEXIA"
-                        FontFamily="/Resources/Fonts/#Rajdhani"
-                        FontSize="28"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource TextPrimaryBrush}" />
+                        Style="{StaticResource HeadingXLStyle}" />
                     <Border
                         HorizontalAlignment="Left"
                         Margin="0,8,0,0"
                         Padding="8,3"
-                        Background="#132636"
-                        CornerRadius="4">
+                        Background="{StaticResource NavActiveBgBrush}"
+                        CornerRadius="{StaticResource RadiusXs}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <TextBlock
-                            Text="PUBG SG"
-                            FontSize="11"
-                            FontWeight="Bold"
+                            Text="{Binding ActiveRouteLabel, FallbackValue='SG ROUTE'}"
+                            Style="{StaticResource BadgeLabelStyle}"
                             Foreground="{StaticResource AccentBrush}" />
                     </Border>
                 </StackPanel>
@@ -146,10 +152,10 @@
                     Grid.Row="2"
                     Margin="20,0,20,22"
                     Padding="12"
-                    Background="#0F1723"
+                    Background="{StaticResource BgCardBrush}"
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8">
+                    CornerRadius="{StaticResource RadiusMd}">
                     <StackPanel>
                         <TextBlock
                             Text="Ready for match"
@@ -192,18 +198,32 @@
                         <ui:SymbolIcon
                             Symbol="Pulse24"
                             FontSize="18"
-                            Foreground="{StaticResource StatusGoodBrush}"
-                            Margin="0,0,10,0" />
+                            Margin="0,0,10,0">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource StatusGoodBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsConnecting}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsKillSwitchActive}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource StatusBadBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
                         <TextBlock
-                            Text="PUBG optimizer ready"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Foreground="{StaticResource TextPrimaryBrush}" />
+                            Text="{Binding DetectedGameName, FallbackValue='RouteXia ready'}"
+                            Style="{StaticResource HeadingSmStyle}" />
                         <Border
                             Margin="12,0,0,0"
                             Padding="8,3"
-                            Background="#111F2B"
-                            CornerRadius="4">
+                            Background="{StaticResource BadgeBgBrush}"
+                            CornerRadius="{StaticResource RadiusXs}">
                             <TextBlock
                                 Text="BETA"
                                 FontSize="10"
@@ -266,7 +286,7 @@
             Grid.ColumnSpan="2"
             Visibility="Collapsed"
             Opacity="0"
-            Background="#E60A0E14"
+            Background="{StaticResource OverlayDimBrush}"
             Panel.ZIndex="99">
             <Grid>
                 <Grid
@@ -275,7 +295,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
                     <Ellipse
-                        Stroke="#243244"
+                        Stroke="{StaticResource BorderBrush}"
                         StrokeThickness="6" />
                     <Path
                         Stroke="{StaticResource AccentBrush}"
