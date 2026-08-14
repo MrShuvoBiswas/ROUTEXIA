@@ -524,6 +524,7 @@ public class ConnectViewModel : INotifyPropertyChanged
         {
             _state = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ConnectionState));
             OnPropertyChanged(nameof(StateText));
             OnPropertyChanged(nameof(ConnectActionText));
             OnPropertyChanged(nameof(ConnectButtonBg));
@@ -547,6 +548,8 @@ public class ConnectViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(ActivePathStrokeThickness));
         }
     }
+
+    public ConnectionState ConnectionState => State;
 
     // Granular connection state booleans — bind to DataTriggers in views
     public bool IsConnected        => State == ConnectionState.Connected || State == ConnectionState.Optimizing;
@@ -646,9 +649,11 @@ public class ConnectViewModel : INotifyPropertyChanged
 
     public string ConnectButtonFg => State switch
     {
-        ConnectionState.Connected    => "#2ED573",
-        ConnectionState.Connecting   => "#FFB020",
-        ConnectionState.Disconnected => "#00C2FF",
+        ConnectionState.Connected        => "#2ED573",
+        ConnectionState.Optimizing       => "#2ED573",
+        ConnectionState.Connecting       => "#FFB020",
+        ConnectionState.KillSwitchActive => "#FF4757",
+        ConnectionState.Disconnected     => "#00C2FF",
         _ => "#00C2FF"
     };
 
