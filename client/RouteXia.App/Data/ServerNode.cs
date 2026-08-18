@@ -1,5 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace RouteXia.App.Data;
 
@@ -14,7 +20,7 @@ public class ServerNode : INotifyPropertyChanged
     public int Port { get; init; } = 9001;
     public string Subtitle { get; init; } = "RouteXia BGP Relay Node";
 
-    private double _latencyMs = 45;
+    private double _latencyMs;
     public double LatencyMs
     {
         get => _latencyMs;
@@ -44,20 +50,17 @@ public class ServerNode : INotifyPropertyChanged
 
 public static class ServerRegistry
 {
-    /// <summary>
-    /// Returns dynamic server nodes fetched directly from central Backend API.
-    /// </summary>
     public static List<ServerNode> GetDefaultServers() => new List<ServerNode>();
 
     /// <summary>
-    /// Dynamically fetches live active relay server nodes from central Admin API.
+    /// Dynamically fetches live active relay server nodes from central Backend API.
     /// </summary>
     public static async Task<List<ServerNode>> FetchDynamicRelaysAsync()
     {
         try
         {
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-            var json = await http.GetStringAsync("http://localhost:8080/api/v1/relays");
+            var json = await http.GetStringAsync("https://api.routexia.in/api/v1/relays");
             var items = System.Text.Json.JsonSerializer.Deserialize<List<ApiRelayDto>>(json);
 
             if (items != null && items.Count > 0)
@@ -81,15 +84,15 @@ public static class ServerRegistry
                     list.Add(new ServerNode
                     {
                         Id = item.Id ?? $"relay-{i}",
-                        Name = item.DisplayName?.ToUpper() ?? $"{item.RegionCode} RELAY",
-                        Country = item.City ?? item.RegionCode ?? "Global",
-                        Region = item.RegionCode ?? "GLOBAL",
+                        Name = item.DisplayName ?? (item.City != null ? $"{item.City} Relay" : "Singapore Relay"),
+                        Country = item.City ?? "Singapore",
+                        Region = item.RegionCode ?? "SG",
                         Flag = flag,
                         Host = item.Host,
                         Port = item.Port > 0 ? item.Port : 9001,
-                        LatencyMs = item.LatencyMs > 0 ? item.LatencyMs : 40,
+                        LatencyMs = 0, // Will be measured via real live ping probe
                         IsRecommended = item.IsRecommended,
-                        Subtitle = $"{item.City ?? "Direct"} BGP Multipath Gateway",
+                        Subtitle = $"{item.City ?? "Direct"} BGP Multipath Route",
                         IsSelected = i == 0
                     });
                 }
@@ -99,6 +102,42 @@ public static class ServerRegistry
         catch { }
 
         return GetDefaultServers();
+    }
+
+    /// <summary>
+    /// Measures actual real-time network latency (RTT) from client to relay host.
+    /// Tries ICMP ping first, and falls back to TCP handshake latency probe if ICMP is blocked.
+    /// </summary>
+    public static async Task<double> MeasurePingAsync(string host, int port = 9001, int timeoutMs = 2000)
+    {
+        if (string.IsNullOrWhiteSpace(host)) return 0;
+
+        // 1. Try ICMP Ping
+        try
+        {
+            using var pinger = new Ping();
+            var reply = await pinger.SendPingAsync(host, timeoutMs).ConfigureAwait(false);
+            if (reply.Status == IPStatus.Success && reply.RoundtripTime > 0)
+            {
+                return reply.RoundtripTime;
+            }
+        }
+        catch { }
+
+        // 2. Try TCP socket connect with CancellationToken (clean cancellation without unobserved task leaks)
+        try
+        {
+            var sw = Stopwatch.StartNew();
+            using var cts = new System.Threading.CancellationTokenSource(timeoutMs);
+            using var client = new TcpClient();
+            await client.ConnectAsync(host, port > 0 ? port : 80, cts.Token).ConfigureAwait(false);
+            sw.Stop();
+
+            return Math.Max(1, sw.ElapsedMilliseconds);
+        }
+        catch { }
+
+        return 0;
     }
 
     private class ApiRelayDto

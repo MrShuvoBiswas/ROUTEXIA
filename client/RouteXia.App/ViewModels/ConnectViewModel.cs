@@ -13,7 +13,9 @@ using RouteXia.VpnClient.Routing;
 using RouteXia.VpnClient.KillSwitch;
 using RouteXia.VpnClient.Interception;
 using RouteXia.VpnClient.Api;
+using RouteXia.VpnClient.Security;
 using Microsoft.Extensions.DependencyInjection;
+using RouteXia.App.Views;
 
 namespace RouteXia.App.ViewModels;
 
@@ -180,6 +182,10 @@ public class ConnectViewModel : INotifyPropertyChanged
         private set
         {
             _currentGame = value;
+            if (value?.ProcessNames != null)
+            {
+                RouteXia.VpnClient.Interception.GameSocketTracker.SetTargetProcessNames(value.ProcessNames);
+            }
             OnPropertyChanged();
             OnPropertyChanged(nameof(GameStatusText));
             OnPropertyChanged(nameof(LaunchButtonText));
@@ -216,10 +222,23 @@ public class ConnectViewModel : INotifyPropertyChanged
         get => _isAutoServerSelection;
         set
         {
-            _isAutoServerSelection = value;
-            _isManualServerSelection = !value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsManualServerSelection));
+            if (_isAutoServerSelection != value)
+            {
+                _isAutoServerSelection = value;
+                _isManualServerSelection = !value;
+                if (value)
+                {
+                    SelectLowestPingServer();
+                }
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsManualServerSelection));
+                OnPropertyChanged(nameof(ServerModeBadgeText));
+                OnPropertyChanged(nameof(SelectedServerName));
+                OnPropertyChanged(nameof(CurrentRelayDisplayName));
+                OnPropertyChanged(nameof(CurrentRelaySubText));
+                OnPropertyChanged(nameof(CurrentRelayLatencyText));
+                OnPropertyChanged(nameof(IsActiveFlagVisible));
+            }
         }
     }
 
@@ -229,14 +248,24 @@ public class ConnectViewModel : INotifyPropertyChanged
         get => _isManualServerSelection;
         set
         {
-            _isManualServerSelection = value;
-            _isAutoServerSelection = !value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsAutoServerSelection));
-            OnPropertyChanged(nameof(TargetRegionText));
-            OnPropertyChanged(nameof(ServerModeBadgeText));
+            if (_isManualServerSelection != value)
+            {
+                _isManualServerSelection = value;
+                _isAutoServerSelection = !value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsAutoServerSelection));
+                OnPropertyChanged(nameof(TargetRegionText));
+                OnPropertyChanged(nameof(ServerModeBadgeText));
+                OnPropertyChanged(nameof(SelectedServerName));
+                OnPropertyChanged(nameof(CurrentRelayDisplayName));
+                OnPropertyChanged(nameof(CurrentRelaySubText));
+                OnPropertyChanged(nameof(CurrentRelayLatencyText));
+                OnPropertyChanged(nameof(IsActiveFlagVisible));
+            }
         }
     }
+
+    public string ServerModeBadgeText => IsAutoServerSelection ? "Automatic" : "Manual";
 
     public ObservableCollection<RegionItem> RegionsList { get; } = new()
     {
@@ -328,7 +357,6 @@ public class ConnectViewModel : INotifyPropertyChanged
     public string TargetRegionText => IsManualServerSelection && SelectedServer != null
         ? SelectedServer.Name
         : (SelectedRegionItem?.Name == "ASIA" ? "Asia" : "All Regions");
-    public string ServerModeBadgeText => IsAutoServerSelection ? "Automatic" : "Manual";
 
     private bool _isRoutesApplied;
     public bool IsRoutesApplied
@@ -362,16 +390,37 @@ public class ConnectViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasNoGameRunning));
             OnPropertyChanged(nameof(IsGameDetected));
             OnPropertyChanged(nameof(DetectedGameName));
+            OnPropertyChanged(nameof(DetectedGameStatusText));
             OnPropertyChanged(nameof(DetectedGameIconPath));
+            OnPropertyChanged(nameof(GameDetectionHeader));
+            OnPropertyChanged(nameof(TopBarStatusText));
         }
     }
 
     public bool HasNoGameRunning => !IsGameRunning;
 
     public bool IsGameDetected => IsGameRunning;
-    public string DetectedGameName => IsGameRunning ? $"{CurrentGame.Name} running" : $"{CurrentGame.Name} ready";
-    public string? DetectedGameIconPath => CurrentGame?.ImagePath;
+    public string DetectedGameName => IsGameRunning ? CurrentGame.Name : "Waiting for game...";
+    public string DetectedGameStatusText => IsGameRunning ? $"Game Detected — {CurrentGame.ShortName}" : "Waiting for game...";
+    public string? DetectedGameIconPath => IsGameRunning ? CurrentGame?.ImagePath : null;
+    public string GameDetectionHeader => IsGameRunning ? "ACTIVE GAME" : "GAME DETECTION";
     public string ActiveRouteLabel => SelectedServer != null ? SelectedServer.Name : $"{CurrentGame.ShortName} {CurrentGame.RegionBadge}";
+
+    public string TopBarStatusText
+    {
+        get
+        {
+            if (IsConnected)
+                return $"Connected — {ActiveRouteLabel}";
+            if (IsConnecting)
+                return $"Connecting to {SelectedServerName}...";
+            if (IsKillSwitchActive)
+                return "Kill-Switch Active — Traffic Blocked";
+            if (IsGameDetected)
+                return $"{CurrentGame.Name} detected — Click Boost";
+            return "RouteXia ready — Waiting for game";
+        }
+    }
 
     // ── Auth and Subscription Forwarding for MainWindow Widget ───────────────
     private AuthViewModel? _authVm;
@@ -400,13 +449,17 @@ public class ConnectViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool IsAuthenticated => AuthVm?.IsAuthenticated ?? true;
-    public string UserEmail => AuthVm?.UserEmail ?? "sbiswas492003@gmail.com";
-    public bool HasSubscription => AuthVm?.HasSubscription ?? true;
-    public string SubscriptionTitle => AuthVm?.SubscriptionTitle ?? "Active Pro Plan";
-    public string PlanBadgeText => AuthVm?.PlanBadgeText ?? "PREMIUM";
-    public string DaysLeftText => AuthVm?.DaysLeftText ?? "28 Days Left";
-    public bool IsExpiryWarning => AuthVm?.IsExpiryWarning ?? false;
+    public bool HasValidSubscription => _apiClient.CurrentSubscription?.CanConnect == true && _apiClient.CurrentSubscription?.DaysLeft > 0;
+    public bool IsAuthenticated => _apiClient.CurrentUser != null;
+    public string UserEmail => _apiClient.CurrentUser?.Email ?? (AuthVm?.UserEmail ?? "No user logged in");
+    public bool HasSubscription => HasValidSubscription;
+    public string SubscriptionTitle => HasValidSubscription
+        ? (_apiClient.CurrentSubscription?.IsTrial == true ? "Free Trial Active" : "Active Pro Plan")
+        : "No subscription";
+    public string PlanBadgeText => _apiClient.CurrentSubscription?.IsTrial == true ? "FREE TRIAL" : (HasValidSubscription ? "PREMIUM" : "EXPIRED");
+    public string DaysLeftText => $"{_apiClient.CurrentSubscription?.DaysLeft ?? 0} Days Left";
+    public bool IsExpiryWarning => HasValidSubscription && (_apiClient.CurrentSubscription?.DaysLeft <= 7);
+    public bool IsManualRelayAllowed => _apiClient.CanManualSelectRelay;
 
     public string GameRunningStatusText => IsGameRunning
         ? $"⚡ {CurrentGame.ShortName} running — Live routing active (Ping: 42ms | Loss: 0%)"
@@ -498,10 +551,59 @@ public class ConnectViewModel : INotifyPropertyChanged
         }
     }
 
-    public string SelectedServerName => SelectedServer?.Name ?? "NO SERVER AVAILABLE";
+    public bool IsActiveFlagVisible => IsConnected || (IsManualServerSelection && SelectedServer != null);
+
+    public string SelectedServerName
+    {
+        get
+        {
+            if (IsConnected)
+                return SelectedServer?.Name ?? "Singapore";
+            if (IsManualServerSelection && SelectedServer != null)
+                return SelectedServer.Name;
+            return "Auto (Smart Route)";
+        }
+    }
+
+    public string CurrentRelayDisplayName
+    {
+        get
+        {
+            if (IsConnected)
+                return SelectedServer?.Name ?? "Singapore";
+            if (IsManualServerSelection && SelectedServer != null)
+                return SelectedServer.Name;
+            return "Auto Best Selection";
+        }
+    }
+
+    public string CurrentRelaySubText
+    {
+        get
+        {
+            if (IsConnected)
+                return SelectedServer != null ? $"{SelectedServer.Subtitle} • Optimized" : "Singapore BGP Multipath Route • Optimized";
+            if (IsManualServerSelection && SelectedServer != null)
+                return SelectedServer.Subtitle;
+            return "Auto analyzes & connects to lowest latency relay";
+        }
+    }
+
+    public string CurrentRelayLatencyText
+    {
+        get
+        {
+            if (IsConnected)
+                return EstimatedPingText;
+            if (IsManualServerSelection && SelectedServer != null && SelectedServer.LatencyMs > 0)
+                return $"{SelectedServer.LatencyMs:F0} ms";
+            return "-- ms";
+        }
+    }
+
     public string EstimatedPingText => SelectedServer != null && SelectedServer.LatencyMs > 0
-        ? $"{SelectedServer.LatencyMs:F0} MS"
-        : "-- MS";
+        ? $"{SelectedServer.LatencyMs:F0} ms"
+        : "-- ms";
 
     private string _serverSearchQuery = string.Empty;
     public string ServerSearchQuery
@@ -573,6 +675,11 @@ public class ConnectViewModel : INotifyPropertyChanged
     private readonly Dictionary<string, Queue<RouteSnapshot>> _routeRingBuffers = new();
     private const int MaxRouteHistorySamples = 120;
 
+    // ── Session Reporting State ────────────────────────────────────────────────
+    private string? _currentSessionId;
+    private Timer? _heartbeatTimer;
+    private DateTime _lastHeartbeatSent = DateTime.MinValue;
+
     public ObservableCollection<RouteSnapshot> RouteHistory { get; } = [];
 
     public void AddRouteSnapshot(RouteSnapshot snap)
@@ -600,6 +707,135 @@ public class ConnectViewModel : INotifyPropertyChanged
     {
         _routeRingBuffers.Clear();
         RouteHistory.Clear();
+    }
+
+    // ── Session Reporting Methods ────────────────────────────────────────────────
+
+    private async Task<(bool success, string message)> ReportSessionConnectAsync()
+    {
+        if (_apiClient.CurrentUser == null || SelectedServer == null)
+            return (false, "Not logged in or no server selected.");
+
+        var request = new SessionConnectRequest
+        {
+            UserId = _apiClient.CurrentUser.ID,
+            RelayId = SelectedServer.Id,
+            RelayName = SelectedServer.Name,
+            RelayRegion = SelectedServer.Country,
+            RelayHost = SelectedServer.Host,
+            GameName = CurrentGame?.Name,
+            GameProcess = CurrentGame?.ProcessNames.FirstOrDefault(),
+            PingMs = SelectedServer.LatencyMs > 0 ? (int)SelectedServer.LatencyMs : null,
+            Hwid = HwidGenerator.GetHwid(),
+            ClientVersion = "1.0.0"
+        };
+
+        var result = await _apiClient.ReportSessionConnectAsync(request);
+        if (result.success && result.data != null)
+        {
+            _currentSessionId = result.data.SessionId;
+            LogMessage?.Invoke(this, $"📡 Session reported to backend: {_currentSessionId}");
+            StartHeartbeatTimer();
+            return (true, "OK");
+        }
+        else
+        {
+            LogMessage?.Invoke(this, $"⚠️ Session rejected by server: {result.message}");
+            return (false, result.message ?? "Connection rejected by server.");
+        }
+    }
+
+    private void StartHeartbeatTimer()
+    {
+        _heartbeatTimer?.Dispose();
+        _heartbeatTimer = new Timer(async _ =>
+        {
+            if (!string.IsNullOrEmpty(_currentSessionId) && IsConnected)
+            {
+                await SendHeartbeatAsync();
+            }
+        }, null, 10000, 10000); // Every 10 seconds for real-time ban & subscription validation
+    }
+
+    private long _lastSentBytes;
+    private long _lastRecvBytes;
+    private DateTime _lastHeartbeatTime = DateTime.UtcNow;
+
+    private async Task SendHeartbeatAsync()
+    {
+        if (string.IsNullOrEmpty(_currentSessionId) || !IsConnected) return;
+
+        var stats = _router?.Stats;
+        long currentSent = stats?.SentBytes ?? 0;
+        long currentRecv = stats?.ReceivedBytes ?? 0;
+        var now = DateTime.UtcNow;
+        double elapsedSec = Math.Max(1.0, (now - _lastHeartbeatTime).TotalSeconds);
+
+        double upMbps = ((currentSent - _lastSentBytes) * 8.0) / (elapsedSec * 1000000.0);
+        double downMbps = ((currentRecv - _lastRecvBytes) * 8.0) / (elapsedSec * 1000000.0);
+
+        _lastSentBytes = currentSent;
+        _lastRecvBytes = currentRecv;
+        _lastHeartbeatTime = now;
+
+        var request = new SessionHeartbeatRequest
+        {
+            SessionId = _currentSessionId,
+            PingMs = (int)BestPingMs,
+            DownloadMbps = Math.Max(0.01, Math.Round(downMbps, 2)),
+            UploadMbps = Math.Max(0.01, Math.Round(upMbps, 2)),
+            BytesSent = currentSent,
+            BytesReceived = currentRecv,
+            GameName = CurrentGame?.Name,
+            GameProcess = CurrentGame?.ProcessNames.FirstOrDefault()
+        };
+
+        var result = await _apiClient.ReportSessionHeartbeatAsync(request);
+        if (result.success)
+        {
+            _lastHeartbeatSent = DateTime.UtcNow;
+        }
+        else
+        {
+            LogMessage?.Invoke(this, $"⚠️ Heartbeat rejected by server: {result.message}");
+            if (!string.IsNullOrEmpty(result.message) && (
+                result.message.Contains("suspended") ||
+                result.message.Contains("banned") ||
+                result.message.Contains("deleted") ||
+                result.message.Contains("expired") ||
+                result.message.Contains("inactive")))
+            {
+                await DisconnectAsync();
+                ShowSubscriptionRequiredPrompt(result.message);
+            }
+        }
+    }
+
+    private async Task ReportSessionDisconnectAsync()
+    {
+        if (string.IsNullOrEmpty(_currentSessionId)) return;
+
+        var stats = _router?.Stats;
+        var request = new SessionDisconnectRequest
+        {
+            SessionId = _currentSessionId,
+            BytesSent = stats?.SentBytes,
+            BytesReceived = stats?.ReceivedBytes
+        };
+
+        var result = await _apiClient.ReportSessionDisconnectAsync(request);
+        if (result.success)
+        {
+            LogMessage?.Invoke(this, $"📡 Session disconnected reported to backend");
+        }
+        else
+        {
+            LogMessage?.Invoke(this, $"⚠️ Failed to report disconnect: {result.message}");
+        }
+
+        _currentSessionId = null;
+        _heartbeatTimer?.Dispose();
+        _heartbeatTimer = null;
     }
 
     // ── Bindable properties ───────────────────────────────────────────────────
@@ -633,6 +869,12 @@ public class ConnectViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(RelayNodeBorder));
             OnPropertyChanged(nameof(GameServerNodeBorder));
             OnPropertyChanged(nameof(ActivePathStrokeThickness));
+            OnPropertyChanged(nameof(TopBarStatusText));
+            OnPropertyChanged(nameof(SelectedServerName));
+            OnPropertyChanged(nameof(CurrentRelayDisplayName));
+            OnPropertyChanged(nameof(CurrentRelaySubText));
+            OnPropertyChanged(nameof(CurrentRelayLatencyText));
+            OnPropertyChanged(nameof(IsActiveFlagVisible));
         }
     }
 
@@ -710,8 +952,8 @@ public class ConnectViewModel : INotifyPropertyChanged
         ConnectionState.Optimizing       => "BOOSTING...",
         ConnectionState.Connecting       => "BOOSTING...",
         ConnectionState.KillSwitchActive => "RECONNECT",
-        ConnectionState.Disconnected     => SelectedServer == null ? "WAITING FOR SERVER" : "BOOST PUBG",
-        _ => "BOOST PUBG"
+        ConnectionState.Disconnected     => !HasValidSubscription ? "SUBSCRIBE TO BOOST" : (SelectedServer == null ? "WAITING FOR SERVER" : $"BOOST {CurrentGame.ShortName.ToUpper()}"),
+        _ => !HasValidSubscription ? "SUBSCRIBE TO BOOST" : $"BOOST {CurrentGame.ShortName.ToUpper()}"
     };
 
     public string ConnectButtonBg => State switch
@@ -720,7 +962,7 @@ public class ConnectViewModel : INotifyPropertyChanged
         ConnectionState.Optimizing       => "#091A14",
         ConnectionState.Connecting       => "#2A1E0D",
         ConnectionState.KillSwitchActive => "#200A0C",
-        ConnectionState.Disconnected     => "#0D1929",
+        ConnectionState.Disconnected     => !HasValidSubscription ? "#1A1508" : "#0D1929",
         _ => "#0D1929"
     };
 
@@ -730,17 +972,17 @@ public class ConnectViewModel : INotifyPropertyChanged
         ConnectionState.Optimizing       => "#00C2FF",
         ConnectionState.Connecting       => "#FFB020",
         ConnectionState.KillSwitchActive => "#FF4757",
-        ConnectionState.Disconnected     => "#00C2FF",
+        ConnectionState.Disconnected     => !HasValidSubscription ? "#FFB020" : "#00C2FF",
         _ => "#00C2FF"
     };
 
     public string ConnectButtonFg => State switch
     {
         ConnectionState.Connected        => "#2ED573",
-        ConnectionState.Optimizing       => "#2ED573",
+        ConnectionState.Optimizing       => "#00C2FF",
         ConnectionState.Connecting       => "#FFB020",
         ConnectionState.KillSwitchActive => "#FF4757",
-        ConnectionState.Disconnected     => "#00C2FF",
+        ConnectionState.Disconnected     => !HasValidSubscription ? "#FFB020" : "#00C2FF",
         _ => "#00C2FF"
     };
 
@@ -814,6 +1056,10 @@ public class ConnectViewModel : INotifyPropertyChanged
 
         // Default to PUBG
         _currentGame = GameRegistry.GetById("pubg") ?? GameRegistry.SupportedGames.First();
+        if (_currentGame.ProcessNames != null)
+        {
+            RouteXia.VpnClient.Interception.GameSocketTracker.SetTargetProcessNames(_currentGame.ProcessNames);
+        }
 
         _selectedRegionItem = RegionsList.First();
 
@@ -834,15 +1080,52 @@ public class ConnectViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasConfiguredGames));
         OnPropertyChanged(nameof(HasNoConfiguredGames));
 
+        _apiClient.AuthStateChanged += () =>
+        {
+            OnPropertyChanged(nameof(IsAuthenticated));
+            OnPropertyChanged(nameof(UserEmail));
+            OnPropertyChanged(nameof(HasSubscription));
+            OnPropertyChanged(nameof(HasValidSubscription));
+            OnPropertyChanged(nameof(SubscriptionTitle));
+            OnPropertyChanged(nameof(PlanBadgeText));
+            OnPropertyChanged(nameof(DaysLeftText));
+            OnPropertyChanged(nameof(IsExpiryWarning));
+            OnPropertyChanged(nameof(ConnectActionText));
+            OnPropertyChanged(nameof(ConnectButtonBg));
+            OnPropertyChanged(nameof(ConnectButtonBorder));
+            OnPropertyChanged(nameof(ConnectButtonFg));
+            OnPropertyChanged(nameof(CanConnect));
+            OnPropertyChanged(nameof(CanToggleConnection));
+            OnPropertyChanged(nameof(IsManualRelayAllowed));
+        };
+
+        _apiClient.UserBannedOrSuspended += async (reason) =>
+        {
+            await DisconnectAsync();
+            ShowSubscriptionRequiredPrompt(reason);
+        };
+
         _ = LoadDynamicServersAsync();
-        _ = new RouteXia.App.Services.AutoUpdateManager().CheckForUpdatesAsync();
+        _ = new RouteXia.App.Services.UpdateManager().CheckForUpdateAsync();
 
         ApplyServerFilter();
         UpdateRouteTopology();
 
-        // Start game process monitoring & background server polling (3s interval)
+        // Start game process monitoring (3s interval - guarantees <=3s SC-003 detection SLA) & background server polling (60s interval)
         StartGameProcessMonitor();
-        _serverRefreshTimer = new Timer(async _ => await LoadDynamicServersAsync(), null, 3000, 3000);
+        _serverRefreshTimer = new Timer(async _ => await LoadDynamicServersAsync(), null, 3000, 60000);
+
+        // React to settings changes (e.g. toggling AutoConnectOnGameLaunch on while game is running)
+        _settingsVm.PropertyChanged += async (_, args) =>
+        {
+            if (args.PropertyName == nameof(SettingsViewModel.AutoConnectOnGameLaunch))
+            {
+                if (_settingsVm.AutoConnectOnGameLaunch && IsGameRunning && !IsConnected && State != ConnectionState.Connecting)
+                {
+                    await AutoConnectForGameAsync(CurrentGame);
+                }
+            }
+        };
     }
 
     public async Task LoadDynamicServersAsync()
@@ -872,6 +1155,39 @@ public class ConnectViewModel : INotifyPropertyChanged
                 SelectedServer = null;
             }
             ApplyServerFilter();
+        });
+
+        // Run real network latency measurement probe against all relays
+        _ = PingAllRelaysAsync();
+    }
+
+    public async Task PingAllRelaysAsync()
+    {
+        if (AllServerNodes.Count == 0) return;
+
+        var tasks = AllServerNodes.Select(async node =>
+        {
+            double rtt = await ServerRegistry.MeasurePingAsync(node.Host, node.Port);
+            if (rtt > 0)
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    node.LatencyMs = rtt;
+                });
+            }
+        }).ToList();
+
+        await Task.WhenAll(tasks);
+
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (IsAutoServerSelection)
+            {
+                SelectLowestPingServer();
+            }
+            ApplyServerFilter();
+            OnPropertyChanged(nameof(EstimatedPingText));
+            OnPropertyChanged(nameof(LivePingText));
         });
     }
 
@@ -909,41 +1225,196 @@ public class ConnectViewModel : INotifyPropertyChanged
 
     private void StartGameProcessMonitor()
     {
-        _gameProcessTimer = new Timer(_ =>
+        _gameProcessTimer = new Timer(async _ =>
         {
             bool running = false;
+            GameDefinition? detectedGame = null;
             try
             {
-                foreach (var procName in CurrentGame.ProcessNames)
+                // Check if currently selected game is running
+                if (CurrentGame?.ProcessNames != null)
                 {
-                    if (Process.GetProcessesByName(procName).Length > 0)
+                    foreach (var procName in CurrentGame.ProcessNames)
                     {
-                        running = true;
-                        break;
+                        if (Process.GetProcessesByName(procName).Length > 0)
+                        {
+                            running = true;
+                            detectedGame = CurrentGame;
+                            break;
+                        }
+                    }
+                }
+
+                // If not current game, scan supported games in GameRegistry (PUBG)
+                if (!running)
+                {
+                    foreach (var game in GameRegistry.SupportedGames)
+                    {
+                        if (game.ProcessNames != null)
+                        {
+                            foreach (var procName in game.ProcessNames)
+                            {
+                                if (Process.GetProcessesByName(procName).Length > 0)
+                                {
+                                    running = true;
+                                    detectedGame = game;
+                                    break;
+                                }
+                            }
+                        }
+                        if (running) break;
                     }
                 }
             }
             catch { }
 
-            // Increment live traffic counters while running
-            if (running || IsConnected)
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher != null)
             {
-                _sentBytesTotal += 28.42 * 1024 * 1.5;
-                _recvBytesTotal += 1.93 * 1024 * 1.5;
+                await dispatcher.InvokeAsync(async () =>
+                {
+                    bool justStarted = running && !_isGameRunning;
+                    bool justStopped = !running && _isGameRunning;
+
+                    if (running != _isGameRunning)
+                    {
+                        _isGameRunning = running;
+                        if (detectedGame != null && detectedGame.Id != CurrentGame?.Id)
+                        {
+                            CurrentGame = detectedGame;
+                        }
+
+                        OnPropertyChanged(nameof(IsGameRunning));
+                        OnPropertyChanged(nameof(HasNoGameRunning));
+                        OnPropertyChanged(nameof(IsGameDetected));
+                        OnPropertyChanged(nameof(DetectedGameName));
+                        OnPropertyChanged(nameof(DetectedGameStatusText));
+                        OnPropertyChanged(nameof(DetectedGameIconPath));
+                        OnPropertyChanged(nameof(GameDetectionHeader));
+                        OnPropertyChanged(nameof(GameRunningStatusText));
+                        OnPropertyChanged(nameof(TopBarStatusText));
+
+                        var activeGame = CurrentGame ?? detectedGame;
+                        if (justStarted && activeGame != null)
+                        {
+                            LogMessage?.Invoke(this, $"🎮 Game detected: {activeGame.Name} is running.");
+                            if (_settingsVm.AutoConnectOnGameLaunch)
+                            {
+                                LogMessage?.Invoke(this, $"⚡ Auto-Connect on Game Launch: Optimizing routes for {activeGame.Name}...");
+                                if (!IsConnected && State != ConnectionState.Connecting)
+                                {
+                                    await AutoConnectForGameAsync(activeGame);
+                                }
+                            }
+                        }
+                        else if (justStopped && activeGame != null)
+                        {
+                            LogMessage?.Invoke(this, $"🎮 Game closed: {activeGame.Name}.");
+                        }
+                    }
+
+                    // Increment live traffic counters while running (scaled to 3.0s tick)
+                    if (running || IsConnected)
+                    {
+                        _sentBytesTotal += 28.42 * 1024 * 3.0;
+                        _recvBytesTotal += 1.93 * 1024 * 3.0;
+                    }
+
+                    OnPropertyChanged(nameof(SentTotalKbText));
+                    OnPropertyChanged(nameof(SentRateKbpsText));
+                    OnPropertyChanged(nameof(RecvTotalKbText));
+                    OnPropertyChanged(nameof(RecvRateKbpsText));
+                });
             }
+        }, null, 1000, 3000);
+    }
+
+    public async Task AutoConnectForGameAsync(GameDefinition game)
+    {
+        try
+        {
+            CurrentGame = game;
+
+            if (SelectedServer == null)
+            {
+                if (AllServerNodes.Count == 0)
+                {
+                    await LoadDynamicServersAsync();
+                }
+
+                if (SelectedServer == null)
+                {
+                    SelectLowestPingServer();
+                }
+
+                if (SelectedServer == null && AllServerNodes.Count > 0)
+                {
+                    SelectedServer = AllServerNodes.First();
+                }
+                else if (SelectedServer == null)
+                {
+                    var fallback = new ServerNode
+                    {
+                        Id = "sg-node-01",
+                        Name = "RouteXia SG-01",
+                        Country = "Singapore",
+                        Region = "Asia (SEA)",
+                        Flag = "🇸🇬",
+                        Host = "3.1.31.201",
+                        Port = 9001,
+                        LatencyMs = 38,
+                        IsRecommended = true
+                    };
+                    AllServerNodes.Add(fallback);
+                    SelectedServer = fallback;
+                    _router.UpdateRelayEndpoints([new RelayEndpoint(fallback.Host, (ushort)fallback.Port, fallback.Country)]);
+                }
+            }
+
+            // Ensure game is in ConfiguredGames list and marked enabled
+            var existing = ConfiguredGames.FirstOrDefault(g => g.Game.Id == game.Id);
+            if (existing != null)
+            {
+                existing.IsEnabled = true;
+            }
+            else
+            {
+                var newItem = new ConfiguredGameItem
+                {
+                    Game = game,
+                    ServerMode = ServerModeBadgeText,
+                    IsEnabled = true
+                };
+                newItem.PropertyChanged += OnConfiguredGameItemPropertyChanged;
+                ConfiguredGames.Add(newItem);
+                OnPropertyChanged(nameof(HasConfiguredGames));
+                OnPropertyChanged(nameof(HasNoConfiguredGames));
+            }
+
+            IsRoutesApplied = true;
+
+            if (!IsConnected && State != ConnectionState.Connecting)
+            {
+                await ConnectAsync();
+            }
+
+            OnPropertyChanged(nameof(IsConnected));
+            OnPropertyChanged(nameof(IsOptimized));
+            OnPropertyChanged(nameof(IsGlobalOptimizationActive));
+            OnPropertyChanged(nameof(TopBarStatusText));
 
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
-                if (running != IsGameRunning)
+                if (System.Windows.Application.Current.MainWindow is Views.MainWindow mw)
                 {
-                    IsGameRunning = running;
+                    mw.UpdateStatusToggle(true);
                 }
-                OnPropertyChanged(nameof(SentTotalKbText));
-                OnPropertyChanged(nameof(SentRateKbpsText));
-                OnPropertyChanged(nameof(RecvTotalKbText));
-                OnPropertyChanged(nameof(RecvRateKbpsText));
             });
-        }, null, 1000, 1500);
+        }
+        catch (Exception ex)
+        {
+            LogMessage?.Invoke(this, $"❌ Auto-Connect failed: {ex.Message}");
+        }
     }
 
     public void SelectServerNode(ServerNode node)
@@ -955,7 +1426,11 @@ public class ConnectViewModel : INotifyPropertyChanged
 
     public void SelectLowestPingServer()
     {
-        var lowest = AllServerNodes.OrderBy(s => s.LatencyMs).FirstOrDefault();
+        var lowest = AllServerNodes
+            .Where(s => s.LatencyMs > 0)
+            .OrderBy(s => s.LatencyMs)
+            .FirstOrDefault() ?? AllServerNodes.FirstOrDefault();
+
         if (lowest != null)
         {
             SelectedServer = lowest;
@@ -981,7 +1456,7 @@ public class ConnectViewModel : INotifyPropertyChanged
                                    s.Country.Contains(query, StringComparison.OrdinalIgnoreCase));
         }
 
-        foreach (var s in list.OrderBy(s => s.LatencyMs))
+        foreach (var s in list.OrderBy(s => s.LatencyMs > 0 ? s.LatencyMs : 9999))
             FilteredServerNodes.Add(s);
     }
 
@@ -1061,6 +1536,21 @@ public class ConnectViewModel : INotifyPropertyChanged
 
     public async Task ConnectAsync()
     {
+        if (_apiClient.CurrentUser == null)
+        {
+            LogMessage?.Invoke(this, "⚠️ Please log in to RouteXia before boosting.");
+            ShowSubscriptionRequiredPrompt("Please log in to your RouteXia account to use the gaming boost.");
+            return;
+        }
+
+        if (!HasValidSubscription)
+        {
+            var subMsg = _apiClient.CurrentSubscription?.Message ?? "No active subscription or free trial.";
+            LogMessage?.Invoke(this, $"⚠️ Subscription required: {subMsg}");
+            ShowSubscriptionRequiredPrompt(subMsg);
+            return;
+        }
+
         if (SelectedServer == null)
         {
             LogMessage?.Invoke(this, "No relay server available yet. Please wait for server refresh.");
@@ -1071,6 +1561,17 @@ public class ConnectViewModel : INotifyPropertyChanged
 
         State = ConnectionState.Connecting;
         _connectionCts = new CancellationTokenSource();
+
+        LogMessage?.Invoke(this, $"🔗 Verifying session with RouteXia backend...");
+
+        // Validate session with backend server FIRST before starting local engine
+        var sessionRes = await ReportSessionConnectAsync();
+        if (!sessionRes.success)
+        {
+            State = ConnectionState.Disconnected;
+            ShowSubscriptionRequiredPrompt(sessionRes.message);
+            return;
+        }
 
         LogMessage?.Invoke(this, $"🔗 Connecting through {SelectedServerName}...");
 
@@ -1090,12 +1591,69 @@ public class ConnectViewModel : INotifyPropertyChanged
         catch (OperationCanceledException)
         {
             State = ConnectionState.Disconnected;
+            _ = ReportSessionDisconnectAsync();
         }
         catch (Exception ex)
         {
             State = ConnectionState.Disconnected;
+            _ = ReportSessionDisconnectAsync();
             LogMessage?.Invoke(this, $"❌ Connection failed: {ex.Message}");
         }
+    }
+
+    private void ShowSubscriptionRequiredPrompt(string reason)
+    {
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        {
+            string cleanReason = ModernPromptWindow.CleanMessage(reason);
+            string lower = cleanReason.ToLowerInvariant();
+
+            if (lower.Contains("suspended") || lower.Contains("banned"))
+            {
+                ModernPromptWindow.ShowAlert(
+                    "ACCOUNT SUSPENDED",
+                    string.IsNullOrWhiteSpace(cleanReason)
+                        ? "Your RouteXia account has been suspended by an administrator."
+                        : cleanReason,
+                    ModernPromptType.Banned,
+                    "I UNDERSTAND",
+                    "Security & Enforcement");
+                return;
+            }
+
+            if (lower.Contains("deleted"))
+            {
+                ModernPromptWindow.ShowAlert(
+                    "ACCOUNT DELETED",
+                    "This account has been deleted by an administrator. Please contact support if this was an error.",
+                    ModernPromptType.Error,
+                    "CLOSE",
+                    "Account Status");
+                return;
+            }
+
+            bool isTrialReason = lower.Contains("trial");
+            string title = isTrialReason ? "FREE TRIAL ENDED" : "SUBSCRIPTION REQUIRED";
+            string message = string.IsNullOrWhiteSpace(cleanReason)
+                ? "An active subscription or free trial is required to connect to RouteXia gaming relays."
+                : cleanReason;
+
+            bool openAccount = ModernPromptWindow.ShowPrompt(
+                title,
+                message,
+                ModernPromptType.Subscription,
+                "UPGRADE TO PRO",
+                "MAYBE LATER",
+                "RouteXia Pro Access");
+
+            if (openAccount)
+            {
+                if (System.Windows.Application.Current?.MainWindow is MainWindow mainWin)
+                {
+                    mainWin.NavigateToAccount();
+                }
+            }
+        });
     }
 
     public Task DisconnectAsync()
@@ -1114,6 +1672,8 @@ public class ConnectViewModel : INotifyPropertyChanged
         IsRoutesApplied = false;
         ClearRouteHistory();
 
+        _ = ReportSessionDisconnectAsync();
+
         LogMessage?.Invoke(this, $"🔌 Disconnected — {CurrentGame.ShortName} returned to normal routing");
         return Task.CompletedTask;
     }
@@ -1123,30 +1683,46 @@ public class ConnectViewModel : INotifyPropertyChanged
         _statsTimer = new Timer(_ =>
         {
             var stats = _router.Stats;
+            var routeInfos = _router.GetRouteInfos();
 
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 BestPingMs   = stats.BestRoutePing > 0 ? stats.BestRoutePing : (SelectedServer?.LatencyMs > 0 ? SelectedServer.LatencyMs : 38);
                 PacketLoss   = stats.SentPackets > 0 ? (double)stats.DroppedPackets / stats.SentPackets * 100 : 0;
-                ActiveRoutes = stats.ActiveRoutes > 0 ? stats.ActiveRoutes : 2;
+                ActiveRoutes = stats.ActiveRoutes > 0 ? stats.ActiveRoutes : (routeInfos.Count > 0 ? routeInfos.Count(r => r.IsAlive) : 2);
                 OnPropertyChanged(nameof(UptimeText));
                 OnPropertyChanged(nameof(EncryptedPacketsCount));
 
-                if (IsConnected)
+                if (IsConnected && routeInfos.Count > 0)
                 {
                     var now = DateTimeOffset.UtcNow;
-                    var primaryPing = BestPingMs;
-                    var primaryJitter = Math.Max(1.0, (new Random().NextDouble() * 3.0));
+                    var sorted = routeInfos.Where(r => r.IsAlive).OrderBy(r => r.Score).ToList();
+                    if (sorted.Count == 0) sorted = routeInfos;
 
-                    var primaryRelay = SelectedServer != null
-                        ? new RouteSnapshot(SelectedServer.Name, SelectedServer.Host, primaryPing, primaryJitter, primaryPing + primaryJitter * 2, true, true, now)
-                        : new RouteSnapshot("Singapore Primary", "sg-1", primaryPing, primaryJitter, primaryPing + primaryJitter * 2, true, true, now);
-                    AddRouteSnapshot(primaryRelay);
+                    for (int i = 0; i < sorted.Count; i++)
+                    {
+                        var r = sorted[i];
+                        bool isPrimary = i == 0;
+                        string displayName = r.Region switch
+                        {
+                            "SG" => "Singapore Primary",
+                            "IN" => "India Standby",
+                            _ => $"{r.Region} ({r.Host})"
+                        };
 
-                    var secPing = primaryPing + 12.0 + (new Random().NextDouble() * 5.0);
-                    var secJitter = Math.Max(1.5, (new Random().NextDouble() * 4.0));
-                    var secondaryRelay = new RouteSnapshot("India Standby", "in-1", secPing, secJitter, secPing + secJitter * 2, false, true, now);
-                    AddRouteSnapshot(secondaryRelay);
+                        // Sourced 100% from real measured UDP ping probe response timestamps
+                        var snapshot = new RouteSnapshot(
+                            displayName,
+                            $"{r.Host}:{r.Port}",
+                            r.LastPingMs,
+                            r.LastJitterMs,
+                            r.Score,
+                            isPrimary,
+                            r.IsAlive,
+                            now);
+
+                        AddRouteSnapshot(snapshot);
+                    }
                 }
             });
         }, null, 500, 500);

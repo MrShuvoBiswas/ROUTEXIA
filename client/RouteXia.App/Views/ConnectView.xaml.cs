@@ -131,6 +131,17 @@ public partial class ConnectView : Page
 
     private void BtnSelectManualMode_Click(object sender, RoutedEventArgs e)
     {
+        if (!_vm.IsManualRelayAllowed)
+        {
+            ModernPromptWindow.ShowAlert(
+                "FEATURE COMING SOON",
+                "Manual Relay Selection is currently undergoing maintenance and fine-tuning.\n\nRouteXia is automatically analyzing and routing your traffic through the lowest latency route with Auto Best.",
+                ModernPromptType.Information,
+                "UNDERSTOOD",
+                "Smart Routing");
+            return;
+        }
+
         _vm.IsManualServerSelection = true;
         _vm.IsAutoServerSelection = false;
     }
@@ -160,6 +171,8 @@ public partial class ConnectView : Page
 
     private async void BtnReOptimize_Click(object sender, RoutedEventArgs e)
     {
+        await _vm.PingAllRelaysAsync();
+
         var region = _vm.SelectedRegionItem ?? _vm.RegionsList.FirstOrDefault();
         if (region == null && _vm.SelectedServer != null)
         {
@@ -224,12 +237,13 @@ public partial class ConnectView : Page
             catch { }
         }
 
-        System.Windows.MessageBox.Show(
+        ModernPromptWindow.ShowAlert(
+            $"LAUNCH {game.ShortName.ToUpperInvariant()}",
             attemptedLaunch
-                ? $"{game.ShortName} could not be launched automatically. Open it from Steam and RouteXia will keep the boost ready."
-                : $"{game.ShortName} does not have a launch path configured yet.",
-            "Launch PUBG",
-            System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Information);
+                ? $"{game.ShortName} could not be launched automatically. Please launch it from Steam / your desktop, and RouteXia will keep the boost active."
+                : $"Please open {game.ShortName} manually, and RouteXia will optimize your connection.",
+            ModernPromptType.Information,
+            "GOT IT",
+            "Game Launcher");
     }
 }

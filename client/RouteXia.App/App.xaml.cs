@@ -6,6 +6,7 @@ using RouteXia.VpnClient.Routing;
 using RouteXia.VpnClient.KillSwitch;
 using RouteXia.VpnClient.Interception;
 using RouteXia.VpnClient.Api;
+using RouteXia.App.Services;
 using System.Security.Principal;
 using System;
 
@@ -19,32 +20,15 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // Global exception handling to log and show crashes
-        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
-        {
-            if (args.ExceptionObject is Exception ex)
-            {
-                MessageBox.Show($"Fatal error: {ex.Message}\n\nStack:\n{ex.StackTrace}", "RouteXia Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        };
+        // ── Structured Global Crash Reporting Engine (T005, T006, T007) ──────
+        CrashReporter.Initialize();
 
-        DispatcherUnhandledException += (s, args) =>
+        // ── Pre-flight Driver & UAC Elevation Health Check (T001, T002, T003) ─
+        var health = DriverHealthChecker.CheckDriverHealth(out string diag);
+        if (health != DriverHealthStatus.Healthy)
         {
-            MessageBox.Show($"Application Error: {args.Exception.Message}\n\nStack:\n{args.Exception.StackTrace}", "RouteXia Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            args.Handled = true;
-        };
-
-        // Check admin privileges — required for WinDivert + kill-switch firewall rules
-        if (!IsRunningAsAdmin())
-        {
-            MessageBox.Show(
-                "RouteXia requires Administrator privileges to intercept PUBG network traffic.\n\n" +
-                "WinDivert (the packet interception engine) requires admin rights to load its kernel filter driver.\n\n" +
-                "Please right-click the app and select 'Run as administrator'.",
-                "Administrator Required",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            Shutdown(1);
+            var elevationWindow = new ElevationRequiredWindow(diag);
+            elevationWindow.ShowDialog();
             return;
         }
 

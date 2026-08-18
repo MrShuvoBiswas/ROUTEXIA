@@ -180,21 +180,28 @@ namespace RouteXia.App.Views
 
         private async void BtnGoogleAuth_Click(object sender, RoutedEventArgs e)
         {
-            // Google 1-click Auth (Redirects to Web Auth Portal)
-            bool success = await _vm.SignInWithBrowserAsync();
+            // Google OAuth via Firebase → browser opens → idToken → backend
+            bool success = await _vm.SignInWithGoogleAsync();
             if (success)
             {
                 ProceedToMainWindow();
             }
         }
 
-        private async void LnkRegister_Click(object sender, MouseButtonEventArgs e)
+        private void LnkRegister_Click(object sender, MouseButtonEventArgs e)
         {
-            // Registration & claiming 4 days trial opens the web auth portal
-            bool success = await _vm.SignInWithBrowserAsync();
-            if (success)
+            try
             {
-                ProceedToMainWindow();
+                // Opens public user registration portal on user domain (completely separated from admin)
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = RouteXia.VpnClient.Common.RouteXiaUrls.RegisterUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _vm.StatusMessage = $"Could not launch browser: {ex.Message}";
             }
         }
 
@@ -202,10 +209,10 @@ namespace RouteXia.App.Views
         {
             try
             {
-                // Open password reset portal in browser
+                // Opens password reset portal on user domain
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = "http://3.1.31.201:8080/auth?mode=reset",
+                    FileName = RouteXia.VpnClient.Common.RouteXiaUrls.ForgotPasswordUrl,
                     UseShellExecute = true
                 });
             }

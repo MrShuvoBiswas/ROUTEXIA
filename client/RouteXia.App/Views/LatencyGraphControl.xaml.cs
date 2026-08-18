@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using RouteXia.App.ViewModels;
 
 namespace RouteXia.App.Views;
@@ -40,11 +40,83 @@ public partial class LatencyGraphControl : UserControl
     }
 
     private NotifyCollectionChangedEventHandler? _collectionHandler;
+    private bool _isRedrawQueued;
+
+    // Cached resources to eliminate per-tick allocations & resource dictionary lookups
+    private static readonly FontFamily MonoFont = new("/Resources/Fonts/#JetBrains Mono");
+    private Brush? _accentBrush;
+    private Brush? _warnBrush;
+    private Brush? _mutedBrush;
+    private Brush? _bgPanelBrush;
+
+    // Retained visual elements per route ID to avoid creating UI elements on each tick
+    private class RouteVisualGroup
+    {
+        public required Polyline Line { get; init; }
+        public required Ellipse Dot { get; init; }
+        public required Border BadgeBorder { get; init; }
+        public required TextBlock BadgeText { get; init; }
+    }
+
+    private readonly Dictionary<string, RouteVisualGroup> _routeVisuals = new();
+    private readonly Dictionary<string, List<RouteSnapshot>> _groupedSamples = new();
+    private readonly HashSet<string> _activeKeys = new();
 
     public LatencyGraphControl()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        IsVisibleChanged += OnIsVisibleChanged;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        SubscribeCollection();
+        if (IsVisible && IsConnected)
+        {
+            QueueRedraw();
+        }
+    }
+
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible && IsLoaded && IsConnected)
+        {
+            QueueRedraw();
+        }
+    }
+
+    private void EnsureBrushes()
+    {
+        _accentBrush  ??= (Brush)Application.Current.FindResource("AccentBrush");
+        _warnBrush    ??= (Brush)Application.Current.FindResource("StatusWarnBrush");
+        _mutedBrush   ??= (Brush)Application.Current.FindResource("TextMutedBrush");
+        _bgPanelBrush ??= (Brush)Application.Current.FindResource("BgPanelBrush");
+    }
+
+    private void SubscribeCollection()
+    {
+        if (RouteHistory != null && _collectionHandler == null)
+        {
+            _collectionHandler = (_, _) =>
+            {
+                if (IsVisible && IsLoaded && IsConnected)
+                {
+                    QueueRedraw();
+                }
+            };
+            RouteHistory.CollectionChanged += _collectionHandler;
+        }
+    }
+
+    private void UnsubscribeCollection()
+    {
+        if (RouteHistory != null && _collectionHandler != null)
+        {
+            RouteHistory.CollectionChanged -= _collectionHandler;
+            _collectionHandler = null;
+        }
     }
 
     private static void OnRouteHistoryChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -54,15 +126,11 @@ public partial class LatencyGraphControl : UserControl
             if (e.OldValue is ObservableCollection<RouteSnapshot> oldCollection && control._collectionHandler != null)
             {
                 oldCollection.CollectionChanged -= control._collectionHandler;
+                control._collectionHandler = null;
             }
 
-            if (e.NewValue is ObservableCollection<RouteSnapshot> newCollection)
-            {
-                control._collectionHandler = (_, _) => control.Dispatcher.Invoke(control.RedrawGraph);
-                newCollection.CollectionChanged += control._collectionHandler;
-            }
-
-            control.RedrawGraph();
+            control.SubscribeCollection();
+            control.QueueRedraw();
         }
     }
 
@@ -70,27 +138,36 @@ public partial class LatencyGraphControl : UserControl
     {
         if (d is LatencyGraphControl control)
         {
-            control.RedrawGraph();
+            control.QueueRedraw();
         }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        if (RouteHistory != null && _collectionHandler != null)
-        {
-            RouteHistory.CollectionChanged -= _collectionHandler;
-            _collectionHandler = null;
-        }
+        UnsubscribeCollection();
     }
 
     private void GraphCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        RedrawGraph();
+        QueueRedraw();
+    }
+
+    public void QueueRedraw()
+    {
+        // Skip redraw if control is not visible, unrendered, or already queued
+        if (!IsVisible || !IsLoaded || _isRedrawQueued || GraphCanvas == null) return;
+
+        _isRedrawQueued = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        {
+            _isRedrawQueued = false;
+            RedrawGraph();
+        });
     }
 
     public void RedrawGraph()
     {
-        if (GraphCanvas == null || PlaceholderOverlay == null) return;
+        if (GraphCanvas == null || PlaceholderOverlay == null || !IsVisible || !IsLoaded) return;
 
         double width = GraphCanvas.ActualWidth;
         double height = GraphCanvas.ActualHeight;
@@ -103,96 +180,164 @@ public partial class LatencyGraphControl : UserControl
         if (!IsConnected || RouteHistory == null || RouteHistory.Count == 0)
         {
             PlaceholderOverlay.Visibility = Visibility.Visible;
-            GraphCanvas.Children.Clear();
+            GridLinesContainer.Visibility = Visibility.Collapsed;
+            foreach (var kvp in _routeVisuals)
+            {
+                kvp.Value.Line.Visibility = Visibility.Collapsed;
+                kvp.Value.Dot.Visibility = Visibility.Collapsed;
+                kvp.Value.BadgeBorder.Visibility = Visibility.Collapsed;
+            }
             return;
         }
 
         PlaceholderOverlay.Visibility = Visibility.Collapsed;
-        GraphCanvas.Children.Clear();
-
-        var routes = RouteHistory.GroupBy(s => s.RelayId).ToList();
-        if (routes.Count == 0) return;
+        GridLinesContainer.Visibility = Visibility.Visible;
+        EnsureBrushes();
 
         const double maxPingScale = 180.0;
         const int maxSamplesWindow = 60;
 
-        Brush accentBrush = (Brush)Application.Current.FindResource("AccentBrush");
-        Brush warnBrush   = (Brush)Application.Current.FindResource("StatusWarnBrush");
-        Brush mutedBrush  = (Brush)Application.Current.FindResource("TextMutedBrush");
-
-        foreach (var group in routes)
+        // Group snapshots into reusable collections without LINQ allocations
+        foreach (var list in _groupedSamples.Values)
         {
-            var samples = group.TakeLast(maxSamplesWindow).ToList();
-            if (samples.Count < 2) continue;
+            list.Clear();
+        }
+        _activeKeys.Clear();
 
-            bool isPrimary = samples.Last().IsActivePrimary;
-            Brush strokeBrush = isPrimary ? accentBrush : (group.Key.Contains("in") ? warnBrush : mutedBrush);
+        var history = RouteHistory;
+        int totalHistory = history.Count;
+        for (int i = 0; i < totalHistory; i++)
+        {
+            var snap = history[i];
+            if (!_groupedSamples.TryGetValue(snap.RelayId, out var list))
+            {
+                list = new List<RouteSnapshot>(maxSamplesWindow);
+                _groupedSamples[snap.RelayId] = list;
+            }
+            list.Add(snap);
+        }
+
+        foreach (var kvp in _groupedSamples)
+        {
+            string relayKey = kvp.Key;
+            var allSamples = kvp.Value;
+            if (allSamples.Count < 2) continue;
+
+            _activeKeys.Add(relayKey);
+
+            // Sliding window: slice last maxSamplesWindow without reallocation
+            int sampleCount = allSamples.Count;
+            int startOffset = Math.Max(0, sampleCount - maxSamplesWindow);
+            int windowCount = sampleCount - startOffset;
+
+            var lastSample = allSamples[sampleCount - 1];
+            bool isPrimary = lastSample.IsActivePrimary;
+            Brush strokeBrush = isPrimary ? _accentBrush! : (relayKey.Contains("in", StringComparison.OrdinalIgnoreCase) ? _warnBrush! : _mutedBrush!);
             double strokeThickness = isPrimary ? 2.5 : 1.5;
 
-            var points = new PointCollection();
-            double stepX = samples.Count > 1 ? width / (maxSamplesWindow - 1) : width;
-            int startIndex = maxSamplesWindow - samples.Count;
-
-            for (int i = 0; i < samples.Count; i++)
+            // Get or create retained visual elements for this route
+            if (!_routeVisuals.TryGetValue(relayKey, out var visualGroup))
             {
-                double x = (startIndex + i) * stepX;
-                double clampedPing = Math.Clamp(samples[i].PingMs, 0, maxPingScale);
-                double y = height - (clampedPing / maxPingScale * height);
-                points.Add(new Point(x, y));
-            }
-
-            var polyline = new Polyline
-            {
-                Points = points,
-                Stroke = strokeBrush,
-                StrokeThickness = strokeThickness,
-                StrokeLineJoin = PenLineJoin.Round,
-                StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round,
-                Opacity = isPrimary ? 1.0 : 0.75
-            };
-
-            GraphCanvas.Children.Add(polyline);
-
-            // Latest point indicator dot
-            if (points.Count > 0)
-            {
-                var lastPt = points.Last();
-                var dot = new Ellipse
+                var polyline = new Polyline
                 {
-                    Width = isPrimary ? 8 : 6,
-                    Height = isPrimary ? 8 : 6,
-                    Fill = strokeBrush
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    IsHitTestVisible = false
                 };
-                Canvas.SetLeft(dot, lastPt.X - (dot.Width / 2.0));
-                Canvas.SetTop(dot, lastPt.Y - (dot.Height / 2.0));
-                GraphCanvas.Children.Add(dot);
 
-                // Ping label badge at the end of the line
-                var labelBorder = new Border
-                {
-                    Background = (Brush)Application.Current.FindResource("BgPanelBrush"),
-                    BorderBrush = strokeBrush,
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(3),
-                    Padding = new Thickness(4, 1, 4, 1)
-                };
+                var dot = new Ellipse { IsHitTestVisible = false };
+
                 var labelText = new TextBlock
                 {
-                    Text = $"{samples.Last().PingMs:F0}ms",
-                    FontFamily = new FontFamily("/Resources/Fonts/#JetBrains Mono"),
+                    FontFamily = MonoFont,
                     FontSize = 10,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = strokeBrush
+                    FontWeight = FontWeights.Bold
                 };
-                labelBorder.Child = labelText;
 
-                double labelLeft = Math.Min(lastPt.X - 35, width - 42);
-                double labelTop = Math.Clamp(lastPt.Y - 18, 2, height - 20);
+                var labelBorder = new Border
+                {
+                    Background = _bgPanelBrush,
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(3),
+                    Padding = new Thickness(4, 1, 4, 1),
+                    Child = labelText,
+                    IsHitTestVisible = false
+                };
 
-                Canvas.SetLeft(labelBorder, Math.Max(4, labelLeft));
-                Canvas.SetTop(labelBorder, labelTop);
+                visualGroup = new RouteVisualGroup
+                {
+                    Line = polyline,
+                    Dot = dot,
+                    BadgeBorder = labelBorder,
+                    BadgeText = labelText
+                };
+
+                _routeVisuals[relayKey] = visualGroup;
+                GraphCanvas.Children.Add(polyline);
+                GraphCanvas.Children.Add(dot);
                 GraphCanvas.Children.Add(labelBorder);
+            }
+
+            visualGroup.Line.Visibility = Visibility.Visible;
+            visualGroup.Dot.Visibility = Visibility.Visible;
+            visualGroup.BadgeBorder.Visibility = Visibility.Visible;
+
+            visualGroup.Line.Stroke = strokeBrush;
+            visualGroup.Line.StrokeThickness = strokeThickness;
+            visualGroup.Line.Opacity = isPrimary ? 1.0 : 0.75;
+
+            // Update PointCollection in-place without reallocating
+            var points = visualGroup.Line.Points;
+            double stepX = windowCount > 1 ? width / (maxSamplesWindow - 1) : width;
+            int startIndex = maxSamplesWindow - windowCount;
+
+            while (points.Count > windowCount)
+            {
+                points.RemoveAt(points.Count - 1);
+            }
+            while (points.Count < windowCount)
+            {
+                points.Add(new Point(0, 0));
+            }
+
+            for (int i = 0; i < windowCount; i++)
+            {
+                var s = allSamples[startOffset + i];
+                double x = (startIndex + i) * stepX;
+                double clampedPing = Math.Clamp(s.PingMs, 0, maxPingScale);
+                double y = height - (clampedPing / maxPingScale * height);
+                points[i] = new Point(x, y);
+            }
+
+            // Update endpoint indicator dot position
+            var lastPt = points[windowCount - 1];
+            double dotSize = isPrimary ? 8 : 6;
+            visualGroup.Dot.Width = dotSize;
+            visualGroup.Dot.Height = dotSize;
+            visualGroup.Dot.Fill = strokeBrush;
+            Canvas.SetLeft(visualGroup.Dot, lastPt.X - (dotSize / 2.0));
+            Canvas.SetTop(visualGroup.Dot, lastPt.Y - (dotSize / 2.0));
+
+            // Update ping badge text and position
+            visualGroup.BadgeBorder.BorderBrush = strokeBrush;
+            visualGroup.BadgeText.Text = $"{lastSample.PingMs:F0}ms";
+            visualGroup.BadgeText.Foreground = strokeBrush;
+
+            double labelLeft = Math.Min(lastPt.X - 35, width - 42);
+            double labelTop = Math.Clamp(lastPt.Y - 18, 2, height - 20);
+            Canvas.SetLeft(visualGroup.BadgeBorder, Math.Max(4, labelLeft));
+            Canvas.SetTop(visualGroup.BadgeBorder, labelTop);
+        }
+
+        // Hide visuals for inactive routes
+        foreach (var kvp in _routeVisuals)
+        {
+            if (!_activeKeys.Contains(kvp.Key))
+            {
+                kvp.Value.Line.Visibility = Visibility.Collapsed;
+                kvp.Value.Dot.Visibility = Visibility.Collapsed;
+                kvp.Value.BadgeBorder.Visibility = Visibility.Collapsed;
             }
         }
     }

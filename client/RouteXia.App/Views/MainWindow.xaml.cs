@@ -27,13 +27,18 @@ public partial class MainWindow : FluentWindow
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         DataContext = App.Services.GetRequiredService<ConnectViewModel>();
-        _navButtons = [BtnNavHome, BtnNavNetwork, BtnNavSettings, BtnNavAccount, BtnNavHelp];
+        _navButtons = [BtnNavHome, BtnNavLibrary, BtnNavNetwork, BtnNavSettings, BtnNavAccount, BtnNavHelp];
         NavigateToHome();
     }
 
     private void BtnNavHome_Click(object sender, RoutedEventArgs e)
     {
         NavigateToHome();
+    }
+
+    private void BtnNavLibrary_Click(object sender, RoutedEventArgs e)
+    {
+        NavigateToLibrary();
     }
 
     private void BtnNavNetwork_Click(object sender, RoutedEventArgs e)
@@ -53,14 +58,12 @@ public partial class MainWindow : FluentWindow
 
     private void BtnNavHelp_Click(object sender, RoutedEventArgs e)
     {
-        System.Windows.MessageBox.Show(
-            "RouteXia Gaming VPN\n\n" +
-            "Support: https://routexia.com/help\n" +
-            "Discord: https://discord.gg/routexia\n\n" +
-            "For PUBG SG boost, open Boost and press Optimize.",
-            "RouteXia Help",
-            System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Information);
+        ModernPromptWindow.ShowAlert(
+            "ROUTEXIA HELP & SUPPORT",
+            "RouteXia Gaming Multipath Route Optimizer\n\n• Official Support Email: help@routexia.in\n\nFor any inquiries, billing assistance, or technical support, feel free to reach out to us directly.",
+            ModernPromptType.Information,
+            "CLOSE",
+            "Help Center");
     }
 
     private void BtnSidebarSignIn_Click(object sender, RoutedEventArgs e)
@@ -165,6 +168,7 @@ public partial class MainWindow : FluentWindow
 
     public void NavigateToLibrary()
     {
+        SetActiveNav(BtnNavLibrary);
         _libraryView ??= new GameLibraryView();
         MainFrame.Navigate(_libraryView);
     }

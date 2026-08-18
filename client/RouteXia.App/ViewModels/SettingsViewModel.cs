@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Win32;
+using RouteXia.App.Services;
 
 namespace RouteXia.App.ViewModels;
 
@@ -33,47 +32,20 @@ public class RelayCommand : ICommand
     public void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
 }
 
-public class RelayRegionPreference : INotifyPropertyChanged
+public class UserSettings
 {
-    public string RegionId { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string FlagEmoji { get; set; } = string.Empty;
-
-    private bool _isEnabled = true;
-    public bool IsEnabled
-    {
-        get => _isEnabled;
-        set
-        {
-            if (_isEnabled != value)
-            {
-                _isEnabled = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    private bool _isPrimaryPreferred;
-    public bool IsPrimaryPreferred
-    {
-        get => _isPrimaryPreferred;
-        set
-        {
-            if (_isPrimaryPreferred != value)
-            {
-                _isPrimaryPreferred = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-    protected void OnPropertyChanged([CallerMemberName] string? name = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    public bool AutoConnectOnGameLaunch { get; set; } = true;
+    public bool MinimizeToTray { get; set; } = true;
+    public bool StartWithWindows { get; set; } = false;
 }
 
 public class SettingsViewModel : INotifyPropertyChanged
 {
+    private static readonly string SettingsFilePath = System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "RouteXia",
+        "settings.json");
+
     private bool _autoConnectOnGameLaunch = true;
     private bool _startWithWindows = false;
     private bool _minimizeToTray = true;
@@ -81,7 +53,15 @@ public class SettingsViewModel : INotifyPropertyChanged
     public bool AutoConnectOnGameLaunch
     {
         get => _autoConnectOnGameLaunch;
-        set { _autoConnectOnGameLaunch = value; OnPropertyChanged(); }
+        set
+        {
+            if (_autoConnectOnGameLaunch != value)
+            {
+                _autoConnectOnGameLaunch = value;
+                OnPropertyChanged();
+                SaveSettings();
+            }
+        }
     }
 
     public bool StartWithWindows
@@ -89,100 +69,177 @@ public class SettingsViewModel : INotifyPropertyChanged
         get => _startWithWindows;
         set
         {
-            _startWithWindows = value;
-            OnPropertyChanged();
-            SetStartupRegistry(value);
+            if (_startWithWindows != value)
+            {
+                _startWithWindows = value;
+                OnPropertyChanged();
+                SetStartupRegistry(value);
+                SaveSettings();
+            }
         }
     }
 
     public bool MinimizeToTray
     {
         get => _minimizeToTray;
-        set { _minimizeToTray = value; OnPropertyChanged(); }
-    }
-
-    // ── Relay Region Preferences (T010, T011, T040) ──────────────────────────
-    public ObservableCollection<RelayRegionPreference> RelayRegions { get; } = [];
-
-    public bool CanSaveRelayPreferences => RelayRegions.Any(r => r.IsEnabled);
-    public bool HasRegionValidationError => !CanSaveRelayPreferences;
-
-    private ICommand? _saveRelayPreferencesCommand;
-    public ICommand SaveRelayPreferencesCommand =>
-        _saveRelayPreferencesCommand ??= new RelayCommand(_ => SaveRelayPreferences(), _ => CanSaveRelayPreferences);
-
-    private string _saveStatusMessage = string.Empty;
-    public string SaveStatusMessage
-    {
-        get => _saveStatusMessage;
-        set { _saveStatusMessage = value; OnPropertyChanged(); }
+        set
+        {
+            if (_minimizeToTray != value)
+            {
+                _minimizeToTray = value;
+                OnPropertyChanged();
+                SaveSettings();
+            }
+        }
     }
 
     public SettingsViewModel()
     {
-        LoadRelayPreferences();
+        LoadSettings();
     }
 
-    public void SaveRelayPreferences()
+    public void LoadSettings()
     {
-        if (!CanSaveRelayPreferences) return;
-
         try
         {
-            var enabledIds = RelayRegions.Where(r => r.IsEnabled).Select(r => r.RegionId).ToList();
-            var json = System.Text.Json.JsonSerializer.Serialize(enabledIds);
-            var path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RouteXia", "relay_preferences.json");
-            var dir = System.IO.Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+            if (System.IO.File.Exists(SettingsFilePath))
             {
-                System.IO.Directory.CreateDirectory(dir);
-            }
-            System.IO.File.WriteAllText(path, json);
-            SaveStatusMessage = "Preferences saved successfully";
-        }
-        catch (Exception ex)
-        {
-            SaveStatusMessage = $"Save error: {ex.Message}";
-        }
-    }
-
-    private void LoadRelayPreferences()
-    {
-        RelayRegions.Clear();
-        var defaults = new List<RelayRegionPreference>
-        {
-            new() { RegionId = "SG", DisplayName = "Singapore (SG)", FlagEmoji = "🇸🇬", IsEnabled = true, IsPrimaryPreferred = true },
-            new() { RegionId = "IN", DisplayName = "India (IN)", FlagEmoji = "🇮🇳", IsEnabled = true, IsPrimaryPreferred = false },
-            new() { RegionId = "AE", DisplayName = "Dubai (AE)", FlagEmoji = "🇦🇪", IsEnabled = true, IsPrimaryPreferred = false }
-        };
-
-        try
-        {
-            var path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RouteXia", "relay_preferences.json");
-            if (System.IO.File.Exists(path))
-            {
-                var json = System.IO.File.ReadAllText(path);
-                var enabledIds = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json);
-                if (enabledIds != null && enabledIds.Count > 0)
+                var json = System.IO.File.ReadAllText(SettingsFilePath);
+                var settings = System.Text.Json.JsonSerializer.Deserialize<UserSettings>(json);
+                if (settings != null)
                 {
-                    foreach (var item in defaults)
-                    {
-                        item.IsEnabled = enabledIds.Contains(item.RegionId);
-                    }
+                    _autoConnectOnGameLaunch = settings.AutoConnectOnGameLaunch;
+                    _minimizeToTray = settings.MinimizeToTray;
+                    _startWithWindows = settings.StartWithWindows;
                 }
             }
         }
         catch { /* Fallback gracefully to defaults */ }
+    }
 
-        foreach (var item in defaults)
+    public void SaveSettings()
+    {
+        try
         {
-            item.PropertyChanged += (_, _) =>
+            var dir = System.IO.Path.GetDirectoryName(SettingsFilePath);
+            if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
             {
-                OnPropertyChanged(nameof(CanSaveRelayPreferences));
-                OnPropertyChanged(nameof(HasRegionValidationError));
-                (SaveRelayPreferencesCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                System.IO.Directory.CreateDirectory(dir);
+            }
+
+            var settings = new UserSettings
+            {
+                AutoConnectOnGameLaunch = _autoConnectOnGameLaunch,
+                MinimizeToTray = _minimizeToTray,
+                StartWithWindows = _startWithWindows
             };
-            RelayRegions.Add(item);
+
+            var json = System.Text.Json.JsonSerializer.Serialize(settings, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            System.IO.File.WriteAllText(SettingsFilePath, json);
+        }
+        catch { /* best effort */ }
+    }
+
+    // ── Application Updates (T008, T009) ─────────────────────────────────────
+    private readonly UpdateManager _updateManager = new();
+    private bool _isCheckingForUpdate;
+    private bool _isUpdateAvailable;
+    private bool _isDownloadingUpdate;
+    private double _downloadProgress;
+    private string _updateStatusText = "Up to date";
+    private string _latestVersionText = "v0.1.0-beta";
+    private string _downloadUrl = string.Empty;
+
+    public string AppVersionText => $"v{UpdateManager.GetCurrentVersion()}-beta";
+
+    public bool IsCheckingForUpdate
+    {
+        get => _isCheckingForUpdate;
+        set { _isCheckingForUpdate = value; OnPropertyChanged(); }
+    }
+
+    public bool IsUpdateAvailable
+    {
+        get => _isUpdateAvailable;
+        set { _isUpdateAvailable = value; OnPropertyChanged(); }
+    }
+
+    public bool IsDownloadingUpdate
+    {
+        get => _isDownloadingUpdate;
+        set { _isDownloadingUpdate = value; OnPropertyChanged(); }
+    }
+
+    public double DownloadProgress
+    {
+        get => _downloadProgress;
+        set { _downloadProgress = value; OnPropertyChanged(); }
+    }
+
+    public string UpdateStatusText
+    {
+        get => _updateStatusText;
+        set { _updateStatusText = value; OnPropertyChanged(); }
+    }
+
+    public string LatestVersionText
+    {
+        get => _latestVersionText;
+        set { _latestVersionText = value; OnPropertyChanged(); }
+    }
+
+    private ICommand? _checkForUpdatesCommand;
+    public ICommand CheckForUpdatesCommand =>
+        _checkForUpdatesCommand ??= new RelayCommand(async _ => await CheckForUpdatesAsync());
+
+    private ICommand? _installUpdateCommand;
+    public ICommand InstallUpdateCommand =>
+        _installUpdateCommand ??= new RelayCommand(async _ => await InstallUpdateAsync());
+
+    public async Task CheckForUpdatesAsync()
+    {
+        if (IsCheckingForUpdate) return;
+        IsCheckingForUpdate = true;
+        UpdateStatusText = "Checking for updates...";
+
+        try
+        {
+            var result = await _updateManager.CheckForUpdateAsync();
+            if (result.IsUpdateAvailable)
+            {
+                IsUpdateAvailable = true;
+                LatestVersionText = $"v{result.LatestVersion}";
+                _downloadUrl = result.DownloadUrl;
+                UpdateStatusText = $"New version {LatestVersionText} available!";
+            }
+            else
+            {
+                IsUpdateAvailable = false;
+                UpdateStatusText = "You are on the latest version.";
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusText = $"Update check failed: {ex.Message}";
+        }
+        finally
+        {
+            IsCheckingForUpdate = false;
+        }
+    }
+
+    public async Task InstallUpdateAsync()
+    {
+        if (string.IsNullOrEmpty(_downloadUrl) || IsDownloadingUpdate) return;
+
+        IsDownloadingUpdate = true;
+        var progress = new Progress<double>(p => DownloadProgress = p);
+
+        bool success = await _updateManager.DownloadAndInstallUpdateAsync(_downloadUrl, progress);
+        if (!success)
+        {
+            UpdateStatusText = "Download failed. Please try again later.";
+            IsDownloadingUpdate = false;
         }
     }
 

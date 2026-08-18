@@ -1,0 +1,8 @@
+{
+  "_comment": "SECURITY: This file contains sensitive API keys. NEVER commit to Git.",
+  "_instructions": "Copy this file to 'firebase.config.json' and fill in your values from Firebase Console > Project Settings > General > Your Apps > Web App",
+
+  "ApiKey": "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE",
+  "ProjectId": "PASTE_YOUR_FIREBASE_PROJECT_ID_HERE",
+  "AuthDomain": "PASTE_YOUR_PROJECT_ID.firebaseapp.com"
+}

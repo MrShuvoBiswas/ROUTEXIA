@@ -4,6 +4,87 @@ using System.Text.Json.Serialization;
 
 namespace RouteXia.VpnClient.Api
 {
+    public class SessionConnectRequest
+    {
+        [JsonPropertyName("userId")]
+        public string UserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("relayId")]
+        public string RelayId { get; set; } = string.Empty;
+
+        [JsonPropertyName("relayName")]
+        public string RelayName { get; set; } = string.Empty;
+
+        [JsonPropertyName("relayRegion")]
+        public string RelayRegion { get; set; } = string.Empty;
+
+        [JsonPropertyName("relayHost")]
+        public string RelayHost { get; set; } = string.Empty;
+
+        [JsonPropertyName("gameName")]
+        public string? GameName { get; set; }
+
+        [JsonPropertyName("gameProcess")]
+        public string? GameProcess { get; set; }
+
+        [JsonPropertyName("pingMs")]
+        public int? PingMs { get; set; }
+
+        [JsonPropertyName("hwid")]
+        public string? Hwid { get; set; }
+
+        [JsonPropertyName("clientVersion")]
+        public string? ClientVersion { get; set; }
+    }
+
+    public class SessionConnectResponse
+    {
+        [JsonPropertyName("session_id")]
+        public string SessionId { get; set; } = string.Empty;
+
+        [JsonPropertyName("connected_at")]
+        public DateTime ConnectedAt { get; set; }
+    }
+
+    public class SessionHeartbeatRequest
+    {
+        [JsonPropertyName("sessionId")]
+        public string SessionId { get; set; } = string.Empty;
+
+        [JsonPropertyName("pingMs")]
+        public int? PingMs { get; set; }
+
+        [JsonPropertyName("downloadMbps")]
+        public double? DownloadMbps { get; set; }
+
+        [JsonPropertyName("uploadMbps")]
+        public double? UploadMbps { get; set; }
+
+        [JsonPropertyName("bytesSent")]
+        public long? BytesSent { get; set; }
+
+        [JsonPropertyName("bytesReceived")]
+        public long? BytesReceived { get; set; }
+
+        [JsonPropertyName("gameName")]
+        public string? GameName { get; set; }
+
+        [JsonPropertyName("gameProcess")]
+        public string? GameProcess { get; set; }
+    }
+
+    public class SessionDisconnectRequest
+    {
+        [JsonPropertyName("sessionId")]
+        public string SessionId { get; set; } = string.Empty;
+
+        [JsonPropertyName("bytesSent")]
+        public long? BytesSent { get; set; }
+
+        [JsonPropertyName("bytesReceived")]
+        public long? BytesReceived { get; set; }
+    }
+
     public class RegisterRequest
     {
         [JsonPropertyName("email")]
@@ -53,6 +134,21 @@ namespace RouteXia.VpnClient.Api
 
         [JsonPropertyName("role")]
         public string Role { get; set; } = "user";
+
+        [JsonPropertyName("is_banned")]
+        public bool IsBanned { get; set; }
+
+        [JsonPropertyName("ban_reason")]
+        public string? BanReason { get; set; }
+
+        [JsonPropertyName("custom_discount_pct")]
+        public int CustomDiscountPct { get; set; }
+
+        [JsonPropertyName("can_manual_select_relay")]
+        public bool CanManualSelectRelay { get; set; }
+
+        [JsonPropertyName("referral_code")]
+        public string ReferralCode { get; set; } = string.Empty;
 
         [JsonPropertyName("created_at")]
         public DateTime CreatedAt { get; set; }

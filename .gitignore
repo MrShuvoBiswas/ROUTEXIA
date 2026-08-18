@@ -31,3 +31,22 @@ Thumbs.db
 # Node.js
 **/node_modules/
 **/dist/
+**/specs/
+
+# Artifacts & release packages
+artifacts/
+*.nupkg
+*.zip
+
+# ── SECURITY: Firebase & Secret Config Files ──────────────────────────────
+# These files contain sensitive API keys and credentials.
+# NEVER commit these to version control.
+firebase.config.json
+firebase-service-account.json
+**/firebase-service-account.json
+backend/.env
+backend/.env.local
+backend/.env.production
+.env
+.env.local
+.env.production

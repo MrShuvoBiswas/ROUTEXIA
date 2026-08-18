@@ -81,3 +81,42 @@ export class UpdateRelayDto {
   @IsBoolean()
   isRecommended?: boolean;
 }
+
+export class RelayTelemetryDto {
+  @ApiProperty({ example: '3.1.31.201' })
+  @IsString()
+  host: string;
+
+  @ApiProperty({ example: 9001, default: 9001 })
+  @IsOptional()
+  @IsInt()
+  port?: number;
+
+  @ApiProperty({ example: 12.5 })
+  @IsOptional()
+  cpuUsage?: number;
+
+  @ApiProperty({ example: 34.2 })
+  @IsOptional()
+  ramUsage?: number;
+
+  @ApiProperty({ example: 2.0 })
+  @IsOptional()
+  ramTotalGb?: number;
+
+  @ApiProperty({ example: 10485760 })
+  @IsOptional()
+  totalBytesSent?: number;
+
+  @ApiProperty({ example: 52428800 })
+  @IsOptional()
+  totalBytesReceived?: number;
+
+  @ApiProperty({ example: 4.8 })
+  @IsOptional()
+  currentBandwidthMbps?: number;
+
+  @ApiProperty({ example: 3 })
+  @IsOptional()
+  activeSessions?: number;
+}

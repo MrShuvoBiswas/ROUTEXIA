@@ -9,8 +9,17 @@ export class UserEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column({ name: 'password_hash' })
-  passwordHash: string;
+  // nullable for Firebase-authenticated users who never set a local password
+  @Column({ name: 'password_hash', nullable: true, default: null })
+  passwordHash: string | null;
+
+  // Firebase UID — set when user signs in via Firebase Auth
+  @Column({ name: 'firebase_uid', nullable: true, unique: true, default: null })
+  firebaseUid: string | null;
+
+  // Whether the account was created / managed via Firebase Auth
+  @Column({ name: 'is_firebase_user', default: false })
+  isFirebaseUser: boolean;
 
   @Column({ default: 'user' })
   role: string; // 'admin' | 'user'
@@ -21,8 +30,17 @@ export class UserEntity {
   @Column({ name: 'ban_reason', default: '' })
   banReason: string;
 
+  @Column({ name: 'is_deleted', default: false })
+  isDeleted: boolean;
+
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true, default: null })
+  deletedAt: Date | null;
+
   @Column({ name: 'custom_discount_pct', default: 0 })
   customDiscountPct: number;
+
+  @Column({ name: 'can_manual_select_relay', default: false })
+  canManualSelectRelay: boolean;
 
   @Column({ name: 'referral_code', nullable: true, unique: true })
   referralCode: string;

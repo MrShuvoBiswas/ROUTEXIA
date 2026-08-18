@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using RouteXia.VpnClient.Security;
 
@@ -22,18 +23,31 @@ namespace RouteXia.VpnClient.Api
 
         public bool IsAuthenticated => !string.IsNullOrEmpty(_authToken) && CurrentUser != null;
         public bool CanConnect => CurrentSubscription?.CanConnect ?? false;
+        public bool CanManualSelectRelay => CurrentUser?.CanManualSelectRelay == true;
 
         public event Action? AuthStateChanged;
+        public event Action<string>? UserBannedOrSuspended;
+
+        private readonly System.Threading.Timer _profileSyncTimer;
 
         private static readonly string TokenFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "RouteXia", "auth.token");
 
-        public RouteXiaApiClient(string baseUrl = "http://3.1.31.201:8080")
+        public RouteXiaApiClient(string baseUrl = "https://api.routexia.in")
         {
             _baseUrl = baseUrl.TrimEnd('/');
             _http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             LoadSavedToken();
+            _profileSyncTimer = new System.Threading.Timer(async _ => await PeriodicProfileSyncAsync(), null, 5000, 10000);
+        }
+
+        private async Task PeriodicProfileSyncAsync()
+        {
+            if (!string.IsNullOrEmpty(_authToken))
+            {
+                await RefreshProfileAsync();
+            }
         }
 
         public void SetBaseUrl(string url)
@@ -61,6 +75,15 @@ namespace RouteXia.VpnClient.Api
                 string resBody = await res.Content.ReadAsStringAsync();
                 if (!res.IsSuccessStatusCode)
                 {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(resBody);
+                        if (doc.RootElement.TryGetProperty("message", out var msgElem))
+                        {
+                            return (false, msgElem.GetString() ?? "Registration failed");
+                        }
+                    }
+                    catch { }
                     return (false, string.IsNullOrWhiteSpace(resBody) ? "Registration failed" : resBody);
                 }
 
@@ -73,61 +96,14 @@ namespace RouteXia.VpnClient.Api
 
                 return (false, "Invalid response from server");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Fallback: Local 4-Day Trial Activation for Testing
-                var trialRes = new AuthResponse
-                {
-                    Token = "trial_session_token_" + Guid.NewGuid(),
-                    User = new UserDto { ID = Guid.NewGuid().ToString(), Email = email, Role = "user" },
-                    Subscription = new SubscriptionDto
-                    {
-                        ID = "sub-trial",
-                        PlanType = "trial",
-                        Status = "active",
-                        DaysLeft = 4,
-                        IsTrial = true,
-                        CanConnect = true,
-                        Message = "🎉 4-Day Free Trial Activated!"
-                    },
-                    Relays = new List<RelayServerDto>
-                    {
-                        new RelayServerDto { ID = "relay-sg-1", RegionCode = "SG", DisplayName = "Singapore 01 (AWS EC2)", Host = "3.1.31.201", Port = 9001, IsActive = true, Priority = 1 }
-                    }
-                };
-                HandleAuthSuccess(trialRes);
-                return (true, "4-Day Free Trial Activated!");
+                return (false, $"Server connection error: {ex.Message}");
             }
         }
 
         public async Task<(bool success, string message)> LoginAsync(string email, string password)
         {
-            // Master Admin Account (Instant Access)
-            if (email.Equals("admin@routexia.com", StringComparison.OrdinalIgnoreCase) && password == "admin123")
-            {
-                var adminRes = new AuthResponse
-                {
-                    Token = "admin_master_session_token",
-                    User = new UserDto { ID = "admin-1", Email = email, Role = "admin" },
-                    Subscription = new SubscriptionDto
-                    {
-                        ID = "sub-admin",
-                        PlanType = "premium",
-                        Status = "active",
-                        DaysLeft = 9999,
-                        IsTrial = false,
-                        CanConnect = true,
-                        Message = "👑 Master Administrator Account"
-                    },
-                    Relays = new List<RelayServerDto>
-                    {
-                        new RelayServerDto { ID = "relay-sg-1", RegionCode = "SG", DisplayName = "Singapore 01 (AWS EC2)", Host = "3.1.31.201", Port = 9001, IsActive = true, Priority = 1 }
-                    }
-                };
-                HandleAuthSuccess(adminRes);
-                return (true, "Admin login successful!");
-            }
-
             try
             {
                 string hwid = HwidGenerator.GetHwid();
@@ -144,11 +120,20 @@ namespace RouteXia.VpnClient.Api
                 string resBody = await res.Content.ReadAsStringAsync();
                 if (!res.IsSuccessStatusCode)
                 {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(resBody);
+                        if (doc.RootElement.TryGetProperty("message", out var msgElem))
+                        {
+                            return (false, msgElem.GetString() ?? "Invalid email or password");
+                        }
+                    }
+                    catch { }
                     return (false, string.IsNullOrWhiteSpace(resBody) ? "Invalid email or password" : resBody);
                 }
 
                 var authRes = JsonSerializer.Deserialize<AuthResponse>(resBody);
-                if (authRes != null)
+                if (authRes != null && !string.IsNullOrEmpty(authRes.Token))
                 {
                     HandleAuthSuccess(authRes);
                     return (true, "Login successful!");
@@ -156,30 +141,9 @@ namespace RouteXia.VpnClient.Api
 
                 return (false, "Invalid response from server");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Fallback for direct user login when backend server is starting
-                var userRes = new AuthResponse
-                {
-                    Token = "user_session_token_" + Guid.NewGuid(),
-                    User = new UserDto { ID = Guid.NewGuid().ToString(), Email = email, Role = "user" },
-                    Subscription = new SubscriptionDto
-                    {
-                        ID = "sub-user",
-                        PlanType = "trial",
-                        Status = "active",
-                        DaysLeft = 4,
-                        IsTrial = true,
-                        CanConnect = true,
-                        Message = "🎉 4-Day Free Trial Active!"
-                    },
-                    Relays = new List<RelayServerDto>
-                    {
-                        new RelayServerDto { ID = "relay-sg-1", RegionCode = "SG", DisplayName = "Singapore 01 (AWS EC2)", Host = "3.1.31.201", Port = 9001, IsActive = true, Priority = 1 }
-                    }
-                };
-                HandleAuthSuccess(userRes);
-                return (true, "Login successful (4-Day Trial Active)!");
+                return (false, $"Server connection failed: {ex.Message}");
             }
         }
 
@@ -201,6 +165,15 @@ namespace RouteXia.VpnClient.Api
                 string resBody = await res.Content.ReadAsStringAsync();
                 if (!res.IsSuccessStatusCode)
                 {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(resBody);
+                        if (doc.RootElement.TryGetProperty("message", out var msgElem))
+                        {
+                            return (false, msgElem.GetString() ?? "Authentication failed");
+                        }
+                    }
+                    catch { }
                     return (false, string.IsNullOrWhiteSpace(resBody) ? "Firebase authentication failed" : resBody);
                 }
 
@@ -213,30 +186,9 @@ namespace RouteXia.VpnClient.Api
 
                 return (false, "Invalid response from server");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Fallback: Firebase Web Token verified, grant 4-Day Trial
-                var fbRes = new AuthResponse
-                {
-                    Token = "fb_session_token_" + Guid.NewGuid(),
-                    User = new UserDto { ID = Guid.NewGuid().ToString(), Email = email ?? "google_user@routexia.com", Role = "user" },
-                    Subscription = new SubscriptionDto
-                    {
-                        ID = "sub-fb-trial",
-                        PlanType = "trial",
-                        Status = "active",
-                        DaysLeft = 4,
-                        IsTrial = true,
-                        CanConnect = true,
-                        Message = "🎉 4-Day Free Trial Activated!"
-                    },
-                    Relays = new List<RelayServerDto>
-                    {
-                        new RelayServerDto { ID = "relay-sg-1", RegionCode = "SG", DisplayName = "Singapore 01 (AWS EC2)", Host = "3.1.31.201", Port = 9001, IsActive = true, Priority = 1 }
-                    }
-                };
-                HandleAuthSuccess(fbRes);
-                return (true, "Authenticated successfully!");
+                return (false, $"Server connection error: {ex.Message}");
             }
         }
 
@@ -246,16 +198,25 @@ namespace RouteXia.VpnClient.Api
 
             try
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/api/v1/user/profile");
+                using var req = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/api/v1/auth/profile");
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
 
                 var res = await _http.SendAsync(req);
+                string resBody = await res.Content.ReadAsStringAsync();
+
                 if (res.IsSuccessStatusCode)
                 {
-                    string body = await res.Content.ReadAsStringAsync();
-                    var authRes = JsonSerializer.Deserialize<AuthResponse>(body);
+                    var authRes = JsonSerializer.Deserialize<AuthResponse>(resBody);
                     if (authRes != null)
                     {
+                        if (authRes.User?.IsBanned == true)
+                        {
+                            string banReason = authRes.User.BanReason ?? "Account suspended by Administrator";
+                            Logout();
+                            UserBannedOrSuspended?.Invoke(banReason);
+                            return;
+                        }
+
                         CurrentUser = authRes.User;
                         CurrentSubscription = authRes.Subscription;
                         if (authRes.Relays.Count > 0)
@@ -264,9 +225,14 @@ namespace RouteXia.VpnClient.Api
                         AuthStateChanged?.Invoke();
                     }
                 }
-                else if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                else if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized || res.StatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
+                    string errorMsg = ExtractErrorMessage(resBody, "Account suspended or session expired");
                     Logout();
+                    if (errorMsg.Contains("suspended") || errorMsg.Contains("banned") || errorMsg.Contains("deleted"))
+                    {
+                        UserBannedOrSuspended?.Invoke(errorMsg);
+                    }
                 }
             }
             catch { /* Best effort */ }
@@ -340,6 +306,8 @@ namespace RouteXia.VpnClient.Api
             AuthStateChanged?.Invoke();
         }
 
+        private static readonly byte[] TokenEntropy = Encoding.UTF8.GetBytes("RouteXia.Token.Entropy.v2026");
+
         private void SaveToken(string token)
         {
             try
@@ -348,7 +316,13 @@ namespace RouteXia.VpnClient.Api
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
 
-                File.WriteAllText(TokenFilePath, token);
+                byte[] plainBytes = Encoding.UTF8.GetBytes(token);
+                byte[] encryptedBytes = ProtectedData.Protect(
+                    plainBytes,
+                    TokenEntropy,
+                    DataProtectionScope.CurrentUser);
+
+                File.WriteAllBytes(TokenFilePath, encryptedBytes);
             }
             catch { }
         }
@@ -359,7 +333,30 @@ namespace RouteXia.VpnClient.Api
             {
                 if (File.Exists(TokenFilePath))
                 {
-                    string token = File.ReadAllText(TokenFilePath).Trim();
+                    byte[] fileBytes = File.ReadAllBytes(TokenFilePath);
+                    if (fileBytes.Length == 0) return;
+
+                    string? token = null;
+                    try
+                    {
+                        byte[] decryptedBytes = ProtectedData.Unprotect(
+                            fileBytes,
+                            TokenEntropy,
+                            DataProtectionScope.CurrentUser);
+                        token = Encoding.UTF8.GetString(decryptedBytes).Trim();
+                    }
+                    catch
+                    {
+                        // Fallback/migration for legacy plaintext token file
+                        string legacyText = Encoding.UTF8.GetString(fileBytes).Trim();
+                        if (legacyText.StartsWith("eyJ"))
+                        {
+                            token = legacyText;
+                            // Automatically upgrade to DPAPI encrypted format
+                            SaveToken(token);
+                        }
+                    }
+
                     if (!string.IsNullOrEmpty(token))
                     {
                         _authToken = token;
@@ -368,6 +365,113 @@ namespace RouteXia.VpnClient.Api
                 }
             }
             catch { }
+        }
+
+        // ── Session Management (Live Session Reporting) ──────────────────────────────
+
+        public async Task<(bool success, string message, SessionConnectResponse? data)> ReportSessionConnectAsync(SessionConnectRequest request)
+        {
+            if (string.IsNullOrEmpty(_authToken)) return (false, "Not authenticated", null);
+
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+                using var req = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/api/v1/sessions/connect");
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
+                req.Content = content;
+
+                var res = await _http.SendAsync(req);
+                string resBody = await res.Content.ReadAsStringAsync();
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    string errorMsg = ExtractErrorMessage(resBody, "Session connect rejected by server");
+                    return (false, errorMsg, null);
+                }
+
+                var data = JsonSerializer.Deserialize<SessionConnectResponse>(resBody);
+                return (true, "Session connected", data);
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message, null);
+            }
+        }
+
+        public async Task<(bool success, string message)> ReportSessionHeartbeatAsync(SessionHeartbeatRequest request)
+        {
+            if (string.IsNullOrEmpty(_authToken)) return (false, "Not authenticated");
+
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+                using var req = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/api/v1/sessions/heartbeat");
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
+                req.Content = content;
+
+                var res = await _http.SendAsync(req);
+                string resBody = await res.Content.ReadAsStringAsync();
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    return (false, ExtractErrorMessage(resBody, "Heartbeat failed"));
+                }
+
+                return (true, "OK");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
+        public async Task<(bool success, string message)> ReportSessionDisconnectAsync(SessionDisconnectRequest request)
+        {
+            if (string.IsNullOrEmpty(_authToken)) return (false, "Not authenticated");
+
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+                using var req = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/api/v1/sessions/disconnect");
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
+                req.Content = content;
+
+                var res = await _http.SendAsync(req);
+                string resBody = await res.Content.ReadAsStringAsync();
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    return (false, ExtractErrorMessage(resBody, "Disconnect failed"));
+                }
+
+                return (true, "OK");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
+        public static string ExtractErrorMessage(string resBody, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(resBody)) return fallback;
+            try
+            {
+                using var doc = JsonDocument.Parse(resBody);
+                if (doc.RootElement.TryGetProperty("message", out var msgElem))
+                {
+                    if (msgElem.ValueKind == JsonValueKind.String)
+                        return msgElem.GetString() ?? fallback;
+                    if (msgElem.ValueKind == JsonValueKind.Array && msgElem.GetArrayLength() > 0)
+                        return msgElem[0].GetString() ?? fallback;
+                }
+                if (doc.RootElement.TryGetProperty("error", out var errElem) && errElem.ValueKind == JsonValueKind.String)
+                {
+                    return errElem.GetString() ?? fallback;
+                }
+            }
+            catch { }
+            return resBody;
         }
 
         public void Dispose() => _http.Dispose();

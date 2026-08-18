@@ -35,6 +35,14 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="20,22,20,24">
+                    <Image
+                        Source="pack://application:,,,/RouteXia;component/Resources/Images/RouteXiaLogo.png"
+                        Width="120"
+                        Height="120"
+                        Stretch="Uniform"
+                        HorizontalAlignment="Left"
+                        Margin="0,0,0,8"
+                        RenderOptions.BitmapScalingMode="HighQuality" />
                     <TextBlock
                         Text="ROUTEXIA"
                         Style="{StaticResource HeadingXLStyle}" />
@@ -75,6 +83,23 @@
                                 Margin="0,0,12,0" />
                             <TextBlock
                                 Text="Boost"
+                                FontWeight="SemiBold"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        x:Name="BtnNavLibrary"
+                        Style="{StaticResource NavButtonStyle}"
+                        Click="BtnNavLibrary_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon
+                                Symbol="Apps24"
+                                FontSize="18"
+                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Text="Library"
                                 FontWeight="SemiBold"
                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                         </StackPanel>
@@ -213,13 +238,13 @@
                         <!-- Game Name & Status (T031, T032) -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock
-                                Text="ACTIVE GAME"
+                                Text="{Binding GameDetectionHeader, FallbackValue='GAME DETECTION'}"
                                 Style="{StaticResource CaptionStyle}"
                                 Foreground="{StaticResource TextMutedBrush}"
                                 FontSize="10"
                                 FontWeight="Bold" />
                             <TextBlock
-                                Text="{Binding DetectedGameName, FallbackValue='PUBG: Battlegrounds'}"
+                                Text="{Binding DetectedGameName, FallbackValue='Waiting for game...'}"
                                 FontSize="12"
                                 TextTrimming="CharacterEllipsis"
                                 Margin="0,2,0,0">
@@ -462,7 +487,7 @@
                             </ui:SymbolIcon.Style>
                         </ui:SymbolIcon>
                         <TextBlock
-                            Text="{Binding DetectedGameName, FallbackValue='RouteXia ready'}"
+                            Text="{Binding TopBarStatusText, FallbackValue='RouteXia ready — Waiting for game'}"
                             Style="{StaticResource HeadingSmStyle}" />
                         <Border
                             Margin="12,0,0,0"

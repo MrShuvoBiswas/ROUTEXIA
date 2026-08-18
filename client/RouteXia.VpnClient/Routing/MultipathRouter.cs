@@ -26,9 +26,11 @@ namespace RouteXia.VpnClient.Routing
         // ── Packet sequence (for duplicate detection on server side) ──────────────
         private uint _sequence;
 
-        // ── Metrics polling ───────────────────────────────────────────────────────
+        // ── Metrics polling & Latency Audit ───────────────────────────────────────
         private readonly Timer _metricsTimer;
         private const int MetricsPollIntervalMs = 500;
+        private long _lastMeasureTimestamp = Stopwatch.GetTimestamp();
+        private int _missedCycleCount;
 
         // ── Inbound relay listener ────────────────────────────────────────────────
         private CancellationTokenSource? _receiveCts;
@@ -92,6 +94,27 @@ namespace RouteXia.VpnClient.Routing
             MeasureAllRoutes(null);
         }
 
+        public List<RouteInfo> GetRouteInfos()
+        {
+            lock (_routeLock)
+            {
+                var list = new List<RouteInfo>(_routes.Count);
+                for (int i = 0; i < _routes.Count; i++)
+                {
+                    var r = _routes[i];
+                    list.Add(new RouteInfo(
+                        r.Endpoint.Host,
+                        r.Endpoint.Port,
+                        r.Endpoint.Region,
+                        r.LastPingMs,
+                        r.LastJitterMs,
+                        r.Score,
+                        r.IsAlive));
+                }
+                return list;
+            }
+        }
+
         // ── Start/Stop inbound listener ───────────────────────────────────────────
 
         public void StartReceiving(CancellationToken ct)
@@ -108,6 +131,12 @@ namespace RouteXia.VpnClient.Routing
 
         private async Task ReceiveLoop(RelayRoute route, CancellationToken ct)
         {
+            try
+            {
+                Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
+            }
+            catch { }
+
             Debug.WriteLine($"[Multipath] Listening on route {route.Endpoint}");
 
             while (!ct.IsCancellationRequested && !_disposed)
@@ -120,9 +149,8 @@ namespace RouteXia.VpnClient.Routing
                     var (payload, origSrcIp, origSrcPort, localPort) = result.Value;
 
                     Stats.ReceivedPackets++;
+                    Stats.ReceivedBytes += (18 + payload.Length);
                     OnRelayResponseReceived?.Invoke(payload, origSrcIp, origSrcPort, localPort);
-
-                    Debug.WriteLine($"[Multipath] Relay response: {payload.Length}b from {origSrcIp}:{origSrcPort}");
                 }
                 catch (OperationCanceledException) { break; }
                 catch (ObjectDisposedException) { break; }
@@ -154,25 +182,28 @@ namespace RouteXia.VpnClient.Routing
                 BuildFrameInPlace(frame, packet, offset, length, seq, destIp, destPort, localPort);
 
                 var activeRoutes = GetSortedActiveRoutes();
-                if (activeRoutes.Count == 0)
+                int targetCount = Math.Min(2, activeRoutes.Count);
+                if (targetCount == 0)
                 {
                     Stats.DroppedPackets++;
-                    Debug.WriteLine("[Multipath] No active routes — packet dropped");
                     return;
                 }
 
-                // Send on top routes simultaneously (fast-path non-blocking)
-                var sendTargets = activeRoutes.Take(2).ToList();
-                var tasks = new List<Task>(sendTargets.Count);
-                for (int i = 0; i < sendTargets.Count; i++)
+                if (targetCount == 1)
                 {
-                    tasks.Add(sendTargets[i].SendAsync(frame.AsMemory(0, 18 + length), ct).AsTask());
+                    await activeRoutes[0].SendAsync(frame.AsMemory(0, 18 + length), ct);
+                    Stats.LastSentRoute = activeRoutes[0].Endpoint.ToString();
+                }
+                else
+                {
+                    var t1 = activeRoutes[0].SendAsync(frame.AsMemory(0, 18 + length), ct).AsTask();
+                    var t2 = activeRoutes[1].SendAsync(frame.AsMemory(0, 18 + length), ct).AsTask();
+                    await Task.WhenAll(t1, t2);
+                    Stats.LastSentRoute = activeRoutes[0].Endpoint.ToString();
                 }
 
-                await Task.WhenAll(tasks);
-                
                 Stats.SentPackets++;
-                Stats.LastSentRoute = sendTargets[0].Endpoint.ToString();
+                Stats.SentBytes += (18 + length);
             }
             finally
             {
@@ -192,7 +223,6 @@ namespace RouteXia.VpnClient.Routing
             ushort destPort,
             ushort localPort)
         {
-            var destBytes = destIp.GetAddressBytes();
             const int headerSize = 18;
 
             // Magic RXIA
@@ -205,8 +235,7 @@ namespace RouteXia.VpnClient.Routing
             frame[7] = (byte)(seq);
 
             // Dest IP
-            frame[8]  = destBytes[0]; frame[9]  = destBytes[1];
-            frame[10] = destBytes[2]; frame[11] = destBytes[3];
+            destIp.TryWriteBytes(frame.AsSpan(8, 4), out _);
 
             // Dest port
             frame[12] = (byte)(destPort >> 8); frame[13] = (byte)(destPort);
@@ -246,11 +275,22 @@ namespace RouteXia.VpnClient.Routing
 
         private void MeasureAllRoutes(object? _)
         {
+            long now = Stopwatch.GetTimestamp();
+            double elapsedCycleMs = Stopwatch.GetElapsedTime(_lastMeasureTimestamp, now).TotalMilliseconds;
+            _lastMeasureTimestamp = now;
+
+            // Latency audit: alert if measurement window was delayed by >10%
+            if (elapsedCycleMs > 550.0)
+            {
+                _missedCycleCount++;
+                Debug.WriteLine($"[LatencyAudit] WARNING: Measurement cycle exceeded deadline: {elapsedCycleMs:F1}ms (> 550ms, missed total: {_missedCycleCount}). App timing delay detected.");
+            }
+
             lock (_routeLock)
             {
-                foreach (var route in _routes)
+                for (int i = 0; i < _routes.Count; i++)
                 {
-                    _ = route.SendPingProbeAsync();
+                    _ = _routes[i].SendPingProbeAsync();
                 }
             }
 
@@ -281,6 +321,8 @@ namespace RouteXia.VpnClient.Routing
             _disposed = true;
         }
     }
+
+    public record RouteInfo(string Host, int Port, string Region, double LastPingMs, double LastJitterMs, double Score, bool IsAlive);
 
     // ── RelayRoute ────────────────────────────────────────────────────────────────
 
@@ -390,8 +432,8 @@ namespace RouteXia.VpnClient.Routing
                 // ── Type 0x03: Data Response from Relay ───────────────────────────
                 if (type == 0x03 && data.Length >= 18)
                 {
-                    var srcIpBytes = new byte[] { data[8], data[9], data[10], data[11] };
-                    var srcIp      = new IPAddress(srcIpBytes);
+                    uint ipInt = (uint)(data[8] | (data[9] << 8) | (data[10] << 16) | (data[11] << 24));
+                    var srcIp = new IPAddress((long)ipInt);
                     ushort srcPort   = (ushort)((data[12] << 8) | data[13]);
                     ushort localPort = (ushort)((data[14] << 8) | data[15]);
 
@@ -415,8 +457,14 @@ namespace RouteXia.VpnClient.Routing
             probe[0] = 0x52; probe[1] = 0x58; probe[2] = 0x49; probe[3] = 0x41;
             probe[4] = 0x01;
             long nowTicks = Stopwatch.GetTimestamp();
-            var tickBytes = BitConverter.GetBytes(nowTicks);
-            Buffer.BlockCopy(tickBytes, 0, probe, 5, 8);
+            probe[5] = (byte)(nowTicks);
+            probe[6] = (byte)(nowTicks >> 8);
+            probe[7] = (byte)(nowTicks >> 16);
+            probe[8] = (byte)(nowTicks >> 24);
+            probe[9] = (byte)(nowTicks >> 32);
+            probe[10] = (byte)(nowTicks >> 40);
+            probe[11] = (byte)(nowTicks >> 48);
+            probe[12] = (byte)(nowTicks >> 56);
             return probe;
         }
 
@@ -432,6 +480,10 @@ namespace RouteXia.VpnClient.Routing
     {
         public long SentPackets      { get; internal set; }
         public long ReceivedPackets  { get; internal set; }
+        public long SentBytes        { get; internal set; }
+        public long ReceivedBytes    { get; internal set; }
+        public double DownloadMbps   { get; internal set; }
+        public double UploadMbps     { get; internal set; }
         public long DroppedPackets   { get; internal set; }
         public long Errors           { get; internal set; }
         public int  ActiveRoutes     { get; internal set; }

@@ -89,133 +89,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- ── Relay Region Preferences (T037, T038, T039, T040) ─────── -->
-            <TextBlock
-                Text="RELAY REGION PREFERENCES"
-                Style="{StaticResource CaptionStyle}"
-                Foreground="{StaticResource TextMutedBrush}"
-                FontWeight="SemiBold"
-                Margin="0,0,0,12" />
-
-            <Border
-                Background="{StaticResource BgCardBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="{StaticResource RadiusLg}"
-                Padding="20,16"
-                Margin="0,0,0,24">
-                <StackPanel>
-                    <TextBlock
-                        Text="Select which regional relay VPS nodes RouteXia should include during multipath parallel routing and dynamic route scoring."
-                        Style="{StaticResource CaptionStyle}"
-                        Foreground="{StaticResource TextMutedBrush}"
-                        TextWrapping="Wrap"
-                        Margin="0,0,0,16" />
-
-                    <!-- ItemsControl of Relay Regions (T037, T038) -->
-                    <ItemsControl ItemsSource="{Binding RelayRegions}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,6,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Flag / Code Badge -->
-                                    <Border
-                                        Grid.Column="0"
-                                        Background="{StaticResource BadgeBgBrush}"
-                                        CornerRadius="{StaticResource RadiusXs}"
-                                        Padding="8,4"
-                                        Margin="0,0,12,0"
-                                        VerticalAlignment="Center">
-                                        <TextBlock
-                                            Text="{Binding FlagEmoji}"
-                                            FontSize="14"
-                                            VerticalAlignment="Center" />
-                                    </Border>
-
-                                    <!-- Region Display Name -->
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock
-                                            Text="{Binding DisplayName}"
-                                            Style="{StaticResource HeadingSmStyle}"
-                                            FontSize="13"
-                                            VerticalAlignment="Center" />
-                                    </StackPanel>
-
-                                    <!-- Region ToggleSwitch -->
-                                    <ui:ToggleSwitch
-                                        Grid.Column="2"
-                                        IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <!-- Validation Error when all disabled (T039) -->
-                    <Border
-                        Margin="0,12,0,0"
-                        Padding="10,6"
-                        Background="{StaticResource BgPanelBrush}"
-                        BorderBrush="{StaticResource StatusBadBrush}"
-                        BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusXs}">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasRegionValidationError}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon
-                                Symbol="Warning24"
-                                FontSize="14"
-                                Foreground="{StaticResource StatusBadBrush}"
-                                Margin="0,0,8,0"
-                                VerticalAlignment="Center" />
-                            <TextBlock
-                                Text="At least one relay region must remain enabled."
-                                Style="{StaticResource CaptionStyle}"
-                                Foreground="{StaticResource StatusBadBrush}"
-                                FontWeight="SemiBold"
-                                VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Save Status / Action Button -->
-                    <Grid Margin="0,16,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock
-                            Grid.Column="0"
-                            Text="{Binding SaveStatusMessage}"
-                            Style="{StaticResource CaptionStyle}"
-                            Foreground="{StaticResource StatusGoodBrush}"
-                            VerticalAlignment="Center" />
-
-                        <Button
-                            Grid.Column="1"
-                            Content="Save Preferences"
-                            Command="{Binding SaveRelayPreferencesCommand}"
-                            Style="{StaticResource ConnectButtonStyle}"
-                            Padding="16,6"
-                            FontSize="12"
-                            Height="32"
-                            VerticalAlignment="Center" />
-                    </Grid>
-                </StackPanel>
-            </Border>
 
             <!-- ── System ────────────────────────────────────────────────── -->
             <TextBlock
@@ -322,7 +195,7 @@
                             Padding="10,4"
                             VerticalAlignment="Center">
                             <TextBlock
-                                Text="v0.1.0-beta"
+                                Text="{Binding AppVersionText}"
                                 Style="{StaticResource BadgeLabelStyle}"
                                 Foreground="{StaticResource AccentBrush}" />
                         </Border>
@@ -338,6 +211,113 @@
                         Style="{StaticResource CaptionStyle}"
                         Foreground="{StaticResource TextMutedBrush}"
                         TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- ── Application Updates (T010) ────────────────────────────── -->
+            <TextBlock
+                Text="APPLICATION UPDATES"
+                Style="{StaticResource SectionHeaderStyle}"
+                Margin="0,20,0,10" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="Auto-Update &amp; Release Channel"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="14" />
+                            <TextBlock
+                                Text="{Binding UpdateStatusText}"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Button
+                            Grid.Column="1"
+                            Content="Check for Updates"
+                            Command="{Binding CheckForUpdatesCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="14,6"
+                            Height="32"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Update Available Banner -->
+                    <Border
+                        Margin="0,6,0,0"
+                        Padding="14,10"
+                        Background="{StaticResource NavActiveBgBrush}"
+                        BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMd}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUpdateAvailable}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock
+                                    Text="{Binding LatestVersionText, StringFormat='Update Available: {0}'}"
+                                    Style="{StaticResource HeadingSmStyle}"
+                                    FontSize="13"
+                                    Foreground="{StaticResource AccentBrush}" />
+                                <TextBlock
+                                    Text="Includes performance improvements, kernel driver optimizations, and stability fixes."
+                                    Style="{StaticResource CaptionStyle}"
+                                    Foreground="{StaticResource TextMutedBrush}"
+                                    Margin="0,2,0,0" />
+                            </StackPanel>
+                            <Button
+                                Grid.Column="1"
+                                Content="Install Now"
+                                Command="{Binding InstallUpdateCommand}"
+                                Style="{StaticResource ConnectButtonStyle}"
+                                Padding="16,6"
+                                Height="32"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Progress bar when downloading -->
+                    <ProgressBar
+                        Height="4"
+                        Value="{Binding DownloadProgress}"
+                        Maximum="100"
+                        Foreground="{StaticResource AccentBrush}"
+                        Background="{StaticResource BgPanelBrush}"
+                        Margin="0,10,0,0">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDownloadingUpdate}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
                 </StackPanel>
             </Border>
 

@@ -25,7 +25,7 @@
 
         <!-- Premium Button Style -->
         <Style x:Key="PremiumButtonStyle" TargetType="ui:Button">
-            <Setter Property="Background" Value="#E52E3D"/>
+            <Setter Property="Background" Value="{StaticResource AccentGradientBrush}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="24,12"/>
@@ -39,7 +39,7 @@
                         <Grid>
                             <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" BorderThickness="0">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#E52E3D" ShadowDepth="0" BlurRadius="10" Opacity="0.4" />
+                                    <DropShadowEffect Color="#00C2FF" ShadowDepth="0" BlurRadius="12" Opacity="0.4" />
                                 </Border.Effect>
                             </Border>
                             <Border x:Name="hoverOverlay" Background="White" Opacity="0" CornerRadius="8" IsHitTestVisible="False" />
@@ -203,7 +203,7 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,24">
-                        <ui:SymbolIcon Symbol="PersonBoard24" FontSize="20" Foreground="#E52E3D" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <ui:SymbolIcon Symbol="PersonBoard24" FontSize="20" Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
                         <TextBlock Text="My Data" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="22" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
                     </StackPanel>
 
@@ -268,7 +268,7 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,24">
-                        <ui:SymbolIcon Symbol="ShieldTask24" FontSize="20" Foreground="#E52E3D" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <ui:SymbolIcon Symbol="ShieldTask24" FontSize="20" Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Account Details" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="22" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
                     </StackPanel>
 
@@ -277,13 +277,13 @@
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <!-- Avatar / Status Icon with Glow -->
                         <Grid HorizontalAlignment="Center" Margin="0,0,0,20">
-                            <Ellipse Width="64" Height="64" Fill="#E52E3D" Opacity="0.15">
+                            <Ellipse Width="64" Height="64" Fill="{StaticResource AccentBrush}" Opacity="0.15">
                                 <Ellipse.Effect>
                                     <BlurEffect Radius="20"/>
                                 </Ellipse.Effect>
                             </Ellipse>
-                            <Border Width="64" Height="64" CornerRadius="32" Background="#0A1018" BorderBrush="#E52E3D" BorderThickness="1.5">
-                                <ui:SymbolIcon Symbol="Premium24" FontSize="28" Foreground="#E52E3D" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Width="64" Height="64" CornerRadius="32" Background="#0A1018" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5">
+                                <ui:SymbolIcon Symbol="Premium24" FontSize="28" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </Grid>
 

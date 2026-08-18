@@ -94,10 +94,10 @@
                     Padding="22,18">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <ui:SymbolIcon Symbol="ArrowRouting24" FontSize="20" Foreground="{StaticResource StatusWarnBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <ui:SymbolIcon Symbol="Flash24" FontSize="20" Foreground="{StaticResource StatusWarnBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
                             <TextBlock Text="Smart Split-Tunneling Protection" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Text="Only designated game processes (PUBG, Valorant, CS2) are routed through the low-latency gaming relays. All downloads, YouTube, and browser traffic remain on your standard ISP connection for maximum overall bandwidth." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="30,0,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="Only designated game traffic is routed through the low-latency gaming relays. All downloads, streaming, and browser traffic remain on your standard ISP connection for maximum overall bandwidth." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="30,0,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
             </StackPanel>

@@ -37,11 +37,12 @@ public partial class GameLibraryView : Page
             if (!game.IsSupported)
             {
                 // Show coming soon message
-                MessageBox.Show(
-                    $"{game.Name} support is coming soon!\n\nWe're actively working on adding routing optimization for this game.",
-                    "Coming Soon",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                ModernPromptWindow.ShowAlert(
+                    $"{game.Name.ToUpperInvariant()} — COMING SOON",
+                    $"We're actively working on adding routing optimization and dedicated low-ping relay routes for {game.Name}.",
+                    ModernPromptType.Information,
+                    "GOT IT",
+                    "Game Library");
                 return;
             }
 

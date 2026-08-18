@@ -1,0 +1,12 @@
+# NEVER commit these to version control.
+firebase.config.json
+firebase-service-account.json
+**/firebase-service-account.json
+backend/.env
+backend/.env.local
+backend/.env.production
+.env
+.env.local
+.env.production
+node_modules/
+dist/

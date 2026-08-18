@@ -13,8 +13,11 @@ import { SubscriptionEntity } from './entities/subscription.entity';
 import { RelayEntity } from './entities/relay.entity';
 import { CouponEntity } from './entities/coupon.entity';
 import { AppVersionEntity } from './entities/app-version.entity';
+import { UserSessionEntity } from './entities/user-session.entity';
+import { UserHistoryEntity } from './entities/user-history.entity';
 
 import { AuthModule } from './modules/auth/auth.module';
+import { SessionsModule } from './modules/sessions/sessions.module';
 import { UsersModule } from './modules/users/users.module';
 import { RelaysModule } from './modules/relays/relays.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
@@ -28,6 +31,7 @@ import { AdminModule } from './modules/admin/admin.module';
     TypeOrmModule.forRootAsync({
       useFactory: () => {
         const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+        if (dbUrl) {
           return {
             type: 'postgres',
             url: dbUrl,
@@ -38,10 +42,11 @@ import { AdminModule } from './modules/admin/admin.module';
               connectionTimeoutMillis: 10000,
               keepAlive: true,
             },
-            entities: [UserEntity, DeviceEntity, SubscriptionEntity, RelayEntity, CouponEntity, AppVersionEntity],
+            entities: [UserEntity, DeviceEntity, SubscriptionEntity, RelayEntity, CouponEntity, AppVersionEntity, UserSessionEntity, UserHistoryEntity],
             synchronize: true,
             autoLoadEntities: true,
           };
+        }
 
         return {
           type: 'postgres',
@@ -51,7 +56,7 @@ import { AdminModule } from './modules/admin/admin.module';
           password: process.env.DB_PASSWORD || 'postgres',
           database: process.env.DB_NAME || 'routexia',
           ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-          entities: [UserEntity, DeviceEntity, SubscriptionEntity, RelayEntity, CouponEntity, AppVersionEntity],
+          entities: [UserEntity, DeviceEntity, SubscriptionEntity, RelayEntity, CouponEntity, AppVersionEntity, UserSessionEntity, UserHistoryEntity],
           synchronize: true,
           autoLoadEntities: true,
         };
@@ -69,6 +74,7 @@ import { AdminModule } from './modules/admin/admin.module';
     CouponsModule,
     VersionsModule,
     AdminModule,
+    SessionsModule,
   ],
 })
 export class AppModule implements OnModuleInit {
@@ -80,19 +86,21 @@ export class AppModule implements OnModuleInit {
 
   async onModuleInit() {
     // Admin account seeding on startup if not exists
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@routexia.com').toLowerCase();
-    let admin = await this.userRepo.findOne({ where: { email: adminEmail } });
-    if (!admin) {
-      const pass = process.env.ADMIN_PASSWORD || 'Admin123456!';
-      const hash = await bcrypt.hash(pass, 10);
-      admin = this.userRepo.create({
-        email: adminEmail,
-        passwordHash: hash,
-        role: 'admin',
-        referralCode: 'RX-ADMIN',
-      });
-      await this.userRepo.save(admin);
-      console.log(`[SEED] Created default Admin account: ${adminEmail}`);
+    const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.toLowerCase() : '';
+    if (adminEmail) {
+      let admin = await this.userRepo.findOne({ where: { email: adminEmail } });
+      if (!admin) {
+        const pass = process.env.ADMIN_PASSWORD || '';
+        const hash = await bcrypt.hash(pass, 10);
+        admin = this.userRepo.create({
+          email: adminEmail,
+          passwordHash: hash,
+          role: 'admin',
+          referralCode: 'RX-ADMIN',
+        });
+        await this.userRepo.save(admin);
+        console.log(`[SEED] Created default Admin account: ${adminEmail}`);
+      }
     }
 
     // Seed initial app version if empty

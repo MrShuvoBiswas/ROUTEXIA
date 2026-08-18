@@ -41,6 +41,27 @@ export class RelayEntity {
   @Column({ name: 'is_recommended', default: true })
   isRecommended: boolean;
 
+  @Column({ name: 'cpu_usage', type: 'float', default: 0 })
+  cpuUsage: number; // e.g. 15.2%
+
+  @Column({ name: 'ram_usage', type: 'float', default: 0 })
+  ramUsage: number; // e.g. 35.4%
+
+  @Column({ name: 'ram_total_gb', type: 'float', default: 2.0 })
+  ramTotalGb: number;
+
+  @Column({ name: 'total_bytes_sent', type: 'bigint', default: 0 })
+  totalBytesSent: number;
+
+  @Column({ name: 'total_bytes_received', type: 'bigint', default: 0 })
+  totalBytesReceived: number;
+
+  @Column({ name: 'current_bandwidth_mbps', type: 'float', default: 0 })
+  currentBandwidthMbps: number;
+
+  @Column({ name: 'last_telemetry_at', nullable: true })
+  lastTelemetryAt: Date;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

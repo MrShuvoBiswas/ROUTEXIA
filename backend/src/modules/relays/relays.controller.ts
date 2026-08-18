@@ -16,6 +16,12 @@ export class RelaysController {
     return this.relaysService.getActiveRelays();
   }
 
+  @Post('telemetry')
+  @ApiOperation({ summary: 'Relay Server: Report live hardware & traffic telemetry' })
+  reportTelemetry(@Body() dto: import('./dto/relay.dto').RelayTelemetryDto) {
+    return this.relaysService.reportTelemetry(dto);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Admin: Add a new relay server' })
   addRelay(@Body() dto: AddRelayDto) {

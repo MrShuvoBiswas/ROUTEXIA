@@ -22,7 +22,7 @@ namespace RouteXia.VpnClient.Auth
     {
         private readonly string _authPortalUrl;
 
-        public BrowserAuthService(string authPortalUrl = "http://3.1.31.201:8080/auth")
+        public BrowserAuthService(string authPortalUrl = Common.RouteXiaUrls.AuthPortalUrl)
         {
             _authPortalUrl = authPortalUrl;
         }
@@ -120,6 +120,9 @@ namespace RouteXia.VpnClient.Auth
 </body>
 </html>";
 
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
                 byte[] buffer = Encoding.UTF8.GetBytes(responseHtml);
                 context.Response.ContentType = "text/html; charset=utf-8";
                 context.Response.ContentLength64 = buffer.Length;
