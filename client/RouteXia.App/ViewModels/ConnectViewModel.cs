@@ -14,6 +14,7 @@ using RouteXia.VpnClient.KillSwitch;
 using RouteXia.VpnClient.Interception;
 using RouteXia.VpnClient.Api;
 using RouteXia.VpnClient.Security;
+using RouteXia.VpnClient.Optimization;
 using Microsoft.Extensions.DependencyInjection;
 using RouteXia.App.Views;
 using RouteXia.App.Services;
@@ -98,6 +99,7 @@ public class ConnectViewModel : INotifyPropertyChanged
     private readonly WinDivertInterceptor _interceptor;
     private readonly PubgServerTracker    _serverTracker;
     private readonly RouteXiaApiClient    _apiClient;
+    private readonly SystemNetworkOptimizer _networkOptimizer;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private ConnectionState _state = ConnectionState.Disconnected;
@@ -1048,14 +1050,16 @@ public class ConnectViewModel : INotifyPropertyChanged
         SettingsViewModel    settingsVm,
         WinDivertInterceptor interceptor,
         PubgServerTracker    serverTracker,
-        RouteXiaApiClient    apiClient)
+        RouteXiaApiClient    apiClient,
+        SystemNetworkOptimizer networkOptimizer)
     {
-        _router        = router;
-        _killSwitch    = killSwitch;
-        _settingsVm    = settingsVm;
-        _interceptor   = interceptor;
-        _serverTracker = serverTracker;
-        _apiClient     = apiClient;
+        _router           = router;
+        _killSwitch       = killSwitch;
+        _settingsVm       = settingsVm;
+        _interceptor      = interceptor;
+        _serverTracker    = serverTracker;
+        _apiClient        = apiClient;
+        _networkOptimizer = networkOptimizer;
 
         // Default to PUBG
         _currentGame = GameRegistry.GetById("pubg") ?? GameRegistry.SupportedGames.First();
@@ -1363,7 +1367,7 @@ public class ConnectViewModel : INotifyPropertyChanged
                         Country = "Singapore",
                         Region = "Asia (SEA)",
                         Flag = "🇸🇬",
-                        Host = "3.1.31.201",
+                        Host = "sg.relays.routexia.in",
                         Port = 9001,
                         LatencyMs = 38,
                         IsRecommended = true
@@ -1585,11 +1589,14 @@ public class ConnectViewModel : INotifyPropertyChanged
             await Task.Delay(300, _connectionCts.Token);
             _router.StartReceiving(_connectionCts.Token);
 
+            // Apply System-Level MTU 1393 Clamping & Cloudflare Ultra-Low Latency Gaming DNS (1.1.1.1 & 1.0.0.1)
+            await _networkOptimizer.ApplyGamingOptimizationsAsync(1393);
+
             State = ConnectionState.Connected;
             _connectedAt = DateTimeOffset.UtcNow;
 
             StartStatsPoller();
-            LogMessage?.Invoke(this, $"✅ Connected — {CurrentGame.ShortName} optimized via {SelectedServerName} ({NumberOfRoutes} parallel routes)");
+            LogMessage?.Invoke(this, $"✅ Connected — {CurrentGame.ShortName} optimized via {SelectedServerName} (MTU 1393 + Cloudflare DNS 1.1.1.1 active)");
         }
         catch (OperationCanceledException)
         {
@@ -1664,6 +1671,9 @@ public class ConnectViewModel : INotifyPropertyChanged
         _connectionCts?.Cancel();
         _statsTimer?.Dispose();
         _statsTimer = null;
+
+        // Restore standard DHCP DNS and 1500 MTU on user's network adapter
+        _networkOptimizer.RestoreDefaultNetworkSettings();
 
         _interceptor.Stop();
         _router.StopReceiving();

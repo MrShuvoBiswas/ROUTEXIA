@@ -272,7 +272,7 @@ namespace RouteXia.VpnClient.Api
                         ID = "default-sg",
                         RegionCode = "SG",
                         DisplayName = "Singapore 01 (AWS)",
-                        Host = "3.1.31.201",
+                        Host = "sg.relays.routexia.in",
                         Port = 9001,
                         Priority = 1,
                         IsActive = true

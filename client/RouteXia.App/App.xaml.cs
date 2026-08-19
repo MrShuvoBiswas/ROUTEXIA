@@ -62,15 +62,19 @@ public partial class App : Application
         // ── Backend API Client (Handles Auth, dynamic relays, trial/subscription) ──
         services.AddSingleton<RouteXiaApiClient>();
 
-        // ── Relay endpoints (Default fallback Singapore) ───────────────────────
-        var defaultRelays = new[]
+        // ── Core routing + interception services (Initialized dynamically via API) ───
+        services.AddSingleton(sp =>
         {
-            new RelayEndpoint("3.1.31.201", 9001, "SG"),   // Singapore AWS EC2 VPS
-        };
-
-        // ── Core routing + interception services ───────────────────────────────
-        services.AddSingleton(_ => new MultipathRouter(defaultRelays));
+            var apiClient = sp.GetRequiredService<RouteXiaApiClient>();
+            var relays = apiClient.ActiveRelays
+                .Select(r => new RelayEndpoint(r.Host, (ushort)r.Port, r.RegionCode ?? "SG"))
+                .ToArray();
+            return new MultipathRouter(relays);
+        });
         services.AddSingleton<KillSwitchManager>();
+
+        // System Network, MTU 1393 & Cloudflare Gaming DNS Optimizer
+        services.AddSingleton<RouteXia.VpnClient.Optimization.SystemNetworkOptimizer>();
 
         // WinDivert packet interceptor — the real network layer
         services.AddSingleton<WinDivertInterceptor>();
@@ -116,7 +120,12 @@ public partial class App : Application
             killSwitch?.EmergencyCleanup();
             killSwitch?.Dispose();
 
-            // 3. Dispose multipath router (close UDP sockets & metrics timers)
+            // 3. Restore default network adapter MTU and DNS settings
+            var networkOpt = Services?.GetService<RouteXia.VpnClient.Optimization.SystemNetworkOptimizer>();
+            networkOpt?.RestoreDefaultNetworkSettings();
+            networkOpt?.Dispose();
+
+            // 4. Dispose multipath router (close UDP sockets & metrics timers)
             var router = Services?.GetService<MultipathRouter>();
             router?.Dispose();
         }
