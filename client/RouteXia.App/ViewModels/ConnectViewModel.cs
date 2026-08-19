@@ -1358,24 +1358,6 @@ public class ConnectViewModel : INotifyPropertyChanged
                 {
                     SelectedServer = AllServerNodes.First();
                 }
-                else if (SelectedServer == null)
-                {
-                    var fallback = new ServerNode
-                    {
-                        Id = "sg-node-01",
-                        Name = "RouteXia SG-01",
-                        Country = "Singapore",
-                        Region = "Asia (SEA)",
-                        Flag = "🇸🇬",
-                        Host = "sg.relays.routexia.in",
-                        Port = 9001,
-                        LatencyMs = 38,
-                        IsRecommended = true
-                    };
-                    AllServerNodes.Add(fallback);
-                    SelectedServer = fallback;
-                    _router.UpdateRelayEndpoints([new RelayEndpoint(fallback.Host, (ushort)fallback.Port, fallback.Country)]);
-                }
             }
 
             // Ensure game is in ConfiguredGames list and marked enabled

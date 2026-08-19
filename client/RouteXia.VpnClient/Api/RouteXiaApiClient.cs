@@ -260,24 +260,9 @@ namespace RouteXia.VpnClient.Api
                     }
                 }
             }
-            catch { /* Fallback to default list */ }
-
-            // Default fallback if backend is unreachable
-            if (ActiveRelays.Count == 0)
+            catch (Exception ex)
             {
-                ActiveRelays = new List<RelayServerDto>
-                {
-                    new RelayServerDto
-                    {
-                        ID = "default-sg",
-                        RegionCode = "SG",
-                        DisplayName = "Singapore 01 (AWS)",
-                        Host = "sg.relays.routexia.in",
-                        Port = 9001,
-                        Priority = 1,
-                        IsActive = true
-                    }
-                };
+                System.Diagnostics.Debug.WriteLine($"[RouteXiaApiClient] Error fetching active relays from API: {ex.Message}");
             }
 
             return ActiveRelays;

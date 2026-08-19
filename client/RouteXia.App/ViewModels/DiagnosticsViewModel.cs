@@ -92,7 +92,7 @@ public class DiagnosticsViewModel : INotifyPropertyChanged
     public async Task TestGamePortsAsync()
     {
         IsBusy = true;
-        AppendLog("Testing connection to RouteXia Gaming Relays (sg.relays.routexia.in:9001 UDP/TCP) ...");
+        AppendLog("Testing connection to RouteXia Gaming Relay Servers (UDP/TCP Port 9001)...");
         await Task.Run(async () =>
         {
             try
