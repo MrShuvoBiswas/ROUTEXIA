@@ -32,6 +32,15 @@ namespace RouteXia.App.Views
                     Dispatcher.Invoke(ProceedToMainWindow);
                 }
             };
+
+            Loaded += (s, e) =>
+            {
+                _ = System.Threading.Tasks.Task.Run(async () =>
+                {
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    await RouteXia.App.Services.UpdateManager.Instance.CheckAndApplyStartupUpdateAsync();
+                });
+            };
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

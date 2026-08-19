@@ -551,6 +551,50 @@
                 Background="{StaticResource BgBaseBrush}" />
         </Grid>
 
+        <!-- ── Live Update Toast Notification Banner (ZIndex 90) ── -->
+        <Border
+            x:Name="UpdateToastOverlay"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Margin="0,0,24,24"
+            Background="#0C121C"
+            BorderBrush="{StaticResource AccentBrush}"
+            BorderThickness="1.5"
+            CornerRadius="10"
+            Padding="18,14"
+            Visibility="Collapsed"
+            Panel.ZIndex="90">
+            <Border.Effect>
+                <DropShadowEffect Color="#00C2FF" ShadowDepth="0" BlurRadius="18" Opacity="0.3" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="26" Foreground="{StaticResource AccentBrush}" Margin="0,0,14,0" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0" MinWidth="260">
+                    <TextBlock x:Name="TxtUpdateToastTitle" Text="🚀 New Update Available!" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" />
+                    <TextBlock x:Name="TxtUpdateToastMsg" Text="Downloading update in background..." FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+                <Button
+                    x:Name="BtnDismissUpdateToast"
+                    Grid.Column="2"
+                    Width="24"
+                    Height="24"
+                    Padding="0"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    Cursor="Hand"
+                    Click="BtnDismissUpdateToast_Click">
+                    <TextBlock Text="✕" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+            </Grid>
+        </Border>
+
         <Border
             x:Name="ClosingOverlay"
             Grid.ColumnSpan="2"

@@ -1,52 +1,53 @@
-# Visual Studio / .NET build outputs
-**/[Bb]in/
-**/[Oo]bj/
-**/publish/
-**/publish_single/
-**/publish_v2/
-**/publish_v3/
-**/publish_enterprise/
-**/publish_exitlag/
-**/publish_v4/
-**/publish_v5/
-**/publish_v6/
-**/publish_*/
+# ══════════════════════════════════════════════════════════════════════════════
+# RouteXia Client Open-Source Repository — .gitignore
+# Excludes backend, web, databases, builds, and sensitive secrets
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── 1. Private Services & Admin Portals (DO NOT PUSH TO CLIENT REPO) ─────────
+backend/
+web/
+server/
+docs/
+specs/
+.specify/
+.agents/
+
+# ── 2. Secrets & Environment Files ───────────────────────────────────────────
+*.env
+*.env.*
+*.env.local
+*.env.production
+firebase.config.json
+firebase-service-account.json
+**/firebase-service-account.json
+
+# ── 3. Databases & Cache ─────────────────────────────────────────────────────
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
+routexia.db
+
+# ── 4. Build Artifacts & Binaries ────────────────────────────────────────────
+artifacts/
+**/artifacts/
+*.nupkg
+*.zip
+*.pdb
 **/.vs/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 
-# Build symbols
-*.pdb
+# ── 5. .NET Compilation & Publish Outputs ────────────────────────────────────
+**/[Bb]in/
+**/[Oo]bj/
+**/publish/
+**/publish_*/
 
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Node.js
+# ── 6. Node.js & Temporary Files ─────────────────────────────────────────────
 **/node_modules/
 **/dist/
-**/specs/
-
-# Artifacts & release packages
-artifacts/
-*.nupkg
-*.zip
-
-# ── SECURITY: Firebase & Secret Config Files ──────────────────────────────
-# These files contain sensitive API keys and credentials.
-# NEVER commit these to version control.
-firebase.config.json
-firebase-service-account.json
-**/firebase-service-account.json
-backend/.env
-backend/.env.local
-backend/.env.production
-.env
-.env.local
-.env.production
+.DS_Store
+Thumbs.db

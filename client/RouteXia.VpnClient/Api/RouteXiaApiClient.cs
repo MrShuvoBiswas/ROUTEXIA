@@ -21,7 +21,8 @@ namespace RouteXia.VpnClient.Api
         public SubscriptionDto? CurrentSubscription { get; private set; }
         public List<RelayServerDto> ActiveRelays { get; private set; } = new();
 
-        public bool IsAuthenticated => !string.IsNullOrEmpty(_authToken) && CurrentUser != null;
+        public bool HasSavedToken => !string.IsNullOrEmpty(_authToken);
+        public bool IsAuthenticated => !string.IsNullOrEmpty(_authToken);
         public bool CanConnect => CurrentSubscription?.CanConnect ?? false;
         public bool CanManualSelectRelay => CurrentUser?.CanManualSelectRelay == true;
 
@@ -33,6 +34,10 @@ namespace RouteXia.VpnClient.Api
         private static readonly string TokenFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "RouteXia", "auth.token");
+
+        private static readonly string SessionFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "RouteXia", "auth.session");
 
         public RouteXiaApiClient(string baseUrl = "https://api.routexia.in")
         {
@@ -222,6 +227,7 @@ namespace RouteXia.VpnClient.Api
                         if (authRes.Relays.Count > 0)
                             ActiveRelays = authRes.Relays;
 
+                        SaveSessionData();
                         AuthStateChanged?.Invoke();
                     }
                 }
@@ -286,6 +292,8 @@ namespace RouteXia.VpnClient.Api
             {
                 if (File.Exists(TokenFilePath))
                     File.Delete(TokenFilePath);
+                if (File.Exists(SessionFilePath))
+                    File.Delete(SessionFilePath);
             }
             catch { }
 
@@ -293,6 +301,14 @@ namespace RouteXia.VpnClient.Api
         }
 
         // ── Token Storage Helpers ─────────────────────────────────────────────────
+
+        private class CachedSessionData
+        {
+            public string? Token { get; set; }
+            public UserDto? User { get; set; }
+            public SubscriptionDto? Subscription { get; set; }
+            public List<RelayServerDto> Relays { get; set; } = new();
+        }
 
         private void HandleAuthSuccess(AuthResponse res)
         {
@@ -303,10 +319,39 @@ namespace RouteXia.VpnClient.Api
                 ActiveRelays = res.Relays;
 
             SaveToken(_authToken);
+            SaveSessionData();
             AuthStateChanged?.Invoke();
         }
 
         private static readonly byte[] TokenEntropy = Encoding.UTF8.GetBytes("RouteXia.Token.Entropy.v2026");
+
+        private void SaveSessionData()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_authToken)) return;
+                var session = new CachedSessionData
+                {
+                    Token = _authToken,
+                    User = CurrentUser,
+                    Subscription = CurrentSubscription,
+                    Relays = ActiveRelays
+                };
+                string json = JsonSerializer.Serialize(session);
+                byte[] plainBytes = Encoding.UTF8.GetBytes(json);
+                byte[] encryptedBytes = ProtectedData.Protect(
+                    plainBytes,
+                    TokenEntropy,
+                    DataProtectionScope.CurrentUser);
+
+                string dir = Path.GetDirectoryName(SessionFilePath)!;
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                File.WriteAllBytes(SessionFilePath, encryptedBytes);
+            }
+            catch { }
+        }
 
         private void SaveToken(string token)
         {
@@ -331,6 +376,36 @@ namespace RouteXia.VpnClient.Api
         {
             try
             {
+                // 1. Try loading cached full session first (instant synchronous profile load)
+                if (File.Exists(SessionFilePath))
+                {
+                    byte[] fileBytes = File.ReadAllBytes(SessionFilePath);
+                    if (fileBytes.Length > 0)
+                    {
+                        try
+                        {
+                            byte[] decryptedBytes = ProtectedData.Unprotect(
+                                fileBytes,
+                                TokenEntropy,
+                                DataProtectionScope.CurrentUser);
+                            string json = Encoding.UTF8.GetString(decryptedBytes);
+                            var session = JsonSerializer.Deserialize<CachedSessionData>(json);
+                            if (session != null && !string.IsNullOrEmpty(session.Token))
+                            {
+                                _authToken = session.Token;
+                                if (session.User != null) CurrentUser = session.User;
+                                if (session.Subscription != null) CurrentSubscription = session.Subscription;
+                                if (session.Relays?.Count > 0) ActiveRelays = session.Relays;
+
+                                _ = RefreshProfileAsync();
+                                return;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                // 2. Fallback to auth.token
                 if (File.Exists(TokenFilePath))
                 {
                     byte[] fileBytes = File.ReadAllBytes(TokenFilePath);

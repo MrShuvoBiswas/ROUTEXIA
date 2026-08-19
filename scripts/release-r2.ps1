@@ -20,12 +20,12 @@
 
 param(
     [Parameter(Mandatory = $false)]
-    [string]$Version = "1.0.1",
+    [string]$Version = "1.0.7",
 
-    [string]$R2Bucket = if ($env:R2_BUCKET) { $env:R2_BUCKET } else { "routexia-app-releases" },
-    [string]$R2AccountId = if ($env:R2_ACCOUNT_ID) { $env:R2_ACCOUNT_ID } else { "1999a517810685b629407fcccabaeaa1" },
-    [string]$R2KeyId = $env:R2_ACCESS_KEY_ID,
-    [string]$R2Secret = $env:R2_SECRET_ACCESS_KEY,
+    [string]$R2Bucket = "",
+    [string]$R2AccountId = "",
+    [string]$R2KeyId = "",
+    [string]$R2Secret = "",
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
     [switch]$SkipUpload
@@ -34,6 +34,38 @@ param(
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
+
+# Auto-load R2 credentials from backend\.env if not provided
+$backendEnv = Join-Path $RepoRoot "backend\.env"
+if (Test-Path $backendEnv) {
+    Get-Content $backendEnv | ForEach-Object {
+        $line = $_.Trim()
+        if ($line -and -not $line.StartsWith("#")) {
+            $parts = $line.Split("=", 2)
+            if ($parts.Length -eq 2) {
+                $k = $parts[0].Trim()
+                $v = $parts[1].Trim()
+                if ($k -eq "R2_ACCESS_KEY_ID" -and -not $R2KeyId) { $R2KeyId = $v }
+                if ($k -eq "R2_SECRET_ACCESS_KEY" -and -not $R2Secret) { $R2Secret = $v }
+                if ($k -eq "R2_ACCOUNT_ID" -and -not $R2AccountId) { $R2AccountId = $v }
+                if ($k -eq "R2_BUCKET" -and -not $R2Bucket) { $R2Bucket = $v }
+            }
+        }
+    }
+}
+
+if (-not $R2Bucket) {
+    $R2Bucket = if ($env:R2_BUCKET) { $env:R2_BUCKET } else { "routexia-app-releases" }
+}
+if (-not $R2AccountId) {
+    $R2AccountId = if ($env:R2_ACCOUNT_ID) { $env:R2_ACCOUNT_ID } else { "1999a517810685b629407fcccabaeaa1" }
+}
+if (-not $R2KeyId) {
+    $R2KeyId = $env:R2_ACCESS_KEY_ID
+}
+if (-not $R2Secret) {
+    $R2Secret = $env:R2_SECRET_ACCESS_KEY
+}
 $ClientDir = Join-Path $RepoRoot "client"
 $AppProj = Join-Path $ClientDir "RouteXia.App\RouteXia.App.csproj"
 $TempPublishDir = Join-Path $ClientDir "RouteXia.App\bin\$Configuration\net9.0-windows\$Runtime\publish_velopack"
@@ -95,7 +127,7 @@ vpk pack `
     --mainExe "RouteXia.exe" `
     --icon "$AppIcon" `
     --outputDir "$ReleasesDir" `
-    --packTitle "RouteXia Gaming Optimizer" `
+    --packTitle "ROUTEXIA" `
     --packAuthors "RouteXia Team"
 
 if ($LASTEXITCODE -ne 0) {
@@ -118,8 +150,7 @@ if (-not $SkipUpload -and -not [string]::IsNullOrWhiteSpace($R2Bucket) -and -not
         --bucket "$R2Bucket" `
         --endpoint "$R2Endpoint" `
         --keyId "$R2KeyId" `
-        --secret "$R2Secret" `
-        --region "auto"
+        --secret "$R2Secret"
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`n Cloudflare R2 Upload completed successfully!" -ForegroundColor Green

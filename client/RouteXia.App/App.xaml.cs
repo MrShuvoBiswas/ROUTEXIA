@@ -42,8 +42,8 @@ public partial class App : Application
 
         var apiClient = Services.GetRequiredService<RouteXiaApiClient>();
 
-        // ExitLag style: If authenticated, open Dashboard directly; otherwise show LoginWindow
-        if (apiClient.IsAuthenticated)
+        // ExitLag style: If authenticated with active/saved session, open Dashboard directly without flashing LoginWindow
+        if (apiClient.IsAuthenticated || apiClient.HasSavedToken)
         {
             var mainWindow = Services.GetRequiredService<MainWindow>();
             MainWindow = mainWindow;
@@ -77,6 +77,9 @@ public partial class App : Application
 
         // PUBG game server tracker (populated from captured packet destinations)
         services.AddSingleton<PubgServerTracker>();
+
+        // ── Auto-Update Manager ────────────────────────────────────────────────
+        services.AddSingleton(UpdateManager.Instance);
 
         // ── ViewModels ─────────────────────────────────────────────────────────
         services.AddSingleton<SettingsViewModel>();

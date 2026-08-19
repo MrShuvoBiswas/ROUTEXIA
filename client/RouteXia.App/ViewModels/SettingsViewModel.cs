@@ -141,7 +141,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     }
 
     // ── Application Updates (T008, T009) ─────────────────────────────────────
-    private readonly UpdateManager _updateManager = new();
+    private readonly UpdateManager _updateManager = UpdateManager.Instance;
     private bool _isCheckingForUpdate;
     private bool _isUpdateAvailable;
     private bool _isDownloadingUpdate;

@@ -13,6 +13,9 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Product>ROUTEXIA</Product>
+    <AssemblyTitle>ROUTEXIA</AssemblyTitle>
+    <Description>ROUTEXIA</Description>
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>

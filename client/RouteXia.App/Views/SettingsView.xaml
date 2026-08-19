@@ -255,12 +255,12 @@
 
                     <!-- Update Available Banner -->
                     <Border
-                        Margin="0,6,0,0"
+                        Margin="0,8,0,0"
                         Padding="14,10"
-                        Background="{StaticResource NavActiveBgBrush}"
-                        BorderBrush="{StaticResource AccentBrush}"
+                        Background="#0F1722"
+                        BorderBrush="#1C2B3C"
                         BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusMd}">
+                        CornerRadius="{StaticResource RadiusSm}">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -281,7 +281,7 @@
                                     Text="{Binding LatestVersionText, StringFormat='Update Available: {0}'}"
                                     Style="{StaticResource HeadingSmStyle}"
                                     FontSize="13"
-                                    Foreground="{StaticResource AccentBrush}" />
+                                    Foreground="{StaticResource TextPrimaryBrush}" />
                                 <TextBlock
                                     Text="Includes performance improvements, kernel driver optimizations, and stability fixes."
                                     Style="{StaticResource CaptionStyle}"
@@ -292,9 +292,9 @@
                                 Grid.Column="1"
                                 Content="Install Now"
                                 Command="{Binding InstallUpdateCommand}"
-                                Style="{StaticResource ConnectButtonStyle}"
+                                Style="{StaticResource PrimaryActionButtonStyle}"
                                 Padding="16,6"
-                                Height="32"
+                                Height="30"
                                 VerticalAlignment="Center" />
                         </Grid>
                     </Border>

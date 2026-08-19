@@ -16,6 +16,7 @@ using RouteXia.VpnClient.Api;
 using RouteXia.VpnClient.Security;
 using Microsoft.Extensions.DependencyInjection;
 using RouteXia.App.Views;
+using RouteXia.App.Services;
 
 namespace RouteXia.App.ViewModels;
 
@@ -846,6 +847,8 @@ public class ConnectViewModel : INotifyPropertyChanged
         private set
         {
             _state = value;
+            bool isConnectedState = value == ConnectionState.Connected || value == ConnectionState.Optimizing;
+            UpdateManager.Instance.SetServerConnected(isConnectedState);
             OnPropertyChanged();
             OnPropertyChanged(nameof(ConnectionState));
             OnPropertyChanged(nameof(StateText));
@@ -1106,7 +1109,7 @@ public class ConnectViewModel : INotifyPropertyChanged
         };
 
         _ = LoadDynamicServersAsync();
-        _ = new RouteXia.App.Services.UpdateManager().CheckForUpdateAsync();
+        UpdateManager.Instance.StartPeriodicBackgroundCheck(15);
 
         ApplyServerFilter();
         UpdateRouteTopology();

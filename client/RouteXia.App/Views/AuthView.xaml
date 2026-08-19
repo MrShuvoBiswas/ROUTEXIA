@@ -23,53 +23,35 @@
             </ThicknessAnimation>
         </Storyboard>
 
-        <!-- Premium Button Style -->
+        <!-- Premium Button Style (Clean, Modern, Glow-Free) -->
         <Style x:Key="PremiumButtonStyle" TargetType="ui:Button">
-            <Setter Property="Background" Value="{StaticResource AccentGradientBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="Padding" Value="22,10"/>
             <Setter Property="FontFamily" Value="/Resources/Fonts/#Rajdhani"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ui:Button">
-                        <Grid>
-                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" BorderThickness="0">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#00C2FF" ShadowDepth="0" BlurRadius="12" Opacity="0.4" />
-                                </Border.Effect>
-                            </Border>
-                            <Border x:Name="hoverOverlay" Background="White" Opacity="0" CornerRadius="8" IsHitTestVisible="False" />
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                        </Grid>
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="6" 
+                                BorderBrush="#0088EE"
+                                BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="hoverOverlay" Storyboard.TargetProperty="Opacity" To="0.1" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.8" Duration="0:0:0.2"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="hoverOverlay" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.4" Duration="0:0:0.2"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
+                                <Setter TargetName="border" Property="Background" Value="#0088EE"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#00A2FF"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="RenderTransform">
-                                    <Setter.Value>
-                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95" CenterX="0.5" CenterY="0.5"/>
-                                    </Setter.Value>
-                                </Setter>
+                                <Setter TargetName="border" Property="Background" Value="#0066AA"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0066AA"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -275,14 +257,9 @@
                     <Separator Grid.Row="1" Background="#1C2B3C" Margin="0,0,0,24" Height="1" BorderThickness="0" />
 
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <!-- Avatar / Status Icon with Glow -->
+                        <!-- Avatar / Status Icon -->
                         <Grid HorizontalAlignment="Center" Margin="0,0,0,20">
-                            <Ellipse Width="64" Height="64" Fill="{StaticResource AccentBrush}" Opacity="0.15">
-                                <Ellipse.Effect>
-                                    <BlurEffect Radius="20"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <Border Width="64" Height="64" CornerRadius="32" Background="#0A1018" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5">
+                            <Border Width="64" Height="64" CornerRadius="32" Background="#0A1018" BorderBrush="#1C2B3C" BorderThickness="1.5">
                                 <ui:SymbolIcon Symbol="Premium24" FontSize="28" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </Grid>

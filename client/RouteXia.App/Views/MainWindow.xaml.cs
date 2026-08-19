@@ -29,6 +29,77 @@ public partial class MainWindow : FluentWindow
         DataContext = App.Services.GetRequiredService<ConnectViewModel>();
         _navButtons = [BtnNavHome, BtnNavLibrary, BtnNavNetwork, BtnNavSettings, BtnNavAccount, BtnNavHelp];
         NavigateToHome();
+
+        // ── Auto-Update Toast Event Subscriptions ───────────────────────────
+        RouteXia.App.Services.UpdateManager.Instance.UpdateDetected += (version) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                TxtUpdateToastTitle.Text = $"🚀 New Update (v{version})";
+                TxtUpdateToastMsg.Text = "Downloading update package in background...";
+                UpdateToastOverlay.Visibility = Visibility.Visible;
+            });
+        };
+
+        RouteXia.App.Services.UpdateManager.Instance.UpdateReadyForRestart += (version, isConnected) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                UpdateToastOverlay.Visibility = Visibility.Visible;
+                if (isConnected)
+                {
+                    TxtUpdateToastTitle.Text = $"🛡️ Update v{version} Downloaded";
+                    TxtUpdateToastMsg.Text = "Will auto-apply when you disconnect from server.";
+                }
+                else
+                {
+                    TxtUpdateToastTitle.Text = $"✓ Update v{version} Ready";
+                    TxtUpdateToastMsg.Text = "Restarting RouteXia in 3 seconds...";
+                }
+            });
+        };
+
+        RouteXia.App.Services.UpdateManager.Instance.RestartCountdown += (sec) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                TxtUpdateToastTitle.Text = "🔄 Applying Update...";
+                TxtUpdateToastMsg.Text = $"Restarting RouteXia in {sec}s...";
+            });
+        };
+
+        // ── Auto-transition to LoginWindow on Logout / Session Invalidation ──
+        var apiClient = App.Services.GetRequiredService<RouteXia.VpnClient.Api.RouteXiaApiClient>();
+        apiClient.AuthStateChanged += () =>
+        {
+            if (!apiClient.IsAuthenticated)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (Application.Current != null && Application.Current.MainWindow == this)
+                    {
+                        var loginWin = App.Services.GetRequiredService<LoginWindow>();
+                        Application.Current.MainWindow = loginWin;
+                        loginWin.Show();
+                        this.Close();
+                    }
+                });
+            }
+        };
+
+        // ── Discord-Style Startup Auto-Update ──────────────────────────────
+        // If not connected to any server and an update is detected, auto-downloads
+        // and seamlessly restarts RouteXia into the latest version.
+        _ = System.Threading.Tasks.Task.Run(async () =>
+        {
+            await System.Threading.Tasks.Task.Delay(1200);
+            await RouteXia.App.Services.UpdateManager.Instance.CheckAndApplyStartupUpdateAsync();
+        });
+    }
+
+    private void BtnDismissUpdateToast_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateToastOverlay.Visibility = Visibility.Collapsed;
     }
 
     private void BtnNavHome_Click(object sender, RoutedEventArgs e)
