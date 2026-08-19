@@ -44,6 +44,24 @@ namespace RouteXia.VpnClient.Api
 
         [JsonPropertyName("connected_at")]
         public DateTime ConnectedAt { get; set; }
+
+        [JsonPropertyName("relay_auth_ticket")]
+        public RelayAuthTicket? RelayAuthTicket { get; set; }
+    }
+
+    public class RelayAuthTicket
+    {
+        [JsonPropertyName("user_id")]
+        public int UserId { get; set; }
+
+        [JsonPropertyName("session_id")]
+        public string SessionId { get; set; } = string.Empty;
+
+        [JsonPropertyName("expires_at")]
+        public long ExpiresAt { get; set; }
+
+        [JsonPropertyName("signature")]
+        public string Signature { get; set; } = string.Empty;
     }
 
     public class SessionHeartbeatRequest

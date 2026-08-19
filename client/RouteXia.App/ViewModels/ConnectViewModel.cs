@@ -737,6 +737,10 @@ public class ConnectViewModel : INotifyPropertyChanged
         if (result.success && result.data != null)
         {
             _currentSessionId = result.data.SessionId;
+            if (result.data.RelayAuthTicket != null)
+            {
+                await _router.SetAuthTicketAsync(result.data.RelayAuthTicket);
+            }
             LogMessage?.Invoke(this, $"📡 Session reported to backend: {_currentSessionId}");
             StartHeartbeatTimer();
             return (true, "OK");

@@ -25,6 +25,7 @@ namespace RouteXia.VpnClient.Routing
 
         // ── Packet sequence (for duplicate detection on server side) ──────────────
         private uint _sequence;
+        private RouteXia.VpnClient.Api.RelayAuthTicket? _authTicket;
 
         // ── Metrics polling & Latency Audit ───────────────────────────────────────
         private readonly Timer _metricsTimer;
@@ -92,6 +93,23 @@ namespace RouteXia.VpnClient.Routing
             }
 
             MeasureAllRoutes(null);
+        }
+
+        public async Task SetAuthTicketAsync(RouteXia.VpnClient.Api.RelayAuthTicket? ticket, CancellationToken ct = default)
+        {
+            _authTicket = ticket;
+            if (ticket == null) return;
+
+            List<RelayRoute> routesCopy;
+            lock (_routeLock)
+            {
+                routesCopy = _routes.ToList();
+            }
+
+            foreach (var route in routesCopy)
+            {
+                await route.SendAuthHandshakeAsync(ticket, ct).ConfigureAwait(false);
+            }
         }
 
         public List<RouteInfo> GetRouteInfos()
@@ -366,6 +384,25 @@ namespace RouteXia.VpnClient.Routing
             return _udp.Client.SendAsync(frame, SocketFlags.None, ct);
         }
 
+        public async Task SendAuthHandshakeAsync(RouteXia.VpnClient.Api.RelayAuthTicket ticket, CancellationToken ct = default)
+        {
+            try
+            {
+                var jsonBytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(ticket);
+                var packet = new byte[5 + jsonBytes.Length];
+                // RXIA Magic
+                packet[0] = 0x52; packet[1] = 0x58; packet[2] = 0x49; packet[3] = 0x41;
+                packet[4] = 0x00; // TypeAuth
+                Buffer.BlockCopy(jsonBytes, 0, packet, 5, jsonBytes.Length);
+
+                await _udp.SendAsync(packet, packet.Length);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[RelayRoute] Auth handshake error on {Endpoint}: {ex.Message}");
+            }
+        }
+
         /// <summary>Sends an outgoing ping probe packet on this route's UDP socket.</summary>
         public async Task SendPingProbeAsync()
         {
@@ -410,6 +447,13 @@ namespace RouteXia.VpnClient.Routing
                     continue;
 
                 byte type = data[4];
+
+                // ── Type 0x0A: Auth Handshake Ack ────────────────────────────────
+                if (type == 0x0A)
+                {
+                    Debug.WriteLine($"[RelayRoute] ✅ Auth Handshake Verified on {Endpoint}");
+                    continue;
+                }
 
                 // ── Type 0x01: Ping Probe Response ────────────────────────────────
                 if (type == 0x01)
