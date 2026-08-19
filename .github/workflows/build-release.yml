@@ -94,27 +94,41 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
         run: |
-          if ($env:R2_KEY_ID -and $env:R2_SECRET -and $env:R2_ACCOUNT_ID -and $env:R2_BUCKET) {
+          $rawKey    = "${{ secrets.R2_ACCESS_KEY_ID }}"
+          $rawSecret = "${{ secrets.R2_SECRET_ACCESS_KEY }}"
+          $rawAcc    = "${{ secrets.R2_ACCOUNT_ID }}"
+          $rawBucket = "${{ secrets.R2_BUCKET }}"
+
+          $keyId     = ($rawKey -replace '\s+', '').Trim()
+          $secret    = ($rawSecret -replace '\s+', '').Trim()
+          $accountId = ($rawAcc -replace '\s+', '').Trim()
+          $bucket    = ($rawBucket -replace '\s+', '').Trim()
+
+          if ($keyId -and $secret -and $accountId -and $bucket) {
             Write-Host "Syncing and packaging Velopack OTA update to Cloudflare R2..." -ForegroundColor Cyan
             $releasesDir = "artifacts\releases"
             if (-not (Test-Path $releasesDir)) { New-Item -ItemType Directory -Path $releasesDir -Force | Out-Null }
             $publishDir = "client\RouteXia.App\bin\Release\net9.0-windows\win-x64\publish"
             $appIcon = "client\RouteXia.App\Resources\Icons\RouteXia-AppIcon.ico"
-            $endpoint = "https://${env:R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+            $endpoint = "https://$accountId.r2.cloudflarestorage.com"
 
-            # 1. Download existing releases metadata from R2
-            try {
-              vpk download s3 --outputDir $releasesDir --bucket $env:R2_BUCKET --endpoint $endpoint --keyId $env:R2_KEY_ID --secret $env:R2_SECRET
-            } catch {
-              Write-Warning "Could not pre-download R2 release feed. Proceeding with fresh pack..."
-            }
+            # 1. Download existing releases metadata from R2 (ignore if empty bucket)
+            Write-Host "Fetching existing release history from R2..." -ForegroundColor Gray
+            vpk download s3 --outputDir $releasesDir --bucket $bucket --endpoint $endpoint --keyId $keyId --secret $secret 2>$null
+            $global:LASTEXITCODE = 0
 
-            # 2. Package delta updates
-            vpk pack -u "RouteXia" -v "${{ env.VERSION }}" -p $publishDir -e "RouteXia.exe" --icon $appIcon --outputDir $releasesDir
+            # 2. Package delta updates & full installer
+            Write-Host "Packing release v${{ env.VERSION }}..." -ForegroundColor Gray
+            vpk pack -u "RouteXia" -v "${{ env.VERSION }}" -p $publishDir -e "RouteXia.exe" --icon $appIcon --outputDir $releasesDir --packTitle "ROUTEXIA" --packAuthors "RouteXia Team"
 
             # 3. Upload to Cloudflare R2
-            vpk upload s3 --outputDir $releasesDir --bucket $env:R2_BUCKET --endpoint $endpoint --keyId $env:R2_KEY_ID --secret $env:R2_SECRET
-            Write-Host "✅ Successfully published OTA update to Cloudflare R2!" -ForegroundColor Green
+            Write-Host "Uploading releases to Cloudflare R2 bucket: $bucket..." -ForegroundColor Gray
+            vpk upload s3 --outputDir $releasesDir --bucket $bucket --endpoint $endpoint --keyId $keyId --secret $secret
+            if ($global:LASTEXITCODE -eq 0) {
+              Write-Host "✅ Successfully published OTA update to Cloudflare R2!" -ForegroundColor Green
+            } else {
+              Write-Error "Cloudflare R2 upload failed with exit code $global:LASTEXITCODE."
+            }
           } else {
             Write-Host "R2 secrets not configured in repository secrets. Skipping R2 upload." -ForegroundColor Yellow
           }
