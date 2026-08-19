@@ -11,16 +11,16 @@
     .\scripts\release-r2.ps1 -Version "1.0.1" -SkipUpload
 
     # Build and upload directly to Cloudflare R2:
-    .\scripts\release-r2.ps1 -Version "1.0.1" `
-        -R2Bucket "routexia-releases" `
-        -R2AccountId "1999a517810685b629407fcccabaeaa1" `
+    .\scripts\release-r2.ps1 -Version "1.0.8" `
+        -R2Bucket "your-r2-bucket" `
+        -R2AccountId "your_r2_account_id" `
         -R2KeyId "YOUR_R2_KEY_ID" `
         -R2Secret "YOUR_R2_SECRET_KEY"
 #>
 
 param(
     [Parameter(Mandatory = $false)]
-    [string]$Version = "1.0.7",
+    [string]$Version = "1.0.8",
 
     [string]$R2Bucket = "",
     [string]$R2AccountId = "",
@@ -55,10 +55,10 @@ if (Test-Path $backendEnv) {
 }
 
 if (-not $R2Bucket) {
-    $R2Bucket = if ($env:R2_BUCKET) { $env:R2_BUCKET } else { "routexia-app-releases" }
+    $R2Bucket = $env:R2_BUCKET
 }
 if (-not $R2AccountId) {
-    $R2AccountId = if ($env:R2_ACCOUNT_ID) { $env:R2_ACCOUNT_ID } else { "1999a517810685b629407fcccabaeaa1" }
+    $R2AccountId = $env:R2_ACCOUNT_ID
 }
 if (-not $R2KeyId) {
     $R2KeyId = $env:R2_ACCESS_KEY_ID
