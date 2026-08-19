@@ -116,7 +116,7 @@ public partial class MainWindow : FluentWindow
         {
             await System.Threading.Tasks.Task.Delay(1200);
             await RouteXia.App.Services.UpdateManager.Instance.CheckAndApplyStartupUpdateAsync();
-            RouteXia.App.Services.UpdateManager.Instance.StartPeriodicBackgroundCheck(2);
+            RouteXia.App.Services.UpdateManager.Instance.StartPeriodicBackgroundCheck(1);
         });
     }
 

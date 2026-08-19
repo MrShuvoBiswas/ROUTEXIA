@@ -230,12 +230,12 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     public async Task InstallUpdateAsync()
     {
-        if (string.IsNullOrEmpty(_downloadUrl) || IsDownloadingUpdate) return;
+        if (IsDownloadingUpdate) return;
 
         IsDownloadingUpdate = true;
         var progress = new Progress<double>(p => DownloadProgress = p);
 
-        bool success = await _updateManager.DownloadAndInstallUpdateAsync(_downloadUrl, progress);
+        bool success = await _updateManager.DownloadAndInstallUpdateAsync(_downloadUrl, progress, LatestVersionText?.TrimStart('v'));
         if (!success)
         {
             UpdateStatusText = "Download failed. Please try again later.";

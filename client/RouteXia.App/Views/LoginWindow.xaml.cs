@@ -33,12 +33,62 @@ namespace RouteXia.App.Views
                 }
             };
 
+            // ── Auto-Update Event Subscriptions (Discord-Style In-App Updater) ──
+            RouteXia.App.Services.UpdateManager.Instance.UpdateDetected += (version) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    TxtLoginModalUpdateTitle.Text = "NEW UPDATE AVAILABLE";
+                    TxtLoginModalUpdateVersion.Text = $"Updating to ROUTEXIA v{version}";
+                    TxtLoginModalUpdateStatus.Text = "Downloading update package...";
+                    LoginModalUpdateProgressBar.Value = 0;
+                    TxtLoginModalProgressPercent.Text = "0%";
+                    UpdateCenterModalOverlay.Visibility = Visibility.Visible;
+
+                    var updateSpinner = Resources.Contains("LoginUpdateSpinnerAnimation")
+                        ? (Storyboard)Resources["LoginUpdateSpinnerAnimation"]
+                        : null;
+                    updateSpinner?.Begin();
+                });
+            };
+
+            RouteXia.App.Services.UpdateManager.Instance.UpdateDownloadProgress += (percent) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    LoginModalUpdateProgressBar.Value = percent;
+                    TxtLoginModalProgressPercent.Text = $"{(int)percent}%";
+                    TxtLoginModalUpdateStatus.Text = percent >= 100
+                        ? "Verifying package integrity..."
+                        : $"Downloading update... ({(int)percent}%)";
+                });
+            };
+
+            RouteXia.App.Services.UpdateManager.Instance.UpdateReadyForRestart += (version, isConnected) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    TxtLoginModalUpdateStatus.Text = "Update downloaded! Preparing restart...";
+                });
+            };
+
+            RouteXia.App.Services.UpdateManager.Instance.RestartCountdown += (sec) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    TxtLoginModalUpdateTitle.Text = "APPLYING UPDATE";
+                    TxtLoginModalUpdateStatus.Text = $"Restarting ROUTEXIA in {sec}s...";
+                    TxtLoginModalProgressPercent.Text = "Restarting...";
+                });
+            };
+
             Loaded += (s, e) =>
             {
                 _ = System.Threading.Tasks.Task.Run(async () =>
                 {
                     await System.Threading.Tasks.Task.Delay(1000);
                     await RouteXia.App.Services.UpdateManager.Instance.CheckAndApplyStartupUpdateAsync();
+                    RouteXia.App.Services.UpdateManager.Instance.StartPeriodicBackgroundCheck(1);
                 });
             };
         }

@@ -29,6 +29,14 @@
                 Storyboard.TargetProperty="Angle"
                 From="0" To="360" Duration="0:0:1.0" />
         </Storyboard>
+
+        <!-- Smooth 60 FPS rotation animation for Update modal spinner -->
+        <Storyboard x:Key="LoginUpdateSpinnerAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="LoginUpdateSpinnerTransform"
+                Storyboard.TargetProperty="Angle"
+                From="0" To="360" Duration="0:0:1.2" />
+        </Storyboard>
     </ui:FluentWindow.Resources>
 
     <Grid KeyDown="Window_KeyDown">
@@ -446,5 +454,102 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- ── Live Center-Screen Seamless Update Modal (Discord Style) ── -->
+        <Border
+            x:Name="UpdateCenterModalOverlay"
+            Grid.RowSpan="2"
+            Background="#D805080E"
+            Visibility="Collapsed"
+            Panel.ZIndex="150">
+            <Border
+                Width="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#0D131F"
+                BorderBrush="{StaticResource AccentBrush}"
+                BorderThickness="1.5"
+                CornerRadius="16"
+                Padding="32,28">
+                <Border.Effect>
+                    <DropShadowEffect Color="#00C2FF" ShadowDepth="0" BlurRadius="32" Opacity="0.5" />
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <!-- Animated Rotating Update Badge -->
+                    <Grid Width="64" Height="64" Margin="0,0,0,16" HorizontalAlignment="Center">
+                        <Border Width="64" Height="64" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <RotateTransform x:Name="LoginUpdateSpinnerTransform" Angle="0" />
+                            </Border.RenderTransform>
+                            <Ellipse Width="64" Height="64" Stroke="{StaticResource AccentBrush}" StrokeThickness="2.5" StrokeDashArray="30 20" />
+                        </Border>
+                        <Border
+                            Width="52"
+                            Height="52"
+                            CornerRadius="26"
+                            Background="#142236"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                            <ui:SymbolIcon
+                                Symbol="ArrowDownload24"
+                                FontSize="24"
+                                Foreground="{StaticResource AccentBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <TextBlock
+                        x:Name="TxtLoginModalUpdateTitle"
+                        Text="NEW UPDATE AVAILABLE"
+                        FontFamily="/Resources/Fonts/#Rajdhani"
+                        FontSize="20"
+                        FontWeight="Bold"
+                        Foreground="#FFFFFF"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        x:Name="TxtLoginModalUpdateVersion"
+                        Text="Updating ROUTEXIA..."
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource AccentBrush}"
+                        HorizontalAlignment="Center"
+                        Margin="0,4,0,14" />
+
+                    <TextBlock
+                        x:Name="TxtLoginModalUpdateStatus"
+                        Text="Downloading update package..."
+                        FontSize="12"
+                        Foreground="#8CA3B8"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,12" />
+
+                    <!-- Live Progress Bar -->
+                    <Grid Width="340" Height="8" Margin="0,0,0,8">
+                        <Border Background="#1A2433" CornerRadius="4" />
+                        <ProgressBar
+                            x:Name="LoginModalUpdateProgressBar"
+                            Height="8"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="0"
+                            Foreground="{StaticResource AccentBrush}"
+                            Background="Transparent"
+                            BorderThickness="0" />
+                    </Grid>
+
+                    <TextBlock
+                        x:Name="TxtLoginModalProgressPercent"
+                        Text="0%"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="#8CA3B8"
+                        HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </ui:FluentWindow>
