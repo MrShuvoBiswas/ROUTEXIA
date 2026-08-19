@@ -214,48 +214,91 @@ namespace RouteXia.App.Services
         }
 
         /// <summary>
-        /// Checks Cloudflare R2 bucket for updates via Velopack.
+        /// Checks Cloudflare R2 bucket for updates via Velopack with direct feed fallback.
         /// </summary>
         public async Task<UpdateCheckResult> CheckForUpdateAsync(string? channel = "win")
         {
             string currentVersion = GetCurrentVersion();
 
-            if (_velopack == null || !_velopack.IsInstalled)
+            // 1. Try Velopack Native Check if running from an active Velopack installation
+            if (_velopack != null && _velopack.IsInstalled)
             {
-                return new UpdateCheckResult
+                try
                 {
-                    IsUpdateAvailable = false,
-                    CurrentVersion = currentVersion,
-                    LatestVersion = currentVersion,
-                    ReleaseNotes = "Running in Development / Portable mode."
-                };
+                    var update = await _velopack.CheckForUpdatesAsync();
+                    if (update != null)
+                    {
+                        _pendingUpdate = update;
+                        string latestVer = update.TargetFullRelease.Version.ToNormalizedString();
+
+                        Debug.WriteLine($"[Velopack] New update available: v{latestVer} (Current: v{currentVersion})");
+
+                        return new UpdateCheckResult
+                        {
+                            IsUpdateAvailable = true,
+                            CurrentVersion = currentVersion,
+                            LatestVersion = latestVer,
+                            ReleaseNotes = $"RouteXia v{latestVer} update available via Cloudflare R2.",
+                            DownloadUrl = $"{RouteXiaUrls.ReleaseUpdateUrl}/RouteXia-win-Setup.exe",
+                            IsMandatory = false
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[Velopack] Native check exception: {ex.Message}");
+                }
             }
 
+            // 2. Direct Cloudflare R2 Feed Check (Universal Fallback for InnoSetup, Portable, & Dev installs)
             try
             {
-                var update = await _velopack.CheckForUpdatesAsync();
+                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+                var json = await http.GetStringAsync($"{RouteXiaUrls.ReleaseUpdateUrl}/releases.win.json");
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
 
-                if (update != null)
+                if (doc.RootElement.TryGetProperty("Assets", out var assetsElem) && assetsElem.ValueKind == System.Text.Json.JsonValueKind.Array)
                 {
-                    _pendingUpdate = update;
-                    string latestVer = update.TargetFullRelease.Version.ToNormalizedString();
+                    string? highestVerStr = null;
+                    Version? highestVer = null;
 
-                    Debug.WriteLine($"[Velopack] New update available: v{latestVer} (Current: v{currentVersion})");
-
-                    return new UpdateCheckResult
+                    foreach (var asset in assetsElem.EnumerateArray())
                     {
-                        IsUpdateAvailable = true,
-                        CurrentVersion = currentVersion,
-                        LatestVersion = latestVer,
-                        ReleaseNotes = $"RouteXia v{latestVer} update available via Cloudflare R2.",
-                        DownloadUrl = RouteXiaUrls.ReleaseUpdateUrl,
-                        IsMandatory = false
-                    };
+                        if (asset.TryGetProperty("Version", out var vElem))
+                        {
+                            string vStr = vElem.GetString() ?? string.Empty;
+                            if (Version.TryParse(vStr, out var parsedVer))
+                            {
+                                if (highestVer == null || parsedVer > highestVer)
+                                {
+                                    highestVer = parsedVer;
+                                    highestVerStr = vStr;
+                                }
+                            }
+                        }
+                    }
+
+                    if (highestVer != null && Version.TryParse(currentVersion, out var curVer))
+                    {
+                        if (highestVer > curVer)
+                        {
+                            Debug.WriteLine($"[UpdateManager] Direct R2 Feed: New version v{highestVerStr} detected (Current: v{currentVersion})");
+                            return new UpdateCheckResult
+                            {
+                                IsUpdateAvailable = true,
+                                CurrentVersion = currentVersion,
+                                LatestVersion = highestVerStr ?? highestVer.ToString(),
+                                ReleaseNotes = $"RouteXia v{highestVerStr} update available via Cloudflare R2.",
+                                DownloadUrl = $"{RouteXiaUrls.ReleaseUpdateUrl}/RouteXia-win-Setup.exe",
+                                IsMandatory = false
+                            };
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Velopack] Check failed: {ex.Message}");
+                Debug.WriteLine($"[UpdateManager] Direct R2 feed check failed: {ex.Message}");
             }
 
             return new UpdateCheckResult
@@ -272,31 +315,79 @@ namespace RouteXia.App.Services
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(string? downloadUrl = null, IProgress<double>? progress = null)
         {
-            if (_velopack == null || _pendingUpdate == null)
+            // 1. If Velopack native package is pending, use Velopack native updater
+            if (_velopack != null && _velopack.IsInstalled && _pendingUpdate != null)
             {
-                return false;
-            }
-
-            try
-            {
-                Debug.WriteLine("[Velopack] Manual download requested...");
-                await _velopack.DownloadUpdatesAsync(_pendingUpdate, p => progress?.Report(p));
-
-                if (IsServerConnected)
+                try
                 {
-                    HasPendingDownloadedUpdate = true;
-                    PendingUpdateVersion = _pendingUpdate.TargetFullRelease.Version.ToNormalizedString();
-                    Debug.WriteLine("[Velopack] Update downloaded. User is connected to server; restart will apply on disconnect.");
+                    Debug.WriteLine("[Velopack] Manual download requested via Velopack...");
+                    await _velopack.DownloadUpdatesAsync(_pendingUpdate, p => progress?.Report(p));
+
+                    if (IsServerConnected)
+                    {
+                        HasPendingDownloadedUpdate = true;
+                        PendingUpdateVersion = _pendingUpdate.TargetFullRelease.Version.ToNormalizedString();
+                        Debug.WriteLine("[Velopack] Update downloaded. User is connected to server; restart will apply on disconnect.");
+                        return true;
+                    }
+
+                    Debug.WriteLine("[Velopack] Applying update and restarting RouteXia...");
+                    await CountdownAndRestartAsync();
                     return true;
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[Velopack] Download & Install failed: {ex.Message}");
+                }
+            }
 
-                Debug.WriteLine("[Velopack] Applying update and restarting RouteXia...");
-                await CountdownAndRestartAsync();
+            // 2. Direct Cloudflare R2 Standalone Installer Downloader & Auto-Executer
+            try
+            {
+                string targetUrl = string.IsNullOrWhiteSpace(downloadUrl)
+                    ? $"{RouteXiaUrls.ReleaseUpdateUrl}/RouteXia-win-Setup.exe"
+                    : downloadUrl;
+
+                string tempFile = Path.Combine(Path.GetTempPath(), "RouteXia-Update-Setup.exe");
+                if (File.Exists(tempFile)) { try { File.Delete(tempFile); } catch { } }
+
+                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+                using var response = await http.GetAsync(targetUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+
+                long? totalBytes = response.Content.Headers.ContentLength;
+                using var contentStream = await response.Content.ReadAsStreamAsync();
+                using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+
+                var buffer = new byte[81920];
+                long totalRead = 0;
+                int bytesRead;
+
+                while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                    totalRead += bytesRead;
+                    if (totalBytes.HasValue && totalBytes.Value > 0)
+                    {
+                        progress?.Report((double)totalRead / totalBytes.Value * 100);
+                    }
+                }
+                fileStream.Close();
+
+                // Launch updated installer and terminate current process cleanly
+                var psi = new ProcessStartInfo
+                {
+                    FileName = tempFile,
+                    Arguments = "/SILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS",
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+                App.PerformFullShutdown();
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Velopack] Download & Install failed: {ex.Message}");
+                Debug.WriteLine($"[UpdateManager] Fallback download failed: {ex.Message}");
                 return false;
             }
         }
