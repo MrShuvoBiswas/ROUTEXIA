@@ -52,7 +52,7 @@ namespace RouteXia.VpnClient.Api
     public class RelayAuthTicket
     {
         [JsonPropertyName("user_id")]
-        public int UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         [JsonPropertyName("session_id")]
         public string SessionId { get; set; } = string.Empty;
