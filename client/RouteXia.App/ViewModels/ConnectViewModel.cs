@@ -196,10 +196,17 @@ public class ConnectViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CurrentRegionBadge));
             OnPropertyChanged(nameof(CurrentRegionName));
             OnPropertyChanged(nameof(SelectedGameTitle));
+            OnPropertyChanged(nameof(BoostHeaderTitle));
+            OnPropertyChanged(nameof(GameReadyBadgeText));
+            OnPropertyChanged(nameof(GameStatusLabelText));
+            OnPropertyChanged(nameof(ConnectActionText));
         }
     }
 
-    public string SelectedGameTitle => CurrentGame.Name;
+    public string SelectedGameTitle => CurrentGame?.Name ?? "Game";
+    public string BoostHeaderTitle => CurrentGame != null ? $"{CurrentGame.ShortName.ToUpper()} BOOST" : "GAME BOOST";
+    public string GameReadyBadgeText => CurrentGame != null ? $"{CurrentGame.ShortName.ToUpper()} READY" : "SELECT GAME";
+    public string GameStatusLabelText => CurrentGame != null ? $"{CurrentGame.ShortName} status" : "Game status";
 
     public void ConfigureGame(GameDefinition game)
     {
@@ -961,8 +968,8 @@ public class ConnectViewModel : INotifyPropertyChanged
         ConnectionState.Optimizing       => "BOOSTING...",
         ConnectionState.Connecting       => "BOOSTING...",
         ConnectionState.KillSwitchActive => "RECONNECT",
-        ConnectionState.Disconnected     => !HasValidSubscription ? "SUBSCRIBE TO BOOST" : (SelectedServer == null ? "WAITING FOR SERVER" : $"BOOST {CurrentGame.ShortName.ToUpper()}"),
-        _ => !HasValidSubscription ? "SUBSCRIBE TO BOOST" : $"BOOST {CurrentGame.ShortName.ToUpper()}"
+        ConnectionState.Disconnected     => !HasValidSubscription ? "SUBSCRIBE TO BOOST" : (SelectedServer == null ? "WAITING FOR SERVER" : (CurrentGame != null ? $"BOOST {CurrentGame.ShortName.ToUpper()}" : "BOOST GAME")),
+        _ => !HasValidSubscription ? "SUBSCRIBE TO BOOST" : (CurrentGame != null ? $"BOOST {CurrentGame.ShortName.ToUpper()}" : "BOOST GAME")
     };
 
     public string ConnectButtonBg => State switch

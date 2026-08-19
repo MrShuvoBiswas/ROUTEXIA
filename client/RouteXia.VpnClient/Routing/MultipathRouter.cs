@@ -200,25 +200,16 @@ namespace RouteXia.VpnClient.Routing
                 BuildFrameInPlace(frame, packet, offset, length, seq, destIp, destPort, localPort);
 
                 var activeRoutes = GetSortedActiveRoutes();
-                int targetCount = Math.Min(2, activeRoutes.Count);
-                if (targetCount == 0)
+                if (activeRoutes.Count == 0)
                 {
                     Stats.DroppedPackets++;
                     return;
                 }
 
-                if (targetCount == 1)
-                {
-                    await activeRoutes[0].SendAsync(frame.AsMemory(0, 18 + length), ct);
-                    Stats.LastSentRoute = activeRoutes[0].Endpoint.ToString();
-                }
-                else
-                {
-                    var t1 = activeRoutes[0].SendAsync(frame.AsMemory(0, 18 + length), ct).AsTask();
-                    var t2 = activeRoutes[1].SendAsync(frame.AsMemory(0, 18 + length), ct).AsTask();
-                    await Task.WhenAll(t1, t2);
-                    Stats.LastSentRoute = activeRoutes[0].Endpoint.ToString();
-                }
+                // Route through the single lowest-latency active relay for optimal in-game ping
+                var primaryRoute = activeRoutes[0];
+                await primaryRoute.SendAsync(frame.AsMemory(0, 18 + length), ct);
+                Stats.LastSentRoute = primaryRoute.Endpoint.ToString();
 
                 Stats.SentPackets++;
                 Stats.SentBytes += (18 + length);

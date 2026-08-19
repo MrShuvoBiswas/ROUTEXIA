@@ -195,13 +195,13 @@
 
             <StackPanel Grid.Column="0">
                 <TextBlock
-                    Text="PUBG BOOST"
+                    Text="{Binding BoostHeaderTitle, FallbackValue='GAME BOOST'}"
                     FontFamily="/Resources/Fonts/#Rajdhani"
                     FontSize="40"
                     FontWeight="Bold"
                     Foreground="{StaticResource TextPrimaryBrush}" />
                 <TextBlock
-                    Text="SG relay, live ping, one-click optimize."
+                    Text="Smart low-latency relay, live ping, one-click optimize."
                     Margin="0,2,0,0"
                     FontSize="13"
                     Foreground="{StaticResource TextMutedBrush}" />
@@ -511,7 +511,7 @@
                 <StackPanel>
                     <TextBlock Text="3. GAME" Style="{StaticResource MutedLabel}" />
                     <TextBlock
-                        Text="PUBG READY"
+                        Text="{Binding GameReadyBadgeText, FallbackValue='GAME READY'}"
                         Margin="0,7,0,0"
                         FontSize="18"
                         FontWeight="SemiBold"
@@ -990,7 +990,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock
                                 Grid.Column="0"
-                                Text="PUBG status"
+                                Text="{Binding GameStatusLabelText, FallbackValue='Game status'}"
                                 FontSize="12"
                                 FontWeight="SemiBold"
                                 Foreground="{StaticResource TextMutedBrush}" />
@@ -1161,7 +1161,7 @@
                         Foreground="{StaticResource StatusGoodBrush}"
                         Margin="0,0,8,0" />
                     <TextBlock
-                        Text="Launch PUBG"
+                        Text="{Binding LaunchButtonText, FallbackValue='Launch Game'}"
                         FontWeight="Bold"
                         Foreground="{StaticResource TextPrimaryBrush}" />
                 </StackPanel>
