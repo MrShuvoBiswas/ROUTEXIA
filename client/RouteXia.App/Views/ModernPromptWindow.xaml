@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Title="RouteXia Notification"
+    Title="ROUTEXIA Notification"
     Width="500"
     SizeToContent="Height"
     WindowStartupLocation="CenterScreen"
@@ -141,7 +141,7 @@
                             Foreground="#E8EDF5" />
                         <TextBlock
                             x:Name="TxtCategory"
-                            Text="RouteXia Notification"
+                            Text="ROUTEXIA Notification"
                             Style="{StaticResource CaptionStyle}"
                             Foreground="#6B7684"
                             FontSize="11"
@@ -175,7 +175,7 @@
                     Margin="0,0,0,20">
                     <TextBlock
                         x:Name="TxtMessage"
-                        Text="An active subscription or trial is required to connect to RouteXia gaming relays."
+                        Text="An active subscription or trial is required to connect to ROUTEXIA gaming relays."
                         Style="{StaticResource CaptionStyle}"
                         Foreground="#C4D1E0"
                         FontSize="13"

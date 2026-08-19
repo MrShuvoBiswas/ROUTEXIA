@@ -86,7 +86,7 @@ public partial class ModernPromptWindow : Window
 
     private static string GetDefaultCategory(ModernPromptType type) => type switch
     {
-        ModernPromptType.Subscription => "RouteXia Subscription",
+        ModernPromptType.Subscription => "ROUTEXIA Subscription",
         ModernPromptType.Banned => "Security & Account Status",
         ModernPromptType.Error => "System Notification",
         ModernPromptType.Warning => "Notice",

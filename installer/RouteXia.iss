@@ -3,13 +3,13 @@
 ; Packages RouteXia x64 WPF client, WinDivert kernel drivers, and firewall rules
 ; ══════════════════════════════════════════════════════════════════════════════
 
-#define MyAppName "RouteXia"
+#define MyAppName "ROUTEXIA"
 #ifndef MyAppVersion
 #define MyAppVersion "1.0.7"
 #endif
-#define MyAppPublisher "RouteXia Inc."
-#define MyAppURL "https://routexia.com"
-#define MyAppExeName "RouteXia.exe"
+#define MyAppPublisher "ROUTEXIA"
+#define MyAppURL "https://routexia.in"
+#define MyAppExeName "routexia.exe"
 
 [Setup]
 ; Unique application GUID
@@ -54,7 +54,7 @@ DisableFinishedPage=no
 OutputDir=..\artifacts\installer
 OutputBaseFilename=SetupRouteXia-v{#MyAppVersion}
 SetupIconFile=..\client\RouteXia.App\Resources\Icons\RouteXia-AppIcon.ico
-UninstallDisplayName={#MyAppName} Gaming Network Optimizer
+UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName},0
 
 UsedUserAreasWarning=no
@@ -71,7 +71,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 ; Desktop Shortcut is CHECKED by default
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 ; Start with Windows is optional (unchecked by default)
-Name: "startwithwindows"; Description: "Start RouteXia automatically on Windows startup"; GroupDescription: "Preferences:"; Flags: unchecked
+Name: "startwithwindows"; Description: "Start ROUTEXIA automatically on Windows startup"; GroupDescription: "Preferences:"; Flags: unchecked
 
 [Files]
 ; Main application binaries (published self-contained x64)

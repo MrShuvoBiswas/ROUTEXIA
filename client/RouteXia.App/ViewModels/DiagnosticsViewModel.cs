@@ -10,7 +10,7 @@ public class DiagnosticsViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private string _terminalOutput = "RouteXia Network Diagnostic Engine v1.0 Ready.\nClick any diagnostic tool below to run system tests.\n";
+    private string _terminalOutput = "ROUTEXIA Network Diagnostic Engine v1.0 Ready.\nClick any diagnostic tool below to run system tests.\n";
     public string TerminalOutput
     {
         get => _terminalOutput;

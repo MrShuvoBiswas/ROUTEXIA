@@ -428,7 +428,7 @@ public class ConnectViewModel : INotifyPropertyChanged
                 return "Kill-Switch Active — Traffic Blocked";
             if (IsGameDetected)
                 return $"{CurrentGame.Name} detected — Click Boost";
-            return "RouteXia ready — Waiting for game";
+            return "ROUTEXIA ready — Waiting for game";
         }
     }
 

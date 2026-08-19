@@ -144,7 +144,7 @@
                                 Style="{StaticResource HeadingSmStyle}"
                                 FontSize="13" />
                             <TextBlock
-                                Text="Launch RouteXia silently when Windows starts"
+                                Text="Launch ROUTEXIA silently when Windows starts"
                                 Style="{StaticResource CaptionStyle}"
                                 Foreground="{StaticResource TextMutedBrush}"
                                 Margin="0,2,0,0" />
@@ -179,7 +179,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel>
                             <TextBlock
-                                Text="RouteXia"
+                                Text="ROUTEXIA"
                                 Style="{StaticResource HeadingSmStyle}"
                                 FontSize="14" />
                             <TextBlock
@@ -207,7 +207,7 @@
                         Margin="0,4,0,12" />
 
                     <TextBlock
-                        Text="RouteXia uses Multipath Routing Technology to find the fastest path for your game traffic, reducing ping and eliminating packet loss."
+                        Text="ROUTEXIA uses Multipath Routing Technology to find the fastest path for your game traffic, reducing ping and eliminating packet loss."
                         Style="{StaticResource CaptionStyle}"
                         Foreground="{StaticResource TextMutedBrush}"
                         TextWrapping="Wrap" />

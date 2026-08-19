@@ -36,7 +36,7 @@ public partial class MainWindow : FluentWindow
             Dispatcher.Invoke(() =>
             {
                 TxtModalUpdateTitle.Text = "NEW UPDATE AVAILABLE";
-                TxtModalUpdateVersion.Text = $"Updating to RouteXia v{version}";
+                TxtModalUpdateVersion.Text = $"Updating to ROUTEXIA v{version}";
                 TxtModalUpdateStatus.Text = "Downloading optimized engine package...";
                 ModalUpdateProgressBar.Value = 0;
                 TxtModalProgressPercent.Text = "0%";
@@ -83,11 +83,11 @@ public partial class MainWindow : FluentWindow
             Dispatcher.Invoke(() =>
             {
                 TxtModalUpdateTitle.Text = "APPLYING UPDATE";
-                TxtModalUpdateStatus.Text = $"Restarting RouteXia in {sec}s...";
+                TxtModalUpdateStatus.Text = $"Restarting ROUTEXIA in {sec}s...";
                 TxtModalProgressPercent.Text = "Restarting...";
 
                 TxtUpdateToastTitle.Text = "🔄 Applying Update...";
-                TxtUpdateToastMsg.Text = $"Restarting RouteXia in {sec}s...";
+                TxtUpdateToastMsg.Text = $"Restarting ROUTEXIA in {sec}s...";
             });
         };
 
@@ -154,7 +154,7 @@ public partial class MainWindow : FluentWindow
     {
         ModernPromptWindow.ShowAlert(
             "ROUTEXIA HELP & SUPPORT",
-            "RouteXia Gaming Multipath Route Optimizer\n\n• Official Support Email: help@routexia.in\n\nFor any inquiries, billing assistance, or technical support, feel free to reach out to us directly.",
+            "ROUTEXIA Gaming Multipath Route Optimizer\n\n• Official Support Email: help@routexia.in\n\nFor any inquiries, billing assistance, or technical support, feel free to reach out to us directly.",
             ModernPromptType.Information,
             "CLOSE",
             "Help Center");

@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Title="RouteXia"
+    Title="ROUTEXIA"
     Width="1200"
     Height="760"
     MinWidth="1080"
@@ -487,7 +487,7 @@
                             </ui:SymbolIcon.Style>
                         </ui:SymbolIcon>
                         <TextBlock
-                            Text="{Binding TopBarStatusText, FallbackValue='RouteXia ready — Waiting for game'}"
+                            Text="{Binding TopBarStatusText, FallbackValue='ROUTEXIA ready — Waiting for game'}"
                             Style="{StaticResource HeadingSmStyle}" />
                         <Border
                             Margin="12,0,0,0"
@@ -643,7 +643,7 @@
 
                     <TextBlock
                         x:Name="TxtModalUpdateVersion"
-                        Text="Updating RouteXia..."
+                        Text="Updating ROUTEXIA..."
                         FontSize="13"
                         FontWeight="SemiBold"
                         Foreground="{StaticResource AccentBrush}"

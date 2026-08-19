@@ -253,10 +253,12 @@ public class SettingsViewModel : INotifyPropertyChanged
 
             if (enable && !string.IsNullOrEmpty(exePath))
             {
-                key.SetValue("RouteXia", $"\"{exePath}\"");
+                key.SetValue("ROUTEXIA", $"\"{exePath}\"");
+                key.DeleteValue("RouteXia", false);
             }
             else
             {
+                key.DeleteValue("ROUTEXIA", false);
                 key.DeleteValue("RouteXia", false);
             }
         }

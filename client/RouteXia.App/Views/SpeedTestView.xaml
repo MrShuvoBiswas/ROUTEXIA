@@ -29,7 +29,7 @@
                         FontWeight="Bold"
                         Foreground="{StaticResource TextPrimaryBrush}" />
                     <TextBlock
-                        Text="Measure real-time round-trip latency to global RouteXia relay nodes and game server clusters"
+                        Text="Measure real-time round-trip latency to global ROUTEXIA relay nodes and game server clusters"
                         FontSize="12"
                         Foreground="{StaticResource TextMutedBrush}"
                         Margin="0,2,0,0" />
