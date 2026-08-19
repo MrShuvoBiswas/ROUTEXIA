@@ -42,6 +42,7 @@ namespace RouteXia.App.Services
         public bool IsUpdating { get; private set; } = false;
 
         public event Action<string>? UpdateDetected;
+        public event Action<double>? UpdateDownloadProgress;
         public event Action<string, bool>? UpdateReadyForRestart;
         public event Action<int>? RestartCountdown;
 
@@ -117,9 +118,14 @@ namespace RouteXia.App.Services
                     IsUpdating = true;
                     UpdateDetected?.Invoke(check.LatestVersion);
 
-                    await _velopack.DownloadUpdatesAsync(_pendingUpdate, p => progress?.Report(p));
+                    await _velopack.DownloadUpdatesAsync(_pendingUpdate, p =>
+                    {
+                        progress?.Report(p);
+                        UpdateDownloadProgress?.Invoke(p);
+                    });
 
                     Debug.WriteLine($"[Velopack] Startup: Update v{check.LatestVersion} downloaded successfully. Restarting RouteXia...");
+                    UpdateReadyForRestart?.Invoke(check.LatestVersion, false);
                     await CountdownAndRestartAsync();
                     return true;
                 }
@@ -311,37 +317,51 @@ namespace RouteXia.App.Services
         }
 
         /// <summary>
-        /// Downloads the delta/full update package from Cloudflare R2 and applies on restart.
+        /// Downloads the delta/full update package from Cloudflare R2 and applies seamlessly on restart.
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(string? downloadUrl = null, IProgress<double>? progress = null)
         {
-            // 1. If Velopack native package is pending, use Velopack native updater
-            if (_velopack != null && _velopack.IsInstalled && _pendingUpdate != null)
+            // 1. If Velopack is installed, use native in-app updater (ZERO popups, 100% seamless)
+            if (_velopack != null && _velopack.IsInstalled)
             {
                 try
                 {
-                    Debug.WriteLine("[Velopack] Manual download requested via Velopack...");
-                    await _velopack.DownloadUpdatesAsync(_pendingUpdate, p => progress?.Report(p));
+                    _pendingUpdate ??= await _velopack.CheckForUpdatesAsync();
 
-                    if (IsServerConnected)
+                    if (_pendingUpdate != null)
                     {
-                        HasPendingDownloadedUpdate = true;
-                        PendingUpdateVersion = _pendingUpdate.TargetFullRelease.Version.ToNormalizedString();
-                        Debug.WriteLine("[Velopack] Update downloaded. User is connected to server; restart will apply on disconnect.");
+                        string ver = _pendingUpdate.TargetFullRelease.Version.ToNormalizedString();
+                        Debug.WriteLine($"[Velopack] Seamless in-app download running for v{ver}...");
+                        UpdateDetected?.Invoke(ver);
+
+                        await _velopack.DownloadUpdatesAsync(_pendingUpdate, p =>
+                        {
+                            progress?.Report(p);
+                            UpdateDownloadProgress?.Invoke(p);
+                        });
+
+                        if (IsServerConnected)
+                        {
+                            HasPendingDownloadedUpdate = true;
+                            PendingUpdateVersion = ver;
+                            Debug.WriteLine("[Velopack] Update downloaded. Server is connected; restart will apply on disconnect.");
+                            UpdateReadyForRestart?.Invoke(PendingUpdateVersion, true);
+                            return true;
+                        }
+
+                        Debug.WriteLine("[Velopack] Applying update and restarting RouteXia seamlessly...");
+                        UpdateReadyForRestart?.Invoke(ver, false);
+                        await CountdownAndRestartAsync();
                         return true;
                     }
-
-                    Debug.WriteLine("[Velopack] Applying update and restarting RouteXia...");
-                    await CountdownAndRestartAsync();
-                    return true;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[Velopack] Download & Install failed: {ex.Message}");
+                    Debug.WriteLine($"[Velopack] In-app download & apply failed: {ex.Message}");
                 }
             }
 
-            // 2. Direct Cloudflare R2 Standalone Installer Downloader & Auto-Executer
+            // 2. Direct Cloudflare R2 Standalone Installer Downloader (Fallback for Dev/Portable builds only)
             try
             {
                 string targetUrl = string.IsNullOrWhiteSpace(downloadUrl)

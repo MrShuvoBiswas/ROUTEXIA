@@ -18,6 +18,13 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // ── 0. Velopack Lifecycle Hooks (Required for seamless background updates) ─
+        try
+        {
+            Velopack.VelopackApp.Build().Run();
+        }
+        catch { }
+
         base.OnStartup(e);
 
         // ── Structured Global Crash Reporting Engine (T005, T006, T007) ──────

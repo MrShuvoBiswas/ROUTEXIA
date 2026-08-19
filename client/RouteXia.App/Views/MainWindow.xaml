@@ -595,6 +595,94 @@
             </Grid>
         </Border>
 
+        <!-- ── Live Center-Screen Seamless Update Modal (ZIndex 120) ── -->
+        <Border
+            x:Name="UpdateCenterModalOverlay"
+            Grid.ColumnSpan="2"
+            Background="#D005080E"
+            Visibility="Collapsed"
+            Panel.ZIndex="120">
+            <Border
+                Width="400"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#0F1724"
+                BorderBrush="{StaticResource AccentBrush}"
+                BorderThickness="1.5"
+                CornerRadius="16"
+                Padding="28,24">
+                <Border.Effect>
+                    <DropShadowEffect Color="#00C2FF" ShadowDepth="0" BlurRadius="28" Opacity="0.45" />
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <Border
+                        Width="56"
+                        Height="56"
+                        CornerRadius="28"
+                        Background="#142236"
+                        BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="2"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,16">
+                        <ui:SymbolIcon
+                            Symbol="ArrowDownload24"
+                            FontSize="26"
+                            Foreground="{StaticResource AccentBrush}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Border>
+
+                    <TextBlock
+                        x:Name="TxtModalUpdateTitle"
+                        Text="NEW UPDATE AVAILABLE"
+                        FontFamily="/Resources/Fonts/#Rajdhani"
+                        FontSize="20"
+                        FontWeight="Bold"
+                        Foreground="#FFFFFF"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        x:Name="TxtModalUpdateVersion"
+                        Text="Updating RouteXia..."
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource AccentBrush}"
+                        HorizontalAlignment="Center"
+                        Margin="0,4,0,14" />
+
+                    <TextBlock
+                        x:Name="TxtModalUpdateStatus"
+                        Text="Downloading optimized engine package..."
+                        FontSize="12"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,12" />
+
+                    <!-- Live Progress Bar -->
+                    <Grid Width="320" Height="8" Margin="0,0,0,8">
+                        <Border Background="#1A2433" CornerRadius="4" />
+                        <ProgressBar
+                            x:Name="ModalUpdateProgressBar"
+                            Height="8"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="0"
+                            Foreground="{StaticResource AccentBrush}"
+                            Background="Transparent"
+                            BorderThickness="0" />
+                    </Grid>
+
+                    <TextBlock
+                        x:Name="TxtModalProgressPercent"
+                        Text="0%"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Border>
+
         <Border
             x:Name="ClosingOverlay"
             Grid.ColumnSpan="2"

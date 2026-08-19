@@ -30,14 +30,32 @@ public partial class MainWindow : FluentWindow
         _navButtons = [BtnNavHome, BtnNavLibrary, BtnNavNetwork, BtnNavSettings, BtnNavAccount, BtnNavHelp];
         NavigateToHome();
 
-        // ── Auto-Update Toast Event Subscriptions ───────────────────────────
+        // ── Auto-Update Event Subscriptions (Discord/Spotify-Style In-App Updater) ──
         RouteXia.App.Services.UpdateManager.Instance.UpdateDetected += (version) =>
         {
             Dispatcher.Invoke(() =>
             {
+                TxtModalUpdateTitle.Text = "NEW UPDATE AVAILABLE";
+                TxtModalUpdateVersion.Text = $"Updating to RouteXia v{version}";
+                TxtModalUpdateStatus.Text = "Downloading optimized engine package...";
+                ModalUpdateProgressBar.Value = 0;
+                TxtModalProgressPercent.Text = "0%";
+                UpdateCenterModalOverlay.Visibility = Visibility.Visible;
+
                 TxtUpdateToastTitle.Text = $"🚀 New Update (v{version})";
                 TxtUpdateToastMsg.Text = "Downloading update package in background...";
-                UpdateToastOverlay.Visibility = Visibility.Visible;
+            });
+        };
+
+        RouteXia.App.Services.UpdateManager.Instance.UpdateDownloadProgress += (percent) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                ModalUpdateProgressBar.Value = percent;
+                TxtModalProgressPercent.Text = $"{(int)percent}%";
+                TxtModalUpdateStatus.Text = percent >= 100 
+                    ? "Verifying package integrity..." 
+                    : $"Downloading update... ({(int)percent}%)";
             });
         };
 
@@ -45,16 +63,17 @@ public partial class MainWindow : FluentWindow
         {
             Dispatcher.Invoke(() =>
             {
-                UpdateToastOverlay.Visibility = Visibility.Visible;
                 if (isConnected)
                 {
+                    // If connected / gaming, hide center modal and show subtle toast so gaming is NOT interrupted!
+                    UpdateCenterModalOverlay.Visibility = Visibility.Collapsed;
+                    UpdateToastOverlay.Visibility = Visibility.Visible;
                     TxtUpdateToastTitle.Text = $"🛡️ Update v{version} Downloaded";
-                    TxtUpdateToastMsg.Text = "Will auto-apply when you disconnect from server.";
+                    TxtUpdateToastMsg.Text = "Will auto-apply when you disconnect or exit game.";
                 }
                 else
                 {
-                    TxtUpdateToastTitle.Text = $"✓ Update v{version} Ready";
-                    TxtUpdateToastMsg.Text = "Restarting RouteXia in 3 seconds...";
+                    TxtModalUpdateStatus.Text = "Update downloaded! Restarting application...";
                 }
             });
         };
@@ -63,6 +82,10 @@ public partial class MainWindow : FluentWindow
         {
             Dispatcher.Invoke(() =>
             {
+                TxtModalUpdateTitle.Text = "APPLYING UPDATE";
+                TxtModalUpdateStatus.Text = $"Restarting RouteXia in {sec}s...";
+                TxtModalProgressPercent.Text = "Restarting...";
+
                 TxtUpdateToastTitle.Text = "🔄 Applying Update...";
                 TxtUpdateToastMsg.Text = $"Restarting RouteXia in {sec}s...";
             });
@@ -87,13 +110,13 @@ public partial class MainWindow : FluentWindow
             }
         };
 
-        // ── Discord-Style Startup Auto-Update ──────────────────────────────
-        // If not connected to any server and an update is detected, auto-downloads
-        // and seamlessly restarts RouteXia into the latest version.
+        // ── Discord-Style Startup & Background Auto-Update ─────────────────
+        // Checks on launch and periodically every 2 minutes.
         _ = System.Threading.Tasks.Task.Run(async () =>
         {
             await System.Threading.Tasks.Task.Delay(1200);
             await RouteXia.App.Services.UpdateManager.Instance.CheckAndApplyStartupUpdateAsync();
+            RouteXia.App.Services.UpdateManager.Instance.StartPeriodicBackgroundCheck(2);
         });
     }
 
