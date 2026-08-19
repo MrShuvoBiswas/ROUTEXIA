@@ -1,0 +1,165 @@
+<Page
+    x:Class="RouteXia.App.Views.DiagnosticsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Background="{StaticResource BgBaseBrush}"
+    Title="Diagnostics &amp; Tools">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="32,24,32,32" MaxWidth="850">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock
+                    Text="Network Diagnostics &amp; Repair Tools"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="26"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock
+                    Text="1-click repair actions for Windows network adapters, DNS caches, and kernel drivers"
+                    FontSize="12"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    Margin="0,2,0,0" />
+            </StackPanel>
+
+            <!-- Tools Row -->
+            <Grid Grid.Row="1" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Tool 1: Flush DNS -->
+                <Border
+                    Grid.Column="0"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16,14"
+                    Margin="0,0,10,0">
+                    <StackPanel>
+                        <ui:SymbolIcon Symbol="ArrowSync24" FontSize="20" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                        <TextBlock Text="Flush DNS Cache" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="Clears cached domain entries to resolve game connection errors" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,14" TextWrapping="Wrap" />
+                        <ui:Button
+                            x:Name="BtnFlushDns"
+                            Click="BtnFlushDns_Click"
+                            Content="Execute Flush"
+                            Background="#0D1929"
+                            BorderBrush="{StaticResource AccentBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,6"
+                            FontFamily="/Resources/Fonts/#Rajdhani"
+                            FontWeight="Bold"
+                            FontSize="12"
+                            Foreground="{StaticResource AccentBrush}"
+                            Cursor="Hand"
+                            HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Tool 2: Reset Winsock -->
+                <Border
+                    Grid.Column="1"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16,14"
+                    Margin="5,0,5,0">
+                    <StackPanel>
+                        <ui:SymbolIcon Symbol="Wrench24" FontSize="20" Foreground="{StaticResource StatusWarnBrush}" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                        <TextBlock Text="Reset TCP Stack" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="Restores Windows Winsock catalog and network socket buffers" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,14" TextWrapping="Wrap" />
+                        <ui:Button
+                            x:Name="BtnResetWinsock"
+                            Click="BtnResetWinsock_Click"
+                            Content="Reset Stack"
+                            Background="#2A1A0D"
+                            BorderBrush="{StaticResource StatusWarnBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,6"
+                            FontFamily="/Resources/Fonts/#Rajdhani"
+                            FontWeight="Bold"
+                            FontSize="12"
+                            Foreground="{StaticResource StatusWarnBrush}"
+                            Cursor="Hand"
+                            HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Tool 3: Test Game Ports -->
+                <Border
+                    Grid.Column="2"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16,14"
+                    Margin="10,0,0,0">
+                    <StackPanel>
+                        <ui:SymbolIcon Symbol="Globe24" FontSize="20" Foreground="{StaticResource StatusGoodBrush}" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                        <TextBlock Text="Test Game Ports" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="Checks outbound UDP/TCP reachability to verify ISP firewall" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,14" TextWrapping="Wrap" />
+                        <ui:Button
+                            x:Name="BtnTestPorts"
+                            Click="BtnTestPorts_Click"
+                            Content="Test Relay"
+                            Background="#0D2A1A"
+                            BorderBrush="{StaticResource StatusGoodBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,6"
+                            FontFamily="/Resources/Fonts/#Rajdhani"
+                            FontWeight="Bold"
+                            FontSize="12"
+                            Foreground="{StaticResource StatusGoodBrush}"
+                            Cursor="Hand"
+                            HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Console Terminal Box -->
+            <Border
+                Grid.Row="2"
+                Background="#070B10"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="16,14"
+                MinHeight="200">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Ellipse Width="8" Height="8" Fill="{StaticResource StatusGoodBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="DIAGNOSTIC TERMINAL CONSOLE" FontFamily="/Resources/Fonts/#Rajdhani" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <TextBlock
+                            Text="{Binding TerminalOutput}"
+                            FontFamily="/Resources/Fonts/#JetBrains Mono"
+                            FontSize="11"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            LineHeight="18"
+                            TextWrapping="Wrap" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Page>

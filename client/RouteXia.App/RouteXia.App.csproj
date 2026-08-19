@@ -1,0 +1,105 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>RouteXia</AssemblyName>
+    <RootNamespace>RouteXia.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\Icons\RouteXia-AppIcon.ico</ApplicationIcon>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Product>ROUTEXIA</Product>
+    <AssemblyTitle>ROUTEXIA</AssemblyTitle>
+    <Description>ROUTEXIA</Description>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <StartupObject>RouteXia.App.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WPF-UI: Fluent Design, Mica/Acrylic, dark theme -->
+    <PackageReference Include="Velopack" Version="1.2.0" />
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
+    <!-- Live ping charts -->
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc3" />
+    <!-- DI container -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <!-- JSON deserialization -->
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference sibling projects -->
+    <ProjectReference Include="..\RouteXia.VpnClient\RouteXia.VpnClient.csproj" />
+    <ProjectReference Include="..\RouteXia.WfpFilter\RouteXia.WfpFilter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bundle PUBG CIDR list -->
+    <None Update="Data\pubg-cidr-ranges.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Firebase client config — contains Web API Key (public by design, safe to ship).
+      This file is gitignored; developers must create it from firebase.config.example.json.
+      It is copied next to RouteXia.exe so FirebaseConfig.cs can load it at runtime.
+    -->
+    <None Update="firebase.config.json" Condition="Exists('firebase.config.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Example template — always included in Git for reference -->
+    <None Update="firebase.config.example.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- WinDivert binaries — packet interception engine (basil00/WinDivert) -->
+    <!-- Place WinDivert.dll + WinDivert64.sys in client\windivert\ -->
+    <Content Include="..\windivert\WinDivert.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>WinDivert.dll</Link>
+    </Content>
+    <Content Include="..\windivert\WinDivert64.sys">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>WinDivert64.sys</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embedded font and image resources -->
+    <Resource Include="Resources\Icons\RouteXia-AppIcon.ico" />
+    <Resource Include="Resources\Fonts\Rajdhani-SemiBold.ttf" />
+    <Resource Include="Resources\Fonts\Rajdhani-Bold.ttf" />
+    <Resource Include="Resources\Fonts\JetBrainsMono-Medium.ttf" />
+    <Resource Include="Resources\Fonts\JetBrainsMono-Bold.ttf" />
+    <Resource Include="Resources\Images\RouteXiaLogo.png" />
+    <Resource Include="Resources\Images\RX_LOGO_TRANSPRANT.png" />
+    <Resource Include="Resources\Images\pubg_icon.png" />
+    <Resource Include="Resources\Images\cs2_icon.png" />
+    <Resource Include="Resources\Images\apex_icon.png" />
+    <Resource Include="Resources\Images\valorant_icon.png" />
+    <Resource Include="Resources\Images\fortnite_icon.png" />
+    <Resource Include="Resources\Images\discord_icon.png" />
+    <Resource Include="Resources\Images\warzone_icon.png" />
+    <Resource Include="Resources\Images\flag_sg.png" />
+  </ItemGroup>
+</Project>

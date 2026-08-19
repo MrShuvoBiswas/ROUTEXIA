@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="RouteXia.App.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Background="{StaticResource BgBaseBrush}"
+    Title="Settings">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="40,28" MaxWidth="580">
+
+            <TextBlock
+                Text="SETTINGS"
+                Style="{StaticResource HeadingXLStyle}"
+                Margin="0,0,0,24" />
+
+            <!-- ── Game Optimization ──────────────────────────────────────── -->
+            <TextBlock
+                Text="GAME OPTIMIZATION"
+                Style="{StaticResource CaptionStyle}"
+                Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
+                Margin="0,0,0,12" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16"
+                Margin="0,0,0,24">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="Auto-Connect on Game Launch"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Automatically optimize routes when the selected game starts"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding AutoConnectOnGameLaunch}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Rectangle
+                        Height="1"
+                        Fill="{StaticResource BorderBrush}"
+                        Margin="0,4,0,16" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="Route Optimization Mode"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Game-specific Split-Tunneling (Game traffic only)"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Border
+                            Grid.Column="1"
+                            Background="{StaticResource BadgeBgBrush}"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            Padding="10,4"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Text="⚡ Smart Split"
+                                Style="{StaticResource BadgeLabelStyle}"
+                                Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+
+            <!-- ── System ────────────────────────────────────────────────── -->
+            <TextBlock
+                Text="SYSTEM"
+                Style="{StaticResource CaptionStyle}"
+                Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
+                Margin="0,0,0,12" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16"
+                Margin="0,0,0,24">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="Minimize to System Tray"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Keep running in background for game detection"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding MinimizeToTray}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Rectangle
+                        Height="1"
+                        Fill="{StaticResource BorderBrush}"
+                        Margin="0,4,0,16" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="Start with Windows"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="13" />
+                            <TextBlock
+                                Text="Launch RouteXia silently when Windows starts"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            IsChecked="{Binding StartWithWindows}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ── About ─────────────────────────────────────────────────── -->
+            <TextBlock
+                Text="ABOUT"
+                Style="{StaticResource CaptionStyle}"
+                Foreground="{StaticResource TextMutedBrush}"
+                FontWeight="SemiBold"
+                Margin="0,0,0,12" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="RouteXia"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="14" />
+                            <TextBlock
+                                Text="AI-Powered Game Route Optimizer"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Border
+                            Grid.Column="1"
+                            Background="{StaticResource BadgeBgBrush}"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            Padding="10,4"
+                            VerticalAlignment="Center">
+                            <TextBlock
+                                Text="{Binding AppVersionText}"
+                                Style="{StaticResource BadgeLabelStyle}"
+                                Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                    </Grid>
+
+                    <Rectangle
+                        Height="1"
+                        Fill="{StaticResource BorderBrush}"
+                        Margin="0,4,0,12" />
+
+                    <TextBlock
+                        Text="RouteXia uses Multipath Routing Technology to find the fastest path for your game traffic, reducing ping and eliminating packet loss."
+                        Style="{StaticResource CaptionStyle}"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- ── Application Updates (T010) ────────────────────────────── -->
+            <TextBlock
+                Text="APPLICATION UPDATES"
+                Style="{StaticResource SectionHeaderStyle}"
+                Margin="0,20,0,10" />
+
+            <Border
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Padding="20,16">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="Auto-Update &amp; Release Channel"
+                                Style="{StaticResource HeadingSmStyle}"
+                                FontSize="14" />
+                            <TextBlock
+                                Text="{Binding UpdateStatusText}"
+                                Style="{StaticResource CaptionStyle}"
+                                Foreground="{StaticResource TextMutedBrush}"
+                                Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Button
+                            Grid.Column="1"
+                            Content="Check for Updates"
+                            Command="{Binding CheckForUpdatesCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="14,6"
+                            Height="32"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Update Available Banner -->
+                    <Border
+                        Margin="0,8,0,0"
+                        Padding="14,10"
+                        Background="#0F1722"
+                        BorderBrush="#1C2B3C"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusSm}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUpdateAvailable}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock
+                                    Text="{Binding LatestVersionText, StringFormat='Update Available: {0}'}"
+                                    Style="{StaticResource HeadingSmStyle}"
+                                    FontSize="13"
+                                    Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock
+                                    Text="Includes performance improvements, kernel driver optimizations, and stability fixes."
+                                    Style="{StaticResource CaptionStyle}"
+                                    Foreground="{StaticResource TextMutedBrush}"
+                                    Margin="0,2,0,0" />
+                            </StackPanel>
+                            <Button
+                                Grid.Column="1"
+                                Content="Install Now"
+                                Command="{Binding InstallUpdateCommand}"
+                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Padding="16,6"
+                                Height="30"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Progress bar when downloading -->
+                    <ProgressBar
+                        Height="4"
+                        Value="{Binding DownloadProgress}"
+                        Maximum="100"
+                        Foreground="{StaticResource AccentBrush}"
+                        Background="{StaticResource BgPanelBrush}"
+                        Margin="0,10,0,0">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDownloadingUpdate}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

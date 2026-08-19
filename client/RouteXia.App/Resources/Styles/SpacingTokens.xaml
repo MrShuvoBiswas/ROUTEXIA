@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== RouteXia Spacing Token System — 8px Base Grid ===== -->
+    <!-- Usage: <Border Padding="{StaticResource Sp2}"> or <StackPanel Margin="{StaticResource Sp3}"> -->
+
+    <!-- Sp1 = 8px — Tight / badge inner padding -->
+    <Thickness x:Key="Sp1">8,8,8,8</Thickness>
+
+    <!-- Sp1H = 8px horizontal only — inline badge padding -->
+    <Thickness x:Key="Sp1H">8,4,8,4</Thickness>
+
+    <!-- Sp2 = 16px — Standard component inner padding -->
+    <Thickness x:Key="Sp2">16,16,16,16</Thickness>
+
+    <!-- Sp2H = 16px horizontal, 8px vertical — compact card padding -->
+    <Thickness x:Key="Sp2H">16,8,16,8</Thickness>
+
+    <!-- Sp3 = 24px — Section separation / larger card padding -->
+    <Thickness x:Key="Sp3">24,24,24,24</Thickness>
+
+    <!-- Sp3V = 24px vertical only — vertical section gap -->
+    <Thickness x:Key="Sp3V">0,24,0,24</Thickness>
+
+    <!-- Sp4 = 32px — Wide margins / generous panel padding -->
+    <Thickness x:Key="Sp4">32,32,32,32</Thickness>
+
+    <!-- Sp5 = 40px — Page content margins (e.g. ScrollViewer content) -->
+    <Thickness x:Key="Sp5">40,40,40,40</Thickness>
+
+    <!-- Sp5Alt = 40px horizontal, 28px vertical — existing page margin pattern -->
+    <Thickness x:Key="Sp5Alt">40,28,40,28</Thickness>
+
+    <!-- CornerRadius tokens -->
+    <CornerRadius x:Key="RadiusXs">4</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">8</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">12</CornerRadius>
+    <CornerRadius x:Key="RadiusXl">16</CornerRadius>
+    <CornerRadius x:Key="RadiusFull">100</CornerRadius>
+
+</ResourceDictionary>

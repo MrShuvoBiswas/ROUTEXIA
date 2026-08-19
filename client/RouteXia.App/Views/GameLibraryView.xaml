@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="RouteXia.App.Views.GameLibraryView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:data="clr-namespace:RouteXia.App.Data"
+    Background="{StaticResource BgBaseBrush}"
+    Title="Library">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /> <!-- Header -->
+            <RowDefinition Height="*" />    <!-- Content -->
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- ── Header: Title + Request Game button ───────────────── -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="0" Margin="28,20,28,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock
+                    Text="Library"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="26"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource TextPrimaryBrush}" />
+            </StackPanel>
+
+            <!-- Request Game button (ExitLag-style) -->
+            <Border
+                Grid.Column="1"
+                Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14,7"
+                Cursor="Hand"
+                VerticalAlignment="Center">
+                <TextBlock
+                    Text="Request game"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="13"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource TextPrimaryBrush}" />
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- ── Main Content: Category sidebar + Game Grid ──────────── -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1" Margin="28,16,28,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130" /> <!-- Category sidebar -->
+                <ColumnDefinition Width="*" />   <!-- Game grid -->
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Category Sidebar ──────────────────────────────── -->
+            <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                <TextBlock
+                    Text="Programs"
+                    FontFamily="/Resources/Fonts/#Rajdhani"
+                    FontSize="13"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource TextPrimaryBrush}"
+                    Margin="0,0,0,12" />
+
+                <!-- Category list -->
+                <ItemsControl ItemsSource="{Binding Categories}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button
+                                Content="{Binding}"
+                                Click="CategoryButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="8,6"
+                                Margin="0,1"
+                                Cursor="Hand"
+                                HorizontalAlignment="Left"
+                                HorizontalContentAlignment="Left"
+                                FontSize="12"
+                                Foreground="{StaticResource TextMutedBrush}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- ── Game Grid Area ────────────────────────────────── -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /> <!-- Search bar -->
+                    <RowDefinition Height="*" />    <!-- Grid -->
+                </Grid.RowDefinitions>
+
+                <!-- Search bar (ExitLag-style) -->
+                <Border
+                    Grid.Row="0"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,8"
+                    Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Search24" FontSize="16"
+                            Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"
+                            VerticalAlignment="Center" />
+                        <TextBox
+                            x:Name="TxtSearch"
+                            Grid.Column="1"
+                            Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            FontSize="13"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Game Grid (ExitLag-style card grid) -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="GameGrid" ItemsSource="{Binding FilteredGames}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type data:GameDefinition}">
+                                <Button
+                                    Style="{StaticResource GameCardButtonStyle}"
+                                    Click="GameCard_Click"
+                                    Tag="{Binding}"
+                                    Margin="0,0,10,10"
+                                    Width="120" Height="130">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <!-- Game icon -->
+                                        <Border
+                                            Width="48" Height="48"
+                                            CornerRadius="10"
+                                            Background="#121D2B"
+                                            Margin="0,0,0,8"
+                                            HorizontalAlignment="Center">
+                                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Image
+                                                    Source="{Binding ImagePath}"
+                                                    Width="38" Height="38"
+                                                    RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasImage}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
+                                                <ui:SymbolIcon
+                                                    Symbol="{Binding IconGlyph}"
+                                                    FontSize="24"
+                                                    Foreground="{StaticResource AccentBrush}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center">
+                                                    <ui:SymbolIcon.Style>
+                                                        <Style TargetType="ui:SymbolIcon">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasImage}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ui:SymbolIcon.Style>
+                                                </ui:SymbolIcon>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Game name -->
+                                        <TextBlock
+                                            Text="{Binding ShortName}"
+                                            FontFamily="/Resources/Fonts/#Rajdhani"
+                                            FontSize="11"
+                                            FontWeight="SemiBold"
+                                            Foreground="{StaticResource TextPrimaryBrush}"
+                                            HorizontalAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            MaxWidth="100" />
+
+                                        <!-- Coming Soon badge (only if not supported) -->
+                                        <TextBlock
+                                            FontSize="8"
+                                            FontWeight="Bold"
+                                            Foreground="{StaticResource ComingSoonBrush}"
+                                            HorizontalAlignment="Center"
+                                            Margin="0,2,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSupported}" Value="False">
+                                                            <Setter Property="Text" Value="COMING SOON" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

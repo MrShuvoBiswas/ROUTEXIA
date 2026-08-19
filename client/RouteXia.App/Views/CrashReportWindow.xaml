@@ -1,0 +1,157 @@
+<Window
+    x:Class="RouteXia.App.Views.CrashReportWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="RouteXia — Crash Report"
+    Width="620"
+    Height="500"
+    WindowStartupLocation="CenterScreen"
+    WindowStyle="None"
+    ResizeMode="NoResize"
+    Background="{StaticResource BgBaseBrush}">
+
+    <Border
+        BorderBrush="{StaticResource BorderBrush}"
+        BorderThickness="1"
+        Background="{StaticResource BgBaseBrush}">
+        <Grid Margin="28,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ── Header ──────────────────────────────────────────────── -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                <Border
+                    Width="40"
+                    Height="40"
+                    Background="{StaticResource BadgeBgBrush}"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    Margin="0,0,14,0">
+                    <ui:SymbolIcon
+                        Symbol="ErrorCircle24"
+                        FontSize="22"
+                        Foreground="{StaticResource StatusBadBrush}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock
+                        Text="UNEXPECTED APPLICATION ERROR"
+                        Style="{StaticResource HeadingLStyle}"
+                        FontSize="18"
+                        Foreground="{StaticResource StatusBadBrush}" />
+                    <TextBlock
+                        Text="A diagnostic crash report has been automatically recorded"
+                        Style="{StaticResource CaptionStyle}"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        Margin="0,2,0,0" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ── Body / StackTrace ───────────────────────────────────── -->
+            <Grid Grid.Row="1" Margin="0,0,0,18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border
+                    Grid.Row="0"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    Padding="12,10"
+                    Margin="0,0,0,10">
+                    <TextBlock
+                        x:Name="ExceptionMessageTextBlock"
+                        Text="Exception details here"
+                        Style="{StaticResource CaptionStyle}"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        TextWrapping="Wrap" />
+                </Border>
+
+                <!-- Scrollable StackTrace -->
+                <Border
+                    Grid.Row="1"
+                    Background="{StaticResource BgPanelBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    Padding="10">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <TextBox
+                            x:Name="StackTraceTextBox"
+                            FontFamily="/Resources/Fonts/#JetBrains Mono"
+                            FontSize="11"
+                            Foreground="{StaticResource TextMutedBrush}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            IsReadOnly="True"
+                            TextWrapping="Wrap" />
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Log File Path Notice -->
+                <TextBlock
+                    x:Name="LogPathTextBlock"
+                    Grid.Row="2"
+                    Text="Log file saved"
+                    Style="{StaticResource CaptionStyle}"
+                    Foreground="{StaticResource TextMutedBrush}"
+                    FontSize="10"
+                    Margin="0,8,0,0" />
+            </Grid>
+
+            <!-- ── Footer Actions ──────────────────────────────────────── -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button
+                    Grid.Column="0"
+                    Content="📋 Copy Diagnostics"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    HorizontalAlignment="Left"
+                    Padding="14,6"
+                    Height="36"
+                    Click="BtnCopyDiagnostics_Click" />
+
+                <Button
+                    Grid.Column="1"
+                    Content="📁 Open Logs Folder"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Padding="14,6"
+                    Height="36"
+                    Margin="0,0,10,0"
+                    Click="BtnOpenLogs_Click" />
+
+                <Button
+                    Grid.Column="2"
+                    Content="Close"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Padding="16,6"
+                    Height="36"
+                    Margin="0,0,10,0"
+                    Click="BtnClose_Click" />
+
+                <Button
+                    Grid.Column="3"
+                    Content="🔄 Restart RouteXia"
+                    Style="{StaticResource ConnectButtonStyle}"
+                    Padding="18,6"
+                    Height="36"
+                    Click="BtnRestart_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
