@@ -1,17 +1,19 @@
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
+using RouteXia.VpnClient.Profiles;
 
 namespace RouteXia.VpnClient.Interception
 {
     /// <summary>
-    /// WinDivert-based packet interceptor — real network interception engine for RouteXia.
-    /// Intercepts outbound UDP traffic from PUBG PC and injects spoofed responses back into PUBG's local socket.
+    /// Precision WinDivert-based packet interceptor — real network interception engine for ROUTEXIA.
+    /// Uses dedicated game profiles to intercept ONLY the active game's UDP packets.
+    /// Non-game applications (Discord, Spotify, browsers) are completely excluded and never touched.
     /// </summary>
     public sealed class WinDivertInterceptor : IDisposable
     {
@@ -23,27 +25,22 @@ namespace RouteXia.VpnClient.Interception
         private CancellationTokenSource? _cts;
         private Thread? _captureThread;
         private bool _disposed;
+        private IGameProfile _activeProfile = new PubgGameProfile();
 
         // Map local UDP port -> (real local IP, captured WINDIVERT_ADDRESS metadata)
         private readonly ConcurrentDictionary<ushort, (IPAddress localIp, WINDIVERT_ADDRESS addr)> _localEndpoints = new();
 
         public bool IsRunning { get; private set; }
+        public IGameProfile ActiveProfile => _activeProfile;
 
         // ── Stats ─────────────────────────────────────────────────────────────────
         public long PacketsCaptured  { get; private set; }
         public long PacketsInjected  { get; private set; }
 
         // ── Events ────────────────────────────────────────────────────────────────
-
         public event Action<byte[], int, int, IPAddress, ushort, ushort>? OnPubgPacketCaptured;
+        public event Action<byte[], int, int, IPAddress, ushort, ushort>? OnGamePacketCaptured;
         public event Action<IPAddress, ushort>? OnServerDiscovered;
-
-        // WinDivert filter: Intercepts all outbound game UDP packets (ports 7000-65535).
-        // Excludes 127.0.0.1 loopback traffic.
-        private const string CaptureFilter =
-            "outbound and udp and " +
-            "ip.DstAddr != 127.0.0.1 and " +
-            "udp.DstPort >= 7000 and udp.DstPort <= 65535";
 
         // Optimal WireGuard / Game MTU payload limit (1393 bytes) to avoid IP fragmentation
         public const int MaxPayloadSize = 1393;
@@ -51,16 +48,22 @@ namespace RouteXia.VpnClient.Interception
 
         // ── Start / Stop ──────────────────────────────────────────────────────────
 
-        public void Start(System.Collections.Generic.IEnumerable<string>? excludedIps = null)
+        public void Start(IGameProfile? profile = null, IEnumerable<string>? excludedIps = null)
         {
             if (IsRunning) return;
 
-            string filter = CaptureFilter;
+            _activeProfile = profile ?? new PubgGameProfile();
+            GameSocketTracker.SetTargetProfile(_activeProfile);
+
+            string filter = _activeProfile.WinDivertFilter;
             if (excludedIps != null)
             {
                 foreach (var ip in excludedIps)
                 {
-                    filter += $" and ip.DstAddr != {ip}";
+                    if (!string.IsNullOrWhiteSpace(ip))
+                    {
+                        filter += $" and ip.DstAddr != {ip.Trim()}";
+                    }
                 }
             }
 
@@ -102,7 +105,15 @@ namespace RouteXia.VpnClient.Interception
             _captureThread.Start();
 
             IsRunning = true;
-            Debug.WriteLine("[WinDivert] Interceptor active — capturing PUBG UDP traffic on dedicated AboveNormal thread");
+            Debug.WriteLine($"[WinDivert] Interceptor active for [{_activeProfile.DisplayName}] — capture filter: {filter}");
+        }
+
+        /// <summary>
+        /// Backward-compatible overload for start.
+        /// </summary>
+        public void Start(IEnumerable<string>? excludedIps)
+        {
+            Start(null, excludedIps);
         }
 
         public void Stop()
@@ -138,7 +149,7 @@ namespace RouteXia.VpnClient.Interception
             var packetBuf = new byte[MaxPacketSize];
             var addr      = new WINDIVERT_ADDRESS();
 
-            Debug.WriteLine("[WinDivert] Capture loop running on dedicated thread...");
+            Debug.WriteLine("[WinDivert] Capture loop running on dedicated AboveNormal thread...");
 
             while (!ct.IsCancellationRequested && IsRunning)
             {
@@ -176,11 +187,11 @@ namespace RouteXia.VpnClient.Interception
             byte protocol = packet[9];
             if (protocol != 17) return; // UDP only
 
-            // Read source IP (PUBG's real local IP address on physical NIC)
+            // Read source IP (Game's real local IP address on physical NIC)
             uint srcInt = (uint)(packet[12] | (packet[13] << 8) | (packet[14] << 16) | (packet[15] << 24));
             var srcIp = new IPAddress((long)srcInt);
 
-            // Read destination IP (game server IP)
+            // Read destination IP (Game server IP)
             uint dstInt = (uint)(packet[16] | (packet[17] << 8) | (packet[18] << 16) | (packet[19] << 24));
             var destIp = new IPAddress((long)dstInt);
 
@@ -189,10 +200,10 @@ namespace RouteXia.VpnClient.Interception
             ushort destPort = (ushort)((packet[ipHdrLen + 2] << 8) | packet[ipHdrLen + 3]);
 
             // ── Strict Game Traffic Isolation ─────────────────────────────────────────
-            // If the packet does NOT belong to the target game process (PUBG, etc.),
+            // If the packet does NOT belong to the active target game process,
             // re-inject it immediately back into the physical network stack untouched.
             // This guarantees 0% interference with Discord, Spotify, Chrome, Steam, etc.
-            if (!GameSocketTracker.IsGameTraffic(srcPort, destIp))
+            if (!GameSocketTracker.IsGameTraffic(srcPort, destIp, destPort))
             {
                 uint sentLen = 0;
                 WinDivertNative.WinDivertSend(_injectHandle, packet, length, ref sentLen, ref addr);
@@ -211,13 +222,14 @@ namespace RouteXia.VpnClient.Interception
 
             OnServerDiscovered?.Invoke(destIp, destPort);
             OnPubgPacketCaptured?.Invoke(packet, payloadOffset, payloadLen, destIp, destPort, srcPort);
+            OnGamePacketCaptured?.Invoke(packet, payloadOffset, payloadLen, destIp, destPort, srcPort);
         }
 
-        // ── Inject response from relay back to PUBG ───────────────────────────────
+        // ── Inject response from relay back to game ───────────────────────────────
 
         /// <summary>
-        /// Injects a response packet back to PUBG's real local socket.
-        /// Spoofs source IP/port as original game server so PUBG recognizes it.
+        /// Injects a response packet back to the game's real local socket.
+        /// Spoofs source IP/port as original game server so the game engine recognizes it.
         /// </summary>
         public void InjectToGame(
             byte[] payload,
@@ -227,7 +239,7 @@ namespace RouteXia.VpnClient.Interception
         {
             if (_injectHandle == WinDivertNative.INVALID_HANDLE_VALUE) return;
 
-            // Find PUBG's real local IP and interface metadata captured from outbound packet
+            // Find game's real local IP and interface metadata captured from outbound packet
             IPAddress localDstIp = IPAddress.Loopback;
             var addr = new WINDIVERT_ADDRESS
             {
@@ -259,27 +271,37 @@ namespace RouteXia.VpnClient.Interception
                 pkt[6]  = 0x40; pkt[7] = 0x00;        // Flags=DF (Don't Fragment) - MTU 1393
                 pkt[8]  = 0x40;                        // TTL = 64 (optimal game hop limit)
                 pkt[9]  = 0x11;                        // Protocol = UDP (17)
-                pkt[10] = 0x00; pkt[11] = 0x00;       // Checksum (WinDivert recalculates)
+                pkt[10] = 0x00; pkt[11] = 0x00;        // Checksum (zeroed before calculation)
 
-                // Source IP (spoofed game server IP)
-                spoofedSrcIp.TryWriteBytes(pkt.AsSpan(12, 4), out _);
+                // Source IP (spoofed as original game server)
+                var srcBytes = spoofedSrcIp.GetAddressBytes();
+                pkt[12] = srcBytes[0]; pkt[13] = srcBytes[1];
+                pkt[14] = srcBytes[2]; pkt[15] = srcBytes[3];
 
-                // Destination IP (PUBG's actual local IP address on NIC)
-                localDstIp.TryWriteBytes(pkt.AsSpan(16, 4), out _);
+                // Destination IP (game's physical NIC local IP)
+                var dstBytes = localDstIp.GetAddressBytes();
+                pkt[16] = dstBytes[0]; pkt[17] = dstBytes[1];
+                pkt[18] = dstBytes[2]; pkt[19] = dstBytes[3];
+
+                // Calculate IPv4 header checksum
+                ushort ipChecksum = CalculateChecksum(pkt, 0, ipHdrLen);
+                pkt[10] = (byte)(ipChecksum >> 8);
+                pkt[11] = (byte)(ipChecksum);
 
                 // ── UDP header ────────────────────────────────────────────────────
-                pkt[20] = (byte)(spoofedSrcPort >> 8);  pkt[21] = (byte)spoofedSrcPort;  // Src port
-                pkt[22] = (byte)(localDstPort >> 8);    pkt[23] = (byte)localDstPort;    // Dst port
+                pkt[20] = (byte)(spoofedSrcPort >> 8); // Source Port (game server port)
+                pkt[21] = (byte)(spoofedSrcPort);
+                pkt[22] = (byte)(localDstPort >> 8);   // Destination Port (game's local port)
+                pkt[23] = (byte)(localDstPort);
                 int udpLen = udpHdrLen + len;
-                pkt[24] = (byte)(udpLen >> 8);          pkt[25] = (byte)udpLen;          // UDP length
-                pkt[26] = 0x00; pkt[27] = 0x00;                                          // Checksum
+                pkt[24] = (byte)(udpLen >> 8);         // UDP length
+                pkt[25] = (byte)(udpLen);
+                pkt[26] = 0x00; pkt[27] = 0x00;        // Checksum (0 = optional in IPv4 UDP)
 
                 // ── Payload ───────────────────────────────────────────────────────
-                Buffer.BlockCopy(payload, 0, pkt, ipHdrLen + udpHdrLen, len);
+                Buffer.BlockCopy(payload, 0, pkt, 28, len);
 
-                // Calculate checksums
-                WinDivertNative.WinDivertHelperCalcChecksums(pkt, (uint)totalLen, ref addr, 0);
-
+                // ── Inject packet into Windows network stack ──────────────────────
                 uint sentLen = 0;
                 bool ok = WinDivertNative.WinDivertSend(
                     _injectHandle,
@@ -295,7 +317,7 @@ namespace RouteXia.VpnClient.Interception
                 else
                 {
                     int err = Marshal.GetLastWin32Error();
-                    Debug.WriteLine($"[WinDivert] Inject to {localDstIp}:{localDstPort} failed, win32 error: {err}");
+                    Debug.WriteLine($"[WinDivert] Inject failed ({err})");
                 }
             }
             finally
@@ -304,12 +326,29 @@ namespace RouteXia.VpnClient.Interception
             }
         }
 
+        private static ushort CalculateChecksum(byte[] buffer, int offset, int length)
+        {
+            uint sum = 0;
+            for (int i = offset; i < offset + length - 1; i += 2)
+            {
+                sum += (uint)((buffer[i] << 8) | buffer[i + 1]);
+            }
+            if ((length & 1) != 0)
+            {
+                sum += (uint)(buffer[offset + length - 1] << 8);
+            }
+            while ((sum >> 16) != 0)
+            {
+                sum = (sum & 0xFFFF) + (sum >> 16);
+            }
+            return (ushort)~sum;
+        }
+
         public void Dispose()
         {
             if (_disposed) return;
-            Stop();
-            _cts?.Dispose();
             _disposed = true;
+            Stop();
         }
     }
 }

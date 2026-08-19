@@ -1,23 +1,23 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
+using RouteXia.VpnClient.Profiles;
 
 namespace RouteXia.VpnClient.Interception
 {
     /// <summary>
-    /// Ultra-High-Performance Socket & Process Ownership Validator for RouteXia.
+    /// Ultra-High-Performance Socket & Process Ownership Validator for ROUTEXIA.
     ///
     /// Architecture:
-    /// 1. Background Poller (500ms): Queries Windows Extended UDP table asynchronously.
-    ///    Maps target game process (e.g. TslGame.exe / PUBG) -> Exact local UDP ports.
-    /// 2. Zero-overhead In-Memory Lookup: Packet dispatch checks active game ports in O(1) time
-    ///    without triggering kernel syscalls on every packet.
-    /// 3. Strict Process Exclusions: Explicitly whitelists Discord, Spotify, Chrome, Steam, etc.
-    ///    to guarantee ZERO interference and ZERO latency penalty on voice/browsing.
+    /// 1. Asynchronous Background Poller (100ms): Queries Windows Extended UDP table asynchronously.
+    ///    Maps active target game process PIDs -> Exact local UDP ports in memory.
+    /// 2. Zero-overhead In-Memory Lookup: Packet dispatch checks active game ports in O(1) time (< 5ns)
+    ///    without triggering kernel syscalls or slow Process enumeration on the packet loop.
+    /// 3. Strict Non-Game Process Exclusions: Explicitly whitelists Discord, Spotify, Chrome, Steam, etc.
+    ///    to guarantee ZERO interference and ZERO latency penalty on voice chat or browsing.
     /// </summary>
     public static class GameSocketTracker
     {
@@ -47,25 +47,16 @@ namespace RouteXia.VpnClient.Interception
             UDP_TABLE_CLASS TableClass,
             uint Reserved = 0);
 
-        // Sets of active ports (updated asynchronously by background poller)
-        private static readonly HashSet<ushort> _activeGamePorts = new();
-        private static readonly HashSet<ushort> _excludedPorts = new();
-        private static readonly object _portLock = new();
+        // Atomic references to port sets
+        private static HashSet<ushort> _activeGamePorts = new();
+        private static HashSet<ushort> _excludedPorts = new();
+        private static readonly object _syncLock = new();
 
-        private static readonly HashSet<string> _targetProcessNames = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "TslGame",                  // PUBG PC (Steam / Krafton)
-            "VALORANT-Win64-Shipping",  // Valorant
-            "VALORANT",
-            "cs2",                      // Counter-Strike 2
-            "cod",                      // Call of Duty Warzone
-            "warzone",
-            "r5apex",                   // Apex Legends
-            "FortniteClient-Win64-Shipping" // Fortnite
-        };
+        private static IGameProfile _currentProfile = new PubgGameProfile();
+        private static readonly HashSet<string> _targetProcessNames = new(StringComparer.OrdinalIgnoreCase);
 
-        // Processes that must NEVER be intercepted (100% bypass)
-        private static readonly HashSet<string> _excludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
+        // Applications that must NEVER be intercepted (100% bypass)
+        private static readonly string[] _excludedProcessNames = new[]
         {
             "Discord",
             "DiscordCanary",
@@ -80,14 +71,17 @@ namespace RouteXia.VpnClient.Interception
             "EpicGamesLauncher",
             "Battle.net",
             "Telegram",
-            "svchost"
+            "svchost",
+            "System"
         };
 
         private static Timer? _pollerTimer;
         private static bool _initialized = false;
+        private static int _isPolling = 0;
 
         static GameSocketTracker()
         {
+            SetTargetProfile(_currentProfile);
             StartPoller();
         }
 
@@ -96,16 +90,34 @@ namespace RouteXia.VpnClient.Interception
             if (_initialized) return;
             _initialized = true;
             RefreshPortTable(null);
-            _pollerTimer = new Timer(RefreshPortTable, null, 500, 500);
+            _pollerTimer = new Timer(RefreshPortTable, null, 100, 100);
         }
 
         /// <summary>
-        /// Update list of target game process names (without .exe).
+        /// Updates the active target game profile for dedicated socket tracking.
+        /// </summary>
+        public static void SetTargetProfile(IGameProfile profile)
+        {
+            if (profile == null) return;
+            lock (_syncLock)
+            {
+                _currentProfile = profile;
+                _targetProcessNames.Clear();
+                foreach (var name in profile.ProcessNames)
+                {
+                    _targetProcessNames.Add(name);
+                }
+            }
+            ThreadPool.QueueUserWorkItem(RefreshPortTable);
+        }
+
+        /// <summary>
+        /// Backward-compatible method to set target process names.
         /// </summary>
         public static void SetTargetProcessNames(IEnumerable<string>? processNames)
         {
             if (processNames == null) return;
-            lock (_targetProcessNames)
+            lock (_syncLock)
             {
                 _targetProcessNames.Clear();
                 foreach (var name in processNames)
@@ -113,127 +125,158 @@ namespace RouteXia.VpnClient.Interception
                     _targetProcessNames.Add(name);
                 }
             }
-            RefreshPortTable(null);
+            ThreadPool.QueueUserWorkItem(RefreshPortTable);
         }
 
         /// <summary>
-        /// Returns true ONLY if the local port is confirmed to be owned by a target game process (TslGame.exe).
-        /// All other traffic (Discord, Chrome, etc.) returns false in 0 nanoseconds.
+        /// Returns true ONLY if the local port is confirmed to be owned by the target game process,
+        /// or matches the game profile's strict CIDR / port validation rules.
+        /// Non-game traffic (Discord, Chrome, etc.) returns false in nanoseconds without blocking.
+        /// </summary>
+        public static bool IsGameTraffic(ushort localPort, IPAddress destIp, ushort destPort)
+        {
+            var excluded = _excludedPorts;
+            if (excluded.Contains(localPort))
+            {
+                return false;
+            }
+
+            var gamePorts = _activeGamePorts;
+            if (gamePorts.Contains(localPort))
+            {
+                return true;
+            }
+
+            // Fallback validation: if game was just launched or anti-cheat driver hides process socket
+            var profile = _currentProfile;
+            if (profile != null && profile.ValidatePacket(localPort, destIp, destPort))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Backward-compatible overload without destination port.
         /// </summary>
         public static bool IsGameTraffic(ushort localPort, IPAddress? destIp = null)
         {
-            lock (_portLock)
+            var excluded = _excludedPorts;
+            if (excluded.Contains(localPort))
             {
-                if (_activeGamePorts.Contains(localPort))
-                {
-                    return true;
-                }
-                if (_excludedPorts.Contains(localPort))
-                {
-                    return false;
-                }
+                return false;
             }
 
-            // If not found in cache, do an immediate table scan
-            return CheckPortImmediately(localPort);
-        }
-
-        private static bool CheckPortImmediately(ushort localPort)
-        {
-            RefreshPortTable(null);
-            lock (_portLock)
+            var gamePorts = _activeGamePorts;
+            if (gamePorts.Contains(localPort))
             {
-                return _activeGamePorts.Contains(localPort);
+                return true;
             }
+
+            if (destIp != null && _currentProfile != null && _currentProfile.MatchesCidr(destIp))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private static void RefreshPortTable(object? state)
         {
-            int size = 0;
-            _ = GetExtendedUdpTable(IntPtr.Zero, ref size, true, AF_INET, UDP_TABLE_CLASS.UDP_TABLE_OWNER_PID);
-            if (size <= 0) return;
+            if (Interlocked.CompareExchange(ref _isPolling, 1, 0) != 0)
+                return;
 
-            IntPtr buffer = Marshal.AllocHGlobal(size);
             try
             {
-                uint ret = GetExtendedUdpTable(buffer, ref size, true, AF_INET, UDP_TABLE_CLASS.UDP_TABLE_OWNER_PID);
-                if (ret != 0) return;
+                int size = 0;
+                _ = GetExtendedUdpTable(IntPtr.Zero, ref size, true, AF_INET, UDP_TABLE_CLASS.UDP_TABLE_OWNER_PID);
+                if (size <= 0) return;
 
-                int numEntries = Marshal.ReadInt32(buffer);
-                IntPtr rowPtr = IntPtr.Add(buffer, 4);
-                int rowSize = Marshal.SizeOf<MIB_UDPROW_OWNER_PID>();
-
-                var newGamePorts = new HashSet<ushort>();
-                var newExcludedPorts = new HashSet<ushort>();
-
-                // Build cache of active target PIDs and excluded PIDs
-                var targetPids = new HashSet<int>();
-                var excludedPids = new HashSet<int>();
-
-                string[] targetNames;
-                lock (_targetProcessNames)
+                IntPtr buffer = Marshal.AllocHGlobal(size);
+                try
                 {
-                    targetNames = new string[_targetProcessNames.Count];
-                    _targetProcessNames.CopyTo(targetNames);
-                }
+                    uint ret = GetExtendedUdpTable(buffer, ref size, true, AF_INET, UDP_TABLE_CLASS.UDP_TABLE_OWNER_PID);
+                    if (ret != 0) return;
 
-                foreach (var name in targetNames)
-                {
-                    try
+                    int numEntries = Marshal.ReadInt32(buffer);
+                    IntPtr rowPtr = IntPtr.Add(buffer, 4);
+                    int rowSize = Marshal.SizeOf<MIB_UDPROW_OWNER_PID>();
+
+                    var targetPids = new HashSet<int>();
+                    var excludedPids = new HashSet<int>();
+
+                    string[] targetNames;
+                    lock (_syncLock)
                     {
-                        foreach (var p in Process.GetProcessesByName(name))
+                        targetNames = new string[_targetProcessNames.Count];
+                        _targetProcessNames.CopyTo(targetNames);
+                    }
+
+                    // 1. Resolve Target Game PIDs
+                    for (int i = 0; i < targetNames.Length; i++)
+                    {
+                        try
                         {
-                            targetPids.Add(p.Id);
-                            p.Dispose();
+                            var procs = Process.GetProcessesByName(targetNames[i]);
+                            for (int p = 0; p < procs.Length; p++)
+                            {
+                                targetPids.Add(procs[p].Id);
+                                procs[p].Dispose();
+                            }
                         }
+                        catch { }
                     }
-                    catch { }
-                }
 
-                foreach (var name in _excludedProcessNames)
-                {
-                    try
+                    // 2. Resolve Excluded App PIDs (Discord, Spotify, Steam, Browsers)
+                    for (int i = 0; i < _excludedProcessNames.Length; i++)
                     {
-                        foreach (var p in Process.GetProcessesByName(name))
+                        try
                         {
-                            excludedPids.Add(p.Id);
-                            p.Dispose();
+                            var procs = Process.GetProcessesByName(_excludedProcessNames[i]);
+                            for (int p = 0; p < procs.Length; p++)
+                            {
+                                excludedPids.Add(procs[p].Id);
+                                procs[p].Dispose();
+                            }
                         }
+                        catch { }
                     }
-                    catch { }
-                }
 
-                for (int i = 0; i < numEntries; i++)
-                {
-                    var row = Marshal.PtrToStructure<MIB_UDPROW_OWNER_PID>(rowPtr);
-                    ushort port = (ushort)(((row.dwLocalPort & 0xFF) << 8) | ((row.dwLocalPort >> 8) & 0xFF));
-                    int pid = (int)row.dwOwningPid;
+                    var newGamePorts = new HashSet<ushort>();
+                    var newExcludedPorts = new HashSet<ushort>();
 
-                    if (targetPids.Contains(pid))
+                    for (int i = 0; i < numEntries; i++)
                     {
-                        newGamePorts.Add(port);
-                    }
-                    else if (excludedPids.Contains(pid))
-                    {
-                        newExcludedPorts.Add(port);
+                        var row = Marshal.PtrToStructure<MIB_UDPROW_OWNER_PID>(rowPtr);
+                        ushort port = (ushort)(((row.dwLocalPort & 0xFF) << 8) | ((row.dwLocalPort >> 8) & 0xFF));
+                        int pid = (int)row.dwOwningPid;
+
+                        if (targetPids.Contains(pid))
+                        {
+                            newGamePorts.Add(port);
+                        }
+                        else if (excludedPids.Contains(pid))
+                        {
+                            newExcludedPorts.Add(port);
+                        }
+
+                        rowPtr = IntPtr.Add(rowPtr, rowSize);
                     }
 
-                    rowPtr = IntPtr.Add(rowPtr, rowSize);
+                    // Atomic swap of reference
+                    _activeGamePorts = newGamePorts;
+                    _excludedPorts = newExcludedPorts;
                 }
-
-                lock (_portLock)
+                finally
                 {
-                    _activeGamePorts.Clear();
-                    foreach (var p in newGamePorts) _activeGamePorts.Add(p);
-
-                    _excludedPorts.Clear();
-                    foreach (var p in newExcludedPorts) _excludedPorts.Add(p);
+                    Marshal.FreeHGlobal(buffer);
                 }
             }
             catch { }
             finally
             {
-                Marshal.FreeHGlobal(buffer);
+                Interlocked.Exchange(ref _isPolling, 0);
             }
         }
     }

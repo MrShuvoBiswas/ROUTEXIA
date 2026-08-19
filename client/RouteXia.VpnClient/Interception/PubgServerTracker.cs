@@ -2,17 +2,15 @@ using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Threading;
+using RouteXia.VpnClient.Profiles;
 
 namespace RouteXia.VpnClient.Interception
 {
     /// <summary>
-    /// Tracks discovered PUBG game server IPs and ports from actual intercepted packets.
-    ///
-    /// Unlike the old approach (GetActiveUdpListeners — which only showed local sockets),
-    /// this class receives real destination IPs/ports from WinDivertInterceptor,
-    /// giving accurate "Match Server IP" display in the UI.
+    /// Tracks discovered game server IPs and ports from actual intercepted packets for the active game.
+    /// Provides real-time "Match Server IP" and location display in ROUTEXIA UI.
     /// </summary>
-    public sealed class PubgServerTracker
+    public sealed class PubgServerTracker : IDisposable
     {
         // ── Observed servers ──────────────────────────────────────────────────────
         // Key: "ip:port" string, Value: last seen timestamp
@@ -23,6 +21,7 @@ namespace RouteXia.VpnClient.Interception
         private volatile bool   _isMatchActive;
         private IPAddress?      _primaryIp;
         private ushort          _primaryPort;
+        private IGameProfile    _activeProfile = new PubgGameProfile();
 
         // Timeout: if no packets seen from a server for 15s, consider match ended
         private static readonly TimeSpan ServerTimeout = TimeSpan.FromSeconds(15);
@@ -44,10 +43,18 @@ namespace RouteXia.VpnClient.Interception
                 TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         }
 
+        public void SetActiveProfile(IGameProfile profile)
+        {
+            _activeProfile = profile ?? new PubgGameProfile();
+            _servers.Clear();
+            _primaryServerDisplay = "--";
+            _isMatchActive = false;
+        }
+
         // ── Public API ────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Called by WinDivertInterceptor every time a PUBG packet is captured.
+        /// Called by WinDivertInterceptor every time a game packet is captured.
         /// Records the destination server and updates match state.
         /// </summary>
         public void OnPacketObserved(IPAddress destIp, ushort destPort)
@@ -62,7 +69,7 @@ namespace RouteXia.VpnClient.Interception
             {
                 _primaryIp   = destIp;
                 _primaryPort = destPort;
-                string display = BuildDisplayName(destIp, destPort);
+                string display = _activeProfile.FormatServerDisplay(destIp, destPort);
 
                 bool wasActive = _isMatchActive;
                 _primaryServerDisplay = display;
@@ -75,7 +82,7 @@ namespace RouteXia.VpnClient.Interception
             }
         }
 
-        /// <summary>Called when PUBG process exits — clears all state.</summary>
+        /// <summary>Called when game process exits — clears all state.</summary>
         public void OnGameExited()
         {
             _servers.Clear();
@@ -108,41 +115,6 @@ namespace RouteXia.VpnClient.Interception
                 _primaryIp            = null;
                 MatchStateChanged?.Invoke("--", false);
             }
-        }
-
-        // ── Display name builder ──────────────────────────────────────────────────
-
-        private static string BuildDisplayName(IPAddress ip, ushort port)
-        {
-            string ipStr = ip.ToString();
-
-            // Map known CIDR ranges to friendly names
-            if (IsInRange(ip, "20.205.0.0", 16) || IsInRange(ip, "20.43.0.0", 16) ||
-                IsInRange(ip, "20.79.0.0",  16) || IsInRange(ip, "20.196.0.0", 16) ||
-                IsInRange(ip, "20.201.0.0", 16) || IsInRange(ip, "52.158.0.0", 16))
-                return $"Azure SEA — {ipStr}:{port}";
-
-            if (IsInRange(ip, "57.129.0.0", 16))
-                return $"PUBG Match Server — {ipStr}:{port}";
-
-            if (IsInRange(ip, "13.228.0.0", 16) || IsInRange(ip, "13.229.0.0", 16) ||
-                IsInRange(ip, "18.136.0.0", 16) || IsInRange(ip, "52.74.0.0",  16) ||
-                IsInRange(ip, "54.169.0.0", 16))
-                return $"AWS Singapore — {ipStr}:{port}";
-
-            return $"{ipStr}:{port}";
-        }
-
-        private static bool IsInRange(IPAddress ip, string networkStr, int prefixLen)
-        {
-            var ipBytes  = ip.GetAddressBytes();
-            var netBytes = IPAddress.Parse(networkStr).GetAddressBytes();
-
-            uint ipInt  = (uint)(ipBytes[0]  << 24 | ipBytes[1]  << 16 | ipBytes[2]  << 8 | ipBytes[3]);
-            uint netInt = (uint)(netBytes[0] << 24 | netBytes[1] << 16 | netBytes[2] << 8 | netBytes[3]);
-            uint mask   = prefixLen == 0 ? 0 : (0xFFFFFFFFu << (32 - prefixLen));
-
-            return (ipInt & mask) == (netInt & mask);
         }
 
         public void Dispose() => _cleanupTimer.Dispose();

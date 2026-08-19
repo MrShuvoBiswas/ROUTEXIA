@@ -3,23 +3,24 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
+using RouteXia.VpnClient.Profiles;
 
 namespace RouteXia.VpnClient.KillSwitch
 {
     /// <summary>
-    /// Kill-Switch: blocks PUBG traffic via Windows Firewall if the tunnel drops or user disconnects.
-    ///
-    /// Dynamically locates the active TslGame.exe process path (Steam / Krafton Launcher)
-    /// and blocks outbound traffic, forcing instant game network error if the tunnel disconnects.
+    /// Kill-Switch: blocks game traffic via Windows Firewall if the tunnel drops or user disconnects.
+    /// Dynamically locates the active game executable path and blocks outbound traffic,
+    /// ensuring ZERO leakage without affecting Discord, browsers, or other system traffic.
     /// </summary>
     public sealed class KillSwitchManager : IDisposable
     {
-        private const string FirewallRuleName = "RouteXia-KillSwitch-PUBG";
+        private const string FirewallRuleName = "RouteXia-KillSwitch";
 
         private bool _killSwitchActive;
         private bool _disposed;
         private readonly Timer _tunnelWatcher;
         private Func<bool>? _isTunnelAlive;
+        private IGameProfile _activeProfile = new PubgGameProfile();
 
         public bool IsActive => _killSwitchActive;
 
@@ -41,45 +42,50 @@ namespace RouteXia.VpnClient.KillSwitch
 
         // ── Public API ────────────────────────────────────────────────────────────
 
+        public void SetActiveProfile(IGameProfile profile)
+        {
+            _activeProfile = profile ?? new PubgGameProfile();
+        }
+
         public void SetTunnelHealthCheck(Func<bool> isAlive)
         {
             _isTunnelAlive = isAlive;
         }
 
-        /// <summary>Immediately activate kill-switch (block PUBG outbound traffic).</summary>
+        /// <summary>Immediately activate kill-switch (block game outbound traffic).</summary>
         public void Activate()
         {
             if (_killSwitchActive) return;
 
             try
             {
-                var pubgPath = GetPubgProcessPath();
+                var gamePath = GetGameProcessPath();
 
                 // Clean up previous rule
                 RunNetsh($"advfirewall firewall delete rule name=\"{FirewallRuleName}\"");
 
-                if (!string.IsNullOrEmpty(pubgPath))
+                if (!string.IsNullOrEmpty(gamePath))
                 {
-                    // Block specific active TslGame.exe executable path
+                    // Block specific active game executable path
                     RunNetsh($"advfirewall firewall add rule " +
                              $"name=\"{FirewallRuleName}\" " +
                              $"dir=out action=block " +
-                             $"program=\"{pubgPath}\" " +
+                             $"program=\"{gamePath}\" " +
                              $"enable=yes profile=any");
                 }
                 else
                 {
-                    // Fallback: block outbound UDP traffic to PUBG ports (7000-8000)
+                    // Fallback: block outbound UDP traffic to game's port range
                     RunNetsh($"advfirewall firewall add rule " +
                              $"name=\"{FirewallRuleName}\" " +
                              $"dir=out action=block protocol=UDP " +
-                             $"remoteport=7000-8000 " +
+                             $"remoteport=7000-20000 " +
                              $"enable=yes profile=any");
                 }
 
                 _killSwitchActive = true;
                 KillSwitchActivated?.Invoke(this, EventArgs.Empty);
-                Debug.WriteLine("[KillSwitch] ACTIVATED — PUBG PC outbound blocked");
+                Debug.WriteLine($"[KillSwitch] ACTIVATED — {_activeProfile.DisplayName} outbound blocked");
             }
             catch (Exception ex)
             {
@@ -87,7 +93,7 @@ namespace RouteXia.VpnClient.KillSwitch
             }
         }
 
-        /// <summary>Deactivate kill-switch (restore PUBG outbound traffic).</summary>
+        /// <summary>Deactivate kill-switch (restore game outbound traffic).</summary>
         public void Deactivate()
         {
             if (!_killSwitchActive) return;
@@ -98,7 +104,7 @@ namespace RouteXia.VpnClient.KillSwitch
 
                 _killSwitchActive = false;
                 KillSwitchDeactivated?.Invoke(this, EventArgs.Empty);
-                Debug.WriteLine("[KillSwitch] DEACTIVATED — PUBG PC traffic restored");
+                Debug.WriteLine($"[KillSwitch] DEACTIVATED — {_activeProfile.DisplayName} traffic restored");
             }
             catch (Exception ex)
             {
@@ -112,6 +118,7 @@ namespace RouteXia.VpnClient.KillSwitch
             try
             {
                 RunNetsh($"advfirewall firewall delete rule name=\"{FirewallRuleName}\"");
+                RunNetsh($"advfirewall firewall delete rule name=\"RouteXia-KillSwitch-PUBG\"");
                 _killSwitchActive = false;
                 Debug.WriteLine("[KillSwitch] Emergency cleanup completed");
             }
@@ -120,14 +127,20 @@ namespace RouteXia.VpnClient.KillSwitch
 
         // ── Helper ────────────────────────────────────────────────────────────────
 
-        private static string GetPubgProcessPath()
+        private string GetGameProcessPath()
         {
             try
             {
-                var procs = Process.GetProcessesByName("TslGame");
-                if (procs.Length > 0 && procs[0].MainModule != null)
+                var names = _activeProfile.ProcessNames;
+                foreach (var name in names)
                 {
-                    return procs[0].MainModule!.FileName;
+                    var procs = Process.GetProcessesByName(name);
+                    if (procs.Length > 0 && procs[0].MainModule != null)
+                    {
+                        string path = procs[0].MainModule!.FileName;
+                        foreach (var p in procs) p.Dispose();
+                        return path;
+                    }
                 }
             }
             catch { /* best effort */ }
@@ -139,13 +152,10 @@ namespace RouteXia.VpnClient.KillSwitch
         {
             if (_isTunnelAlive == null) return;
 
-            bool alive = false;
-            try { alive = _isTunnelAlive(); } catch { }
-
-            // Only trigger kill-switch if the tunnel was connected and then dropped unexpectedly
-            if (!alive && _killSwitchActive)
+            bool alive = _isTunnelAlive();
+            if (!alive && !_killSwitchActive)
             {
-                // Already active
+                Activate();
             }
             else if (alive && _killSwitchActive)
             {
@@ -155,25 +165,34 @@ namespace RouteXia.VpnClient.KillSwitch
 
         private static void RunNetsh(string args)
         {
-            var psi = new ProcessStartInfo
+            try
             {
-                FileName = "netsh",
-                Arguments = args,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-            };
-
-            using var proc = Process.Start(psi);
-            proc?.WaitForExit(3000);
+                using var p = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh.exe",
+                        Arguments = args,
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    }
+                };
+                p.Start();
+                p.WaitForExit(3000);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[KillSwitch] Netsh error: {ex.Message}");
+            }
         }
 
         public void Dispose()
         {
             if (_disposed) return;
+            _disposed = true;
             _tunnelWatcher.Dispose();
             EmergencyCleanup();
-            _disposed = true;
         }
     }
 }

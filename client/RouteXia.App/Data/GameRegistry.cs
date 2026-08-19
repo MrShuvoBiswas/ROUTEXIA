@@ -1,17 +1,16 @@
 namespace RouteXia.App.Data;
 
 /// <summary>
-/// Central registry of games and applications with official image assets.
+/// Central registry of games and applications with official image assets and dedicated isolation profiles.
 /// </summary>
 public static class GameRegistry
 {
-    /// <summary>All registered games with official icons (supported + coming soon).</summary>
+    /// <summary>All registered games with official icons and dedicated routing profiles.</summary>
     public static IReadOnlyList<GameDefinition> AllGames { get; } = new List<GameDefinition>
     {
         // ═══════════════════════════════════════════════════════
-        // ── 1. FULLY SUPPORTED GAME (ACTIVE) ─────────────────
+        // ── 1. PUBG: BATTLEGROUNDS ────────────────────────────
         // ═══════════════════════════════════════════════════════
-
         new GameDefinition
         {
             Id            = "pubg",
@@ -19,7 +18,7 @@ public static class GameRegistry
             ShortName     = "PUBG",
             IconGlyph     = "Shield24",
             ImagePath     = "pack://application:,,,/RouteXia;component/Resources/Images/pubg_icon.png",
-            ProcessNames  = ["TslGame"],
+            ProcessNames  = ["TslGame", "TslGame_UC", "TslGame_BE", "ExecPubg"],
             CidrFile      = "pubg-cidr-ranges.json",
             Category      = "Games",
             LaunchUri     = "steam://rungameid/578080",
@@ -31,25 +30,8 @@ public static class GameRegistry
         },
 
         // ═══════════════════════════════════════════════════════
-        // ── 2. COMING SOON (WITH OFFICIAL IMAGE ASSETS) ───────
+        // ── 2. COUNTER-STRIKE 2 ───────────────────────────────
         // ═══════════════════════════════════════════════════════
-
-        new GameDefinition
-        {
-            Id            = "valorant",
-            Name          = "Valorant",
-            ShortName     = "Valorant",
-            IconGlyph     = "Target24",
-            ImagePath     = "pack://application:,,,/RouteXia;component/Resources/Images/valorant_icon.png",
-            ProcessNames  = ["VALORANT-Win64-Shipping", "VALORANT"],
-            Category      = "Games",
-            LaunchUri     = null,
-            IsSupported   = false,
-            Region        = "SEA",
-            RegionName    = "South East Asia",
-            RegionBadge   = "SG"
-        },
-
         new GameDefinition
         {
             Id            = "cs2",
@@ -60,12 +42,36 @@ public static class GameRegistry
             ProcessNames  = ["cs2"],
             Category      = "Games",
             LaunchUri     = "steam://rungameid/730",
-            IsSupported   = false,
+            FallbackExe   = "cs2.exe",
+            IsSupported   = true,
             Region        = "SEA",
             RegionName    = "South East Asia",
             RegionBadge   = "SG"
         },
 
+        // ═══════════════════════════════════════════════════════
+        // ── 3. VALORANT ───────────────────────────────────────
+        // ═══════════════════════════════════════════════════════
+        new GameDefinition
+        {
+            Id            = "valorant",
+            Name          = "Valorant",
+            ShortName     = "Valorant",
+            IconGlyph     = "Target24",
+            ImagePath     = "pack://application:,,,/RouteXia;component/Resources/Images/valorant_icon.png",
+            ProcessNames  = ["VALORANT-Win64-Shipping", "VALORANT", "RiotClientServices"],
+            Category      = "Games",
+            LaunchUri     = null,
+            FallbackExe   = "VALORANT.exe",
+            IsSupported   = true,
+            Region        = "SEA",
+            RegionName    = "South East Asia",
+            RegionBadge   = "SG"
+        },
+
+        // ═══════════════════════════════════════════════════════
+        // ── 4. CALL OF DUTY: WARZONE ──────────────────────────
+        // ═══════════════════════════════════════════════════════
         new GameDefinition
         {
             Id            = "warzone",
@@ -73,15 +79,19 @@ public static class GameRegistry
             ShortName     = "Warzone",
             IconGlyph     = "Games24",
             ImagePath     = "pack://application:,,,/RouteXia;component/Resources/Images/warzone_icon.png",
-            ProcessNames  = ["cod", "warzone"],
+            ProcessNames  = ["cod", "warzone", "ModernWarfare", "bootstrapper"],
             Category      = "Games",
             LaunchUri     = null,
-            IsSupported   = false,
+            FallbackExe   = "cod.exe",
+            IsSupported   = true,
             Region        = "SEA",
             RegionName    = "South East Asia",
             RegionBadge   = "SG"
         },
 
+        // ═══════════════════════════════════════════════════════
+        // ── 5. APEX LEGENDS ───────────────────────────────────
+        // ═══════════════════════════════════════════════════════
         new GameDefinition
         {
             Id            = "apex",
@@ -89,15 +99,19 @@ public static class GameRegistry
             ShortName     = "Apex",
             IconGlyph     = "Trophy24",
             ImagePath     = "pack://application:,,,/RouteXia;component/Resources/Images/apex_icon.png",
-            ProcessNames  = ["r5apex"],
+            ProcessNames  = ["r5apex", "r5apex_dx12"],
             Category      = "Games",
             LaunchUri     = "steam://rungameid/1172470",
-            IsSupported   = false,
+            FallbackExe   = "r5apex.exe",
+            IsSupported   = true,
             Region        = "SEA",
             RegionName    = "South East Asia",
             RegionBadge   = "SG"
         },
 
+        // ═══════════════════════════════════════════════════════
+        // ── 6. FORTNITE ───────────────────────────────────────
+        // ═══════════════════════════════════════════════════════
         new GameDefinition
         {
             Id            = "fortnite",
@@ -105,10 +119,11 @@ public static class GameRegistry
             ShortName     = "Fortnite",
             IconGlyph     = "Games24",
             ImagePath     = "pack://application:,,,/RouteXia;component/Resources/Images/fortnite_icon.png",
-            ProcessNames  = ["FortniteClient-Win64-Shipping"],
+            ProcessNames  = ["FortniteClient-Win64-Shipping", "FortniteClient-Win64-Shipping_BE", "FortniteClient-Win64-Shipping_EAC", "FortniteLauncher"],
             Category      = "Games",
             LaunchUri     = null,
-            IsSupported   = false,
+            FallbackExe   = "FortniteLauncher.exe",
+            IsSupported   = true,
             Region        = "SEA",
             RegionName    = "South East Asia",
             RegionBadge   = "SG"

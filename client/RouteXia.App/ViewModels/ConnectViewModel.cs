@@ -15,6 +15,7 @@ using RouteXia.VpnClient.Interception;
 using RouteXia.VpnClient.Api;
 using RouteXia.VpnClient.Security;
 using RouteXia.VpnClient.Optimization;
+using RouteXia.VpnClient.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using RouteXia.App.Views;
 using RouteXia.App.Services;
@@ -185,10 +186,11 @@ public class ConnectViewModel : INotifyPropertyChanged
         private set
         {
             _currentGame = value;
-            if (value?.ProcessNames != null)
-            {
-                RouteXia.VpnClient.Interception.GameSocketTracker.SetTargetProcessNames(value.ProcessNames);
-            }
+            var profile = GameProfileRegistry.GetProfile(value?.Id ?? "pubg");
+            RouteXia.VpnClient.Interception.GameSocketTracker.SetTargetProfile(profile);
+            _serverTracker?.SetActiveProfile(profile);
+            _killSwitch?.SetActiveProfile(profile);
+
             OnPropertyChanged();
             OnPropertyChanged(nameof(GameStatusText));
             OnPropertyChanged(nameof(LaunchButtonText));
@@ -1074,10 +1076,10 @@ public class ConnectViewModel : INotifyPropertyChanged
 
         // Default to PUBG
         _currentGame = GameRegistry.GetById("pubg") ?? GameRegistry.SupportedGames.First();
-        if (_currentGame.ProcessNames != null)
-        {
-            RouteXia.VpnClient.Interception.GameSocketTracker.SetTargetProcessNames(_currentGame.ProcessNames);
-        }
+        var initialProfile = GameProfileRegistry.GetProfile(_currentGame.Id);
+        RouteXia.VpnClient.Interception.GameSocketTracker.SetTargetProfile(initialProfile);
+        _serverTracker.SetActiveProfile(initialProfile);
+        _killSwitch.SetActiveProfile(initialProfile);
 
         _selectedRegionItem = RegionsList.First();
 
@@ -1577,8 +1579,13 @@ public class ConnectViewModel : INotifyPropertyChanged
 
         try
         {
+            var profile = GameProfileRegistry.GetProfile(CurrentGame.Id);
+            GameSocketTracker.SetTargetProfile(profile);
+            _serverTracker.SetActiveProfile(profile);
+            _killSwitch.SetActiveProfile(profile);
+
             var relayIps = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Select(AllServerNodes, s => s.Host)));
-            _interceptor.Start(relayIps);
+            _interceptor.Start(profile, relayIps);
             await Task.Delay(300, _connectionCts.Token);
             _router.StartReceiving(_connectionCts.Token);
 
