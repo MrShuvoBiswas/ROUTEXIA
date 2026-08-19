@@ -1,0 +1,103 @@
+name: Build & Release RouteXia
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version (e.g. 1.0.8)'
+        required: true
+        default: '1.0.8'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-package:
+    name: Build & Package RouteXia (win-x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Resolve Version
+        shell: pwsh
+        run: |
+          $ver = "${{ github.event.inputs.version }}"
+          if (-not $ver) {
+            $tag = "${{ github.ref_name }}"
+            $ver = $tag -replace '^v', ''
+          }
+          if (-not $ver) { $ver = "1.0.8" }
+          echo "VERSION=$ver" >> $env:GITHUB_ENV
+          Write-Host "Building version: $ver" -ForegroundColor Green
+
+      - name: ⚙️ Setup .NET 9.0 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: 📦 Setup Inno Setup Compiler
+        run: |
+          choco install innosetup --no-progress -y
+          echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
+
+      - name: 🔨 Restore & Publish .NET x64 Binaries
+        shell: pwsh
+        run: |
+          $publishDir = "client\RouteXia.App\bin\Release\net9.0-windows\win-x64\publish"
+          dotnet publish client/RouteXia.App/RouteXia.App.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output $publishDir `
+            /p:Version=${{ env.VERSION }} `
+            /p:AssemblyVersion="${{ env.VERSION }}.0" `
+            /p:FileVersion="${{ env.VERSION }}.0"
+
+      - name: 🛡️ Bundle WinDivert Native Drivers
+        shell: pwsh
+        run: |
+          $publishDir = "client\RouteXia.App\bin\Release\net9.0-windows\win-x64\publish"
+          $nativeDir = "client\RouteXia.App\Native"
+          if (Test-Path $nativeDir) {
+            Copy-Item "$nativeDir\WinDivert.dll" -Destination $publishDir -Force
+            Copy-Item "$nativeDir\WinDivert64.sys" -Destination $publishDir -Force
+            $destNative = Join-Path $publishDir "Native"
+            if (-not (Test-Path $destNative)) { New-Item -ItemType Directory -Path $destNative | Out-Null }
+            Copy-Item "$nativeDir\*" -Destination $destNative -Recurse -Force
+          }
+
+      - name: 🏗️ Compile Inno Setup Installer
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "artifacts\installer")) {
+            New-Item -ItemType Directory -Path "artifacts\installer" -Force | Out-Null
+          }
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ env.VERSION }}" "installer\RouteXia.iss"
+          Get-ChildItem -Path "artifacts\installer" | Format-Table -AutoSize
+
+      - name: 💾 Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RouteXia-Installer-v${{ env.VERSION }}
+          path: artifacts/installer/SetupRouteXia-v${{ env.VERSION }}.exe
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: RouteXia v${{ env.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/installer/SetupRouteXia-v${{ env.VERSION }}.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
